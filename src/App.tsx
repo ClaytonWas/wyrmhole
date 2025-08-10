@@ -1,35 +1,44 @@
-import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  async function deny_file_receive(id: string) {
+    try {
+      const response = await invoke("receiving_file_deny", { id });
+      console.log("File result:", response);
+    } catch (error) {
+      console.error("Error denying file:", error);
+    }
+  }
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+  async function accept_file_receive(id: string) {
+    try {
+      const response = await invoke("receiving_file_accept", { id });
+      console.log("File result:", response);
+    } catch (error) {
+      console.error("Error accepting file:", error);
+    }
   }
 
   async function receive() {
     const receive_code = (document.getElementById("receive_input") as HTMLInputElement).value;
     console.log("Receive code:", receive_code, "attempting push to Tauri backend.");
-    const response = await invoke("receiving_file", { receiveCode: receive_code });
-    
+    const response = await invoke("receiving_file_request", { receiveCode: receive_code });
+
     try {
       const data = JSON.parse(response as string);
       console.log("Transit offer received from Wormhole.");
+      console.log("File offer ID:", data.id);
       console.log("Transit offer information:", data.transit_info);
       console.log("File data:", data.file_offer);
 
       const accept = window.confirm(`File offer received:\n${JSON.stringify(data.file_offer, null, 2)}\n\nAccept and download?`);
         if (accept) {
-          // Call backend to proceed with the file transfer like await invoke("accept_file_offer"....
-          console.log("User accepted the file offer.");
+          accept_file_receive(data.id);
         } else {
-          console.log("User rejected the file offer.");
-        }
+          deny_file_receive(data.id);
+        } 
     } catch (e) {
       console.error("Response from Tauri backend:", response);
     }
@@ -41,42 +50,47 @@ function App() {
   }
 
   return (
-    <main className="container">
-      <div className="card_container">
-        <div className="card">
-          <h3>Send</h3>        
-          <p>functional equivalent in CLI would be 'wormhole send path/to/file.deb'</p>
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              send();
-            }}
-          >
+    <>
+      <nav>
+        <div className="navbar">
+          <h1>🌀 wyrmhole</h1>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="none" stroke="#a59f9fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m2.75 12.25h10.5m-10.5-4h10.5m-10.5-4h10.5"/></svg>
+        </div>
+      </nav>
+
+      <div>
+        <h2>Sending</h2> {/* functional equivalent in CLI would be 'wormhole send path/to/file.deb' */}
+        <form
+          onSubmit={(e) => { e.preventDefault(); send(); }}
+        >
+          <div id="send_form_input_div">
             <input type="file" id="send_input" />
             <button type="submit">Send</button>
-          </form>
-        </div>
-        <div className="card">
-          <h3>Receive</h3>
-          <p>functional equivalent in CLI would be 'wormhole receive 5-funny-earth'</p>
-          <form onSubmit={(e) => { e.preventDefault(); receive(); }}>
-            <input id="receive_input" />
-            <button type="submit">Request</button>
-          </form>
+          </div>
+        </form>
+        <div>
+          <h3>Sent History</h3>
+          <ul>
+            <li>IMG_1992.png</li>
+          </ul>
         </div>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); greet(); }}>
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-
-      <p>{greetMsg}</p>
-    </main>
+      <div>
+        <h2>Receiving</h2> {/* functional equivalent in CLI would be 'wormhole receive 5-funny-earth' */}
+        <form onSubmit={(e) => { e.preventDefault(); receive(); }}>
+          <input id="receive_input" placeholder="ex. 5-funny-earth"/>
+          <button type="submit">Request</button>
+        </form>
+        <div>
+          <h3>Received History</h3>
+          <ul>
+            <li>book.epub</li>
+            <li>Half Alive - RUNAWAY.m4a</li>
+          </ul>
+        </div>
+      </div>
+    </>
   );
 }
 

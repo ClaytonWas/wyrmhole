@@ -7,11 +7,14 @@ name = "a-magic-wormhole-wrapper"
 version = "0.1.0"
 dependencies = [
  "magic-wormhole",
+ "once_cell",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
