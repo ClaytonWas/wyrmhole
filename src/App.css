@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -21,35 +23,18 @@ body {
 }
 
 /* Header Bar Styles */
-.navbar {
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: rgba(0, 0, 0, 0.25) 0px 4px 8px;
-}
-
-.navbar h1 {
+h1 {
   font-size: clamp(16px, 4vw, 36px);
-  margin: 0;
 }
 
-.navbar svg {
+svg {
   width: clamp(16px, 4vw, 36px);
   height: clamp(16px, 4vw, 36px);
 }
 
 /* List Styles */
-ul {
-  list-style: none;
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  padding: 0;
-}
-
-li {
-  margin-inline-start: 1rem;
+.file_display_ul > li {
+  margin-right: .5rem;
   padding: 0.5rem 1rem;
   border-radius: .5rem;
   position: relative;
@@ -58,7 +43,7 @@ li {
   border-color: #396bd828;
 }
 
-li:hover {
+.file_display_ul > li:hover {
   background-color: #396bd828;
   border-color: #396cd8;
 }
@@ -102,6 +87,21 @@ button {
 #send_form_input_div {
   display: flex;
   align-items: center;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-on-hover {
+  animation: spin 1s linear infinite;
+  animation-play-state: paused;
+  display: inline-block; /* needed for transform */
+}
+
+.spin-on-hover:hover {
+  animation-play-state: running;
 }
 /*
 @media (prefers-color-scheme: dark) {

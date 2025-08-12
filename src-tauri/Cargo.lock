@@ -6,6 +6,7 @@ version = 4
 name = "a-magic-wormhole-wrapper"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "magic-wormhole",
  "once_cell",
  "serde",
@@ -14,6 +15,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-opener",
  "tokio",
+ "tokio-util",
  "uuid",
 ]
 
@@ -4582,12 +4584,13 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.15"
+version = "0.7.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66a539a9ad6d5d281510d5bd368c973d636c02dbf8a67300bfb6b950696ad7df"
+checksum = "14307c986784f72ef81c89db7d9e28d6ac26d16213b109ea501696195e6e3ce5"
 dependencies = [
  "bytes",
  "futures-core",
+ "futures-io",
  "futures-sink",
  "pin-project-lite",
  "tokio",
