@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import React from "react";
+import ReceiveFileCard from "./RecieveFileCardComponent";
 import "./App.css";
 
 
@@ -57,7 +59,7 @@ function App() {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="none" stroke="#a59f9fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m2.75 12.25h10.5m-10.5-4h10.5m-10.5-4h10.5"/></svg>
         </div>
       </nav>
-
+      
       <div className="m-4">
         <h2 className="text-lg font-bold">Sending</h2> {/* functional equivalent in CLI would be 'wormhole send path/to/file.deb' */}
         <form
@@ -79,14 +81,14 @@ function App() {
       <div className="m-4">
         <h2 className="font-bold">Receiving</h2> {/* functional equivalent in CLI would be 'wormhole receive 5-funny-earth' */}
         <form onSubmit={(e) => { e.preventDefault(); request_file(); }}>
-          <input id="request_file_input" placeholder="ex. 5-funny-earth"/>
-          <button type="submit">Request</button>
+          <input id="request_file_input" placeholder="ex. 5-funny-earth" className="border-b border-gray-300 hover:bg-gray-100 hover:border-gray-300 rounded-lg p-1"/>
+          <button type="submit" className="rounded-lg cursor-pointer bg-gray-100 border-2 border-transparent active:border-blue-300 transition-colors drop-shadow-md">Request</button>
         </form>
-        <div className="m-2">
-          <h3 className="text-sm mb-1">History</h3>
-          <ul className="file_display_ul list-none flex flex-row">
-            <li>book.epub</li>
-            <li>Half Alive - RUNAWAY.m4a</li>
+        <div className="py-2">
+          <h3 className="text-sm text-gray-600 mb-1">History</h3>
+          <ul className="list-none flex flex-row py-0.5">
+            <ReceiveFileCard file_name="readme" file_extension=".md" file_size={345} />
+            <ReceiveFileCard file_name="IMG_1992" file_extension=".jpg" file_size={67890} />
           </ul>
         </div>
       </div>
@@ -95,3 +97,10 @@ function App() {
 }
 
 export default App;
+
+/*
+border-radius: 4px;
+padding: 4px 8px;
+min-height: 28px;
+vertical-align: middle;
+*/

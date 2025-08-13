@@ -12,8 +12,6 @@ static REQUESTS_HASHMAP: Lazy<Mutex<HashMap<String, OpenRequests>>> = Lazy::new(
 
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-
-// Function that takes in a wormhole code and attempts to build a ReceiveRequest and store it for later acceptance or denial.
 #[tauri::command]
 async fn request_file_call(receive_code: &str) -> Result<String, String> {
     // Parsing input
@@ -35,6 +33,7 @@ async fn request_file_call(receive_code: &str) -> Result<String, String> {
     println!("Successfully parsed code: {:?}", code);
 
     // Connecting to the mailbox
+    //TODO: Allow customizable configs
     let config = transfer::APP_CONFIG.clone();
     let mailbox_connection = match MailboxConnection::connect(config, code, false).await {
         Ok(conn) => {
@@ -112,6 +111,7 @@ async fn receiving_file_deny(id: String) -> Result<String, String> {
     }
 }
 
+// Function that takes in a wormhole code and attempts to build a ReceiveRequest and store it for later acceptance or denial.
 #[tauri::command]
 async fn receiving_file_accept(id: String) -> Result<String, String> {
     let mut requests = REQUESTS_HASHMAP.lock().await;

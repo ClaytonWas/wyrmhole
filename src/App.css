@@ -6,8 +6,8 @@
   line-height: 24px;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  color: #050517;
+  background-color: #fafafa;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -32,63 +32,7 @@ svg {
   height: clamp(16px, 4vw, 36px);
 }
 
-/* List Styles */
-.file_display_ul > li {
-  margin-right: .5rem;
-  padding: 0.5rem 1rem;
-  border-radius: .5rem;
-  position: relative;
-  cursor: pointer;
-  border: .125rem solid transparent;
-  border-color: #396bd828;
-}
-
-.file_display_ul > li:hover {
-  background-color: #396bd828;
-  border-color: #396cd8;
-}
-
-/* Unsorted Global Styles */
-input,
-button {
-  border-radius: 8px;
-  border: .125rem solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
-}
-
-input,
-button {
-  outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
-}
-
-#send_form_input_div {
-  display: flex;
-  align-items: center;
-}
-
+/* Wormhole Animation */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -103,20 +47,13 @@ button {
 .spin-on-hover:hover {
   animation-play-state: running;
 }
+
+
 /*
 @media (prefers-color-scheme: dark) {
   :root {
-    color: #f6f6f6;
-    background-color: #0c132b;
-  }
-
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f5e;
-  }
-  button:active {
-    background-color: #0f0f0f;
+    color: #fafafa;
+    background-color: #1f1f1f;
   }
 }
 */
