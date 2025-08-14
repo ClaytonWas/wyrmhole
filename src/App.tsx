@@ -1,8 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import React from "react";
 import ReceiveFileCard from "./RecieveFileCardComponent";
 import "./App.css";
-
 
 function App() {
   async function deny_file_receive(id: string) {
@@ -80,9 +78,12 @@ function App() {
 
       <div className="m-4">
         <h2 className="font-bold">Receiving</h2> {/* functional equivalent in CLI would be 'wormhole receive 5-funny-earth' */}
-        <form onSubmit={(e) => { e.preventDefault(); request_file(); }}>
-          <input id="request_file_input" placeholder="ex. 5-funny-earth" className="border-b border-gray-300 hover:bg-gray-100 hover:border-gray-300 rounded-lg p-1"/>
-          <button type="submit" className="rounded-lg cursor-pointer bg-gray-100 border-2 border-transparent active:border-blue-300 transition-colors drop-shadow-md">Request</button>
+        <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex content-center gap-4">
+          <input id="request_file_input" placeholder="ex. 5-funny-earth" className="border-2 rounded-lg p-1 focus:outline-gray-400 border-gray-100 hover:border-gray-200 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors"/>
+          <button type="submit" className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
+            <svg className="p-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/></svg>
+            <span>Receive</span>
+          </button>
         </form>
         <div className="py-2">
           <h3 className="text-sm text-gray-600 mb-1">History</h3>
