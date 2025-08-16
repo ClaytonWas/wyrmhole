@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import React, { useState, useEffect } from 'react';
 import ReceiveFileCard from "./RecieveFileCardComponent";
 import "./App.css";
 

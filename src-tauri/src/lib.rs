@@ -152,9 +152,11 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         // Get the download directory from settings using app_handle
         let app_settings = app_handle.state::<settings::AppSettings>();
         let download_dir = app_settings.download_directory.clone();
-        let file_name = entry.request.file_name();
+        let file_name_with_extension = entry.request.file_name();
+        let file_name = file_name_with_extension.rsplit_once('.').map(|(before, _)| before.to_string()).unwrap_or_default();
+        let file_extension = file_name_with_extension.rsplit_once('.').map(|(_, after)| after.to_string()).unwrap_or_default();
         let file_size = entry.request.file_size();
-        let file_path = download_dir.join(file_name.clone());
+        let file_path = download_dir.join(file_name_with_extension.clone());
 
         // Check and create the download directory if it doesn't exist
         if let Some(parent_dir) = file_path.parent() {
@@ -169,7 +171,7 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         })?;
 
         let mut compat_file = file.compat_write();
-        let cancel = futures::future::pending::<()>();
+        let cancel = futures::future::pending::<()>(); //TODO: Add a proper timeout or cancel instead of leaving connections hanging forever.
 
         entry.request.accept(transit_handler, progress_handler, &mut compat_file, cancel).await.map_err(|e| {
             let error_message = format!("Error accepting file: {}", e);
@@ -178,7 +180,8 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         }).and_then(|_| {
             files_json::add_received_file(app_handle, files_json::ReceivedFile { 
                 file_name: file_name, 
-                file_size: file_size, 
+                file_size: file_size,
+                file_extension: file_extension, 
                 progress: 0, 
                 status: "in-progress".to_string(), 
                 download_url: download_dir, 
@@ -205,8 +208,10 @@ pub fn run() {
             let app_settings = settings::init_settings(app.handle());
             app.manage(app_settings);
 
-            let received_files_manager = files_json::init_received_files(app.handle());
-            app.manage(received_files_manager);
+            files_json::init_received_files(app.handle());
+            let app_received_files_manager = files_json::init_received_file_manager(app.handle());
+            println!("\n\n\n\n Printing Manager From Recieved_Files_Manager struct instance, call this from RecieveFileCardComponet to populate the recieved file history with cards from the recieved files JSON: {} \n", app_received_files_manager.received_file_directory.display());
+            app.manage(app_received_files_manager);
 
             Ok(())
         })

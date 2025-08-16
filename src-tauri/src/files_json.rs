@@ -6,10 +6,15 @@ use std::fs;
 use tauri::{AppHandle, Manager};
 use chrono::prelude::*;
 
+pub struct ReceivedFileManager {
+    pub received_file_directory: PathBuf,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ReceivedFile {
     pub file_name: String,
     pub file_size: u64,
+    pub file_extension: String,
     pub progress: u8,
     pub status: String,
     pub download_url: PathBuf,
@@ -19,7 +24,7 @@ pub struct ReceivedFile {
 }
 
 // Gets the data path of the applications operating system and appends a filename as a path.
-fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
+pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
         eprintln!("Could not get app config directory: {}", e);
         PathBuf::from(".")
@@ -34,6 +39,14 @@ fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
 
     path.push("received_files.json");
     path
+}
+
+pub fn init_received_file_manager(app_handle: &AppHandle) -> ReceivedFileManager {
+    let received_file_directory = get_received_files_path(app_handle);
+    
+    ReceivedFileManager { 
+        received_file_directory
+    }
 }
 
 // Initializes a received_files.json file.
