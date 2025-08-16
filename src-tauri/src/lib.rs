@@ -4,6 +4,10 @@ use tokio::sync::Mutex;
 use tokio_util::compat::TokioAsyncWriteCompatExt; 
 use uuid::Uuid;
 use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, WormholeError};
+use tauri::{AppHandle, Manager};
+
+pub mod settings;
+pub mod files_json;
 
 struct OpenRequests {
     request: transfer::ReceiveRequest,
@@ -113,7 +117,7 @@ async fn receiving_file_deny(id: String) -> Result<String, String> {
 
 // Function that takes in a wormhole code and attempts to build a ReceiveRequest and store it for later acceptance or denial.
 #[tauri::command]
-async fn receiving_file_accept(id: String) -> Result<String, String> {
+async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<String, String> {
     let mut requests = REQUESTS_HASHMAP.lock().await;
     if let Some(entry) = requests.remove(&id) {
         println!("receiving_file_accept closing request with id: {}", id);
@@ -126,7 +130,27 @@ async fn receiving_file_accept(id: String) -> Result<String, String> {
         let progress_handler = |transferred: u64, total: u64| {
             println!("Progress: {}/{}", transferred, total);
         };
-        let file = tokio::fs::File::create(entry.request.file_name()).await.unwrap();
+
+        // Build the full file path by joining the directory and the filename
+        // Get the download directory from settings using app_handle
+        let app_settings = app_handle.state::<settings::AppSettings>();
+        let download_dir = app_settings.download_directory.clone();
+        let file_name = entry.request.file_name();
+        let file_size = entry.request.file_size();
+        let file_path = download_dir.join(file_name.clone());
+
+        // Check and create the download directory if it doesn't exist
+        if let Some(parent_dir) = file_path.parent() {
+            if let Err(e) = tokio::fs::create_dir_all(&parent_dir).await {
+                return Err(format!("Failed to create download directory: {}", e));
+            }
+        }
+        
+        // Create the file at the full, correct path
+        let file = tokio::fs::File::create(&file_path).await.map_err(|e| {
+            format!("Failed to create file at path: {}: {}", file_path.display(), e)
+        })?;
+
         let mut compat_file = file.compat_write();
         let cancel = futures::future::pending::<()>();
         
@@ -134,6 +158,11 @@ async fn receiving_file_accept(id: String) -> Result<String, String> {
             let error_message = format!("Error accepting file: {}", e);
             println!("{}", error_message);
             error_message
+        }).and_then(|_| {
+            files_json::add_received_file(app_handle, files_json::ReceivedFile { file_name: file_name, file_size: file_size }).map_err(|e| {
+                println!("Failed to add received file: {}", e);
+                e
+            })
         })?;
         Ok("File transfer Completed".to_string())
     } else {
@@ -141,9 +170,20 @@ async fn receiving_file_accept(id: String) -> Result<String, String> {
     }
 }
 
+//TODO:: Create a function that checks if a file under that name/directory already exists and prompt the user to overwrite if they want instead of hard overwriting it.
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            let app_settings = settings::init_settings(app.handle());
+            app.manage(app_settings);
+
+            let received_files_manager = files_json::init_received_files(app.handle());
+            app.manage(received_files_manager);
+
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![request_file_call, receiving_file_accept, receiving_file_deny])
         .run(tauri::generate_context!())

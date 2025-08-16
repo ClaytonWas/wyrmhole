@@ -1,0 +1,78 @@
+// This file creates and modifies the file receive and sent card history for the Tauri application.
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+use std::fs;
+use tauri::{AppHandle, Manager};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ReceivedFile {
+    pub file_name: String,
+    pub file_size: u64,
+}
+
+// Gets the data path of the applications operating system and appends a filename as a path.
+fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
+    let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
+        eprintln!("Could not get app config directory: {}", e);
+        PathBuf::from(".")
+    });
+    
+    // Ensure the config directory exists before writing to it.
+    if !path.exists() {
+        if let Err(e) = fs::create_dir_all(&path) {
+            eprintln!("Failed to create config directory: {}", e);
+        }
+    }
+
+    path.push("received_files.json");
+    path
+}
+
+// Initializes a received_files.json file.
+// It attempts to load existing file data; if unsuccessful, it creates an empty array.
+pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
+    let received_files_path = get_received_files_path(app_handle);
+
+    // Attempt to load received files from the JSON file.
+    if received_files_path.exists() {
+        if let Ok(content) = fs::read_to_string(&received_files_path) {
+            if let Ok(files) = serde_json::from_str::<Vec<ReceivedFile>>(&content) {
+                println!("Received files loaded successfully from {}.", received_files_path.display());
+                return files;
+            } else {
+                eprintln!("Failed to parse received_files.json, creating a new empty file at {}", received_files_path.display());
+            }
+        } else {
+            eprintln!("Failed to read received_files.json, creating a new empty file with defaults at {}", received_files_path.display());
+        }
+    } else {
+        println!("received_files.json not found, creating a new empty file at {}", received_files_path.display());
+    }
+
+    // If loading failed or file didn't exist, create and save an empty list.
+    let default_files = Vec::new(); // Initialize as an empty vector (functions as an empty JSON array)
+    if let Err(e) = save_received_files(&default_files, &received_files_path) {
+        eprintln!("Failed to save initial empty received files: {}", e);
+    }
+    default_files
+}
+
+// Saves the current list of `ReceivedFile` structs to the `received_files.json` file.
+pub fn save_received_files(files: &Vec<ReceivedFile>, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let json = serde_json::to_string_pretty(files)?;
+    fs::write(path, json)?;
+    println!("Received files saved to {}.", path.display());
+    Ok(())
+}
+
+pub fn add_received_file(app_handle: AppHandle, new_file: ReceivedFile) -> Result<Vec<ReceivedFile>, String> {
+    let path = get_received_files_path(&app_handle);
+    let mut files = init_received_files(&app_handle); // Load current files
+    
+    files.push(new_file); // Add the new file
+    
+    match save_received_files(&files, &path) {
+        Ok(_) => Ok(files), // Return updated list on success
+        Err(e) => Err(format!("Failed to save received files: {}", e)),
+    }
+}

@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import React, { useState, useEffect } from 'react';
 import ReceiveFileCard from "./RecieveFileCardComponent";
 import "./App.css";
 
@@ -98,10 +99,3 @@ function App() {
 }
 
 export default App;
-
-/*
-border-radius: 4px;
-padding: 4px 8px;
-min-height: 28px;
-vertical-align: middle;
-*/
