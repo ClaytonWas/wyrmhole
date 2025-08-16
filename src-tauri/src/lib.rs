@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, net::SocketAddr};
 use once_cell::sync::Lazy;
 use tokio::sync::Mutex;
 use tokio_util::compat::TokioAsyncWriteCompatExt; 
 use uuid::Uuid;
 use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, WormholeError};
 use tauri::{AppHandle, Manager};
+use chrono::prelude::*;
 
 pub mod settings;
 pub mod files_json;
@@ -123,9 +124,25 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         println!("receiving_file_accept closing request with id: {}", id);
         println!("File name: {}", entry.request.file_name());
 
-
+        // Build the transit handler and get variables available for JSON metadata file.
+        // connection_type is mapped to String because I don't know if ConnectionType struct will be needed and serde doesn't have a default serializer for it.
+        let mut connection_type: String = String::new();
+        let mut peer_address: SocketAddr = "0.0.0.0:0".parse().unwrap();
         let transit_handler = |info: transit::TransitInfo| {
             println!("Transit info: {:?}", info);
+            let connection_type_str = match info.conn_type {
+                transit::ConnectionType::Direct => "direct".to_string(),
+                transit::ConnectionType::Relay { ref name } => {
+                    if let Some(n) = name {
+                        format!("relay ({})", n)
+                    } else {
+                        "relay".to_string()
+                    }
+                },
+                _ => "unknown".to_string(), 
+            };
+            connection_type = connection_type_str;
+            peer_address = info.peer_addr.to_owned();
         };
         let progress_handler = |transferred: u64, total: u64| {
             println!("Progress: {}/{}", transferred, total);
@@ -153,13 +170,22 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
 
         let mut compat_file = file.compat_write();
         let cancel = futures::future::pending::<()>();
-        
+
         entry.request.accept(transit_handler, progress_handler, &mut compat_file, cancel).await.map_err(|e| {
             let error_message = format!("Error accepting file: {}", e);
             println!("{}", error_message);
             error_message
         }).and_then(|_| {
-            files_json::add_received_file(app_handle, files_json::ReceivedFile { file_name: file_name, file_size: file_size }).map_err(|e| {
+            files_json::add_received_file(app_handle, files_json::ReceivedFile { 
+                file_name: file_name, 
+                file_size: file_size, 
+                progress: 0, 
+                status: "in-progress".to_string(), 
+                download_url: download_dir, 
+                download_time: Local::now(),
+                connection_type: connection_type,
+                peer_address: peer_address,
+            }).map_err(|e| {
                 println!("Failed to add received file: {}", e);
                 e
             })

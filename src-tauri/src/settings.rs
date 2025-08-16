@@ -1,6 +1,5 @@
 // This file contains the settings for the Tauri application.
 // Creates and modifies the settings file.
-
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::fs;

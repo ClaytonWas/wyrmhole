@@ -1,13 +1,21 @@
 // This file creates and modifies the file receive and sent card history for the Tauri application.
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::fs;
 use tauri::{AppHandle, Manager};
+use chrono::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ReceivedFile {
     pub file_name: String,
     pub file_size: u64,
+    pub progress: u8,
+    pub status: String,
+    pub download_url: PathBuf,
+    pub download_time: DateTime<Local>,
+    pub connection_type: String, // Cast from ConnectionType to String because serde doesn't have a serializer for ConnectionType and I don't know if it will even matter.
+    pub peer_address: SocketAddr,
 }
 
 // Gets the data path of the applications operating system and appends a filename as a path.
