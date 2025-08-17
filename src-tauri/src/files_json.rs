@@ -3,12 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::fs;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use chrono::prelude::*;
 
-pub struct ReceivedFileManager {
-    pub received_file_directory: PathBuf,
-}
+use crate::settings;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ReceivedFile {
@@ -23,36 +21,11 @@ pub struct ReceivedFile {
     pub peer_address: SocketAddr,
 }
 
-// Gets the data path of the applications operating system and appends a filename as a path.
-pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
-    let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
-        eprintln!("Could not get app config directory: {}", e);
-        PathBuf::from(".")
-    });
-    
-    // Ensure the config directory exists before writing to it.
-    if !path.exists() {
-        if let Err(e) = fs::create_dir_all(&path) {
-            eprintln!("Failed to create config directory: {}", e);
-        }
-    }
-
-    path.push("received_files.json");
-    path
-}
-
-pub fn init_received_file_manager(app_handle: &AppHandle) -> ReceivedFileManager {
-    let received_file_directory = get_received_files_path(app_handle);
-    
-    ReceivedFileManager { 
-        received_file_directory
-    }
-}
-
 // Initializes a received_files.json file.
 // It attempts to load existing file data; if unsuccessful, it creates an empty array.
 pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
-    let received_files_path = get_received_files_path(app_handle);
+    // Pulls the value from the settings.rs AppSettings struct instead of calling directly to the OS to allow user reassignments. 
+    let received_files_path = settings::get_received_files_path(app_handle); 
 
     // Attempt to load received files from the JSON file.
     if received_files_path.exists() {
@@ -82,12 +55,12 @@ pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
 pub fn save_received_files(files: &Vec<ReceivedFile>, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(files)?;
     fs::write(path, json)?;
-    println!("Received files saved to {}.", path.display());
     Ok(())
 }
 
+// Adds a new received file to the list and saves the updated list.
 pub fn add_received_file(app_handle: AppHandle, new_file: ReceivedFile) -> Result<Vec<ReceivedFile>, String> {
-    let path = get_received_files_path(&app_handle);
+    let path = settings::get_received_files_path(&app_handle);
     let mut files = init_received_files(&app_handle); // Load current files
     
     files.push(new_file); // Add the new file

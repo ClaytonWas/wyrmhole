@@ -8,10 +8,29 @@ use tauri::{AppHandle, Manager};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
     pub download_directory: PathBuf,
+    pub received_file_directory: PathBuf,
+}
+
+impl AppSettings {
+    pub fn get_download_directory(&self) -> &PathBuf {
+        &self.download_directory
+    }
+
+    pub fn get_received_file_directory(&self) -> &PathBuf {
+        &self.received_file_directory
+    }
+
+    pub fn set_download_directory(&mut self, path: PathBuf) {
+        self.download_directory = path;
+    }
+
+    pub fn set_received_file_directory(&mut self, path: PathBuf) {
+        self.received_file_directory = path;
+    }
 }
 
 // Gets the config path of the applications operating system and appends a settings.json.
-fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
+pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_config_dir().unwrap_or_else(|e| {
         eprintln!("Could not get app config directory: {}", e);
         PathBuf::from(".")
@@ -28,16 +47,35 @@ fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
     path
 }
 
+// Get the app data path of the applications operating system and appends a receivedFiles.json.
+pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
+    let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
+        eprintln!("Could not get app config directory: {}", e);
+        PathBuf::from(".")
+    });
+    
+    // Ensure the config directory exists before writing to it.
+    if !path.exists() {
+        if let Err(e) = fs::create_dir_all(&path) {
+            eprintln!("Failed to create config directory: {}", e);
+        }
+    }
+
+    path.push("received_files.json");
+    path
+}
+
 // Creates an instance of AppSettings with default values.
 fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
     let download_dir = app_handle.path().download_dir().unwrap_or_else(|e| {
-        eprintln!("Could not get download directory, using a fallback: {}", e);
-        // Using `std::env::current_dir` as a fallback.
-        std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+        eprintln!("Could not get app data directory: {}", e);
+        PathBuf::from(".")
     });
+    let received_dir = get_received_files_path(app_handle); 
 
     AppSettings {
         download_directory: download_dir,
+        received_file_directory: received_dir,
     }
 }
 

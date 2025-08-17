@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::SocketAddr};
+use std::{collections::HashMap, net::SocketAddr, path::PathBuf};
 use once_cell::sync::Lazy;
 use tokio::sync::Mutex;
 use tokio_util::compat::TokioAsyncWriteCompatExt; 
@@ -150,8 +150,10 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
 
         // Build the full file path by joining the directory and the filename
         // Get the download directory from settings using app_handle
-        let app_settings = app_handle.state::<settings::AppSettings>();
-        let download_dir = app_settings.download_directory.clone();
+        let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+        let app_settings_lock = app_settings_state.lock().await;
+        let download_dir = app_settings_lock.get_download_directory().to_path_buf();
+        drop(app_settings_lock); // Drop lock so we can get the app_handle again later.
         let file_name_with_extension = entry.request.file_name();
         let file_name = file_name_with_extension.rsplit_once('.').map(|(before, _)| before.to_string()).unwrap_or_default();
         let file_extension = file_name_with_extension.rsplit_once('.').map(|(_, after)| after.to_string()).unwrap_or_default();
@@ -159,10 +161,8 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         let file_path = download_dir.join(file_name_with_extension.clone());
 
         // Check and create the download directory if it doesn't exist
-        if let Some(parent_dir) = file_path.parent() {
-            if let Err(e) = tokio::fs::create_dir_all(&parent_dir).await {
-                return Err(format!("Failed to create download directory: {}", e));
-            }
+        if let Err(e) = tokio::fs::create_dir_all(&download_dir).await {
+            return Err(format!("Failed to create download directory: {}", e));
         }
         
         // Create the file at the full, correct path
@@ -188,15 +188,40 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
                 download_time: Local::now(),
                 connection_type: connection_type,
                 peer_address: peer_address,
-            }).map_err(|e| {
+            }
+        ).map_err(|e| {
                 println!("Failed to add received file: {}", e);
                 e
             })
         })?;
-        Ok("File transfer Completed".to_string())
+        Ok(format!("File transfer completed! File saved to {}", file_path.display()))
     } else {
         Err("No request found for this id".to_string())
     }
+}
+
+#[tauri::command]
+async fn set_download_directory(app_handle: AppHandle, new_path: String) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    let new_path_buf = PathBuf::from(new_path);
+    app_settings_lock.set_download_directory(new_path_buf);
+    
+    // Save the updated settings to the file
+    let settings_path = settings::get_settings_path(&app_handle);
+    if let Err(e) = settings::save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_received_files_path(app_handle: AppHandle) -> Result<String, String> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    let dir = app_settings_lock.get_received_file_directory().to_string_lossy().to_string();
+    Ok(dir)
 }
 
 //TODO:: Create a function that checks if a file under that name/directory already exists and prompt the user to overwrite if they want instead of hard overwriting it.
@@ -206,17 +231,14 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             let app_settings = settings::init_settings(app.handle());
-            app.manage(app_settings);
+            app.manage(Mutex::new(app_settings)); 
 
             files_json::init_received_files(app.handle());
-            let app_received_files_manager = files_json::init_received_file_manager(app.handle());
-            println!("\n\n\n\n Printing Manager From Recieved_Files_Manager struct instance, call this from RecieveFileCardComponet to populate the recieved file history with cards from the recieved files JSON: {} \n", app_received_files_manager.received_file_directory.display());
-            app.manage(app_received_files_manager);
 
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![request_file_call, receiving_file_accept, receiving_file_deny])
+        .invoke_handler(tauri::generate_handler![request_file_call, receiving_file_accept, receiving_file_deny, set_download_directory, get_received_files_path])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
