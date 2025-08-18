@@ -1,14 +1,14 @@
 // This file contains the settings for the Tauri application.
 // Creates and modifies the settings file.
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
     pub download_directory: PathBuf,
-    pub received_file_directory: PathBuf,
+    pub received_files_directory: PathBuf,
 }
 
 impl AppSettings {
@@ -16,16 +16,16 @@ impl AppSettings {
         &self.download_directory
     }
 
-    pub fn get_received_file_directory(&self) -> &PathBuf {
-        &self.received_file_directory
+    pub fn get_received_files_directory(&self) -> &PathBuf {
+        &self.received_files_directory
     }
 
     pub fn set_download_directory(&mut self, path: PathBuf) {
         self.download_directory = path;
     }
 
-    pub fn set_received_file_directory(&mut self, path: PathBuf) {
-        self.received_file_directory = path;
+    pub fn set_received_files_directory(&mut self, path: PathBuf) {
+        self.received_files_directory = path;
     }
 }
 
@@ -35,14 +35,14 @@ pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
         eprintln!("Could not get app config directory: {}", e);
         PathBuf::from(".")
     });
-    
+
     // Ensure the config directory exists before writing to it.
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
             eprintln!("Failed to create config directory: {}", e);
         }
     }
-    
+
     path.push("settings.json");
     path
 }
@@ -53,7 +53,7 @@ pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
         eprintln!("Could not get app config directory: {}", e);
         PathBuf::from(".")
     });
-    
+
     // Ensure the config directory exists before writing to it.
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
@@ -71,11 +71,11 @@ fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
         eprintln!("Could not get app data directory: {}", e);
         PathBuf::from(".")
     });
-    let received_dir = get_received_files_path(app_handle); 
+    let received_dir = get_received_files_path(app_handle);
 
     AppSettings {
         download_directory: download_dir,
-        received_file_directory: received_dir,
+        received_files_directory: received_dir,
     }
 }
 
@@ -87,16 +87,28 @@ pub fn init_settings(app_handle: &AppHandle) -> AppSettings {
     if settings_path.exists() {
         if let Ok(content) = fs::read_to_string(&settings_path) {
             if let Ok(settings) = serde_json::from_str::<AppSettings>(&content) {
-                println!("Settings loaded successfully from {}.", settings_path.display());
+                println!(
+                    "Settings loaded successfully from {}.",
+                    settings_path.display()
+                );
                 return settings;
             } else {
-                eprintln!("Failed to parse settings.json, creating a new file with defaults at {}", settings_path.display());
+                eprintln!(
+                    "Failed to parse settings.json, creating a new file with defaults at {}",
+                    settings_path.display()
+                );
             }
         } else {
-            eprintln!("Failed to read settings.json, creating a new file with defaults at {}", settings_path.display());
+            eprintln!(
+                "Failed to read settings.json, creating a new file with defaults at {}",
+                settings_path.display()
+            );
         }
     } else {
-        println!("settings.json not found, creating a new file with defaults at {}", settings_path.display());
+        println!(
+            "settings.json not found, creating a new file with defaults at {}",
+            settings_path.display()
+        );
     }
 
     // If loading failed or file didn't exist, create and save default settings.
@@ -108,7 +120,10 @@ pub fn init_settings(app_handle: &AppHandle) -> AppSettings {
 }
 
 // Saves the current AppSettings struct information to the settings.json file.
-pub fn save_settings(settings: &AppSettings, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_settings(
+    settings: &AppSettings,
+    path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(settings)?;
     fs::write(path, json)?;
     Ok(())

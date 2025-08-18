@@ -1,11 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useState } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
 import ReceiveFileCard from "./RecieveFileCardComponent";
+import SettingsMenu from "./SettingsMenu";
 import "./App.css";
 
 function App() {
-  const [recievedDirectory, setRecievedDirectory] = useState<string>('');
-
   async function deny_file_receive(id: string) {
     try {
       const response = await invoke("receiving_file_deny", { id });
@@ -44,33 +43,30 @@ function App() {
     }
   }
 
+  async function select_download_directory() {
+    try {
+      const selected = await open({
+        directory: true,  // only folders
+        multiple: false
+      });
+
+      if (typeof selected === "string") {
+        await invoke("set_download_directory", { newPath: selected });
+        console.log("Download directory set to:", selected);
+      } else {
+        console.log("No directory selected. Download directory unchanged.");
+      }
+    } catch (error) {
+      console.error("Error setting download directory:", error);
+    }
+  }
+
   async function send() {
     (document.getElementById("send_input") as HTMLInputElement).value = "";
     // Invoke Tauri command here to send the file and receive the code.
   }
 
-  async function set_download_directory() {
-    const new_path = (document.getElementById("download_directory_input") as HTMLInputElement).value;
-    try {
-      invoke("set_download_directory", { newPath: new_path })
-    } catch (error) {
-      console.error("Error setting download directory. Response from Tauri backend:", error);
-    }
-  }
 
-  async function get_recieved_directory() {
-  try {
-    const path = await invoke("get_received_files_path");
-    if (typeof path === 'string') {
-      setRecievedDirectory(path); // Update the state with the received path
-    } else {
-      setRecievedDirectory("Invalid path received");
-    }
-  } catch (error) {
-    console.error("Error getting directory:", error);
-    setRecievedDirectory("Error getting directory.");
-  }
-}
   return (
     <>
       <nav>
@@ -79,7 +75,7 @@ function App() {
             <span className="spin-on-hover cursor-pointer">🌀</span> 
             wyrmhole
           </h1>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="none" stroke="#a59f9fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m2.75 12.25h10.5m-10.5-4h10.5m-10.5-4h10.5"/></svg>
+          <SettingsMenu />
         </div>
       </nav>
       
@@ -118,19 +114,6 @@ function App() {
           </ul>
         </div>
       </div>
-
-      <form onSubmit={(e) => { e.preventDefault(); set_download_directory(); }} className="flex content-center gap-4">
-        <input id="download_directory_input" placeholder="ex. 5-funny-earth" className="border-2 rounded-lg p-1 focus:outline-gray-400 border-gray-100 hover:border-gray-200 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors"/>
-        <button type="submit" className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
-          <span>Set Download Directory</span>
-        </button>
-      </form>
-      <form onSubmit={(e) => { e.preventDefault(); get_recieved_directory(); }} className="flex content-center gap-4">
-        <button type="submit" className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
-          <span>Get Recieved Directory</span>
-        </button>
-        <p>{recievedDirectory}</p>
-      </form>
     </>
   );
 }
