@@ -43,24 +43,6 @@ function App() {
     }
   }
 
-  async function select_download_directory() {
-    try {
-      const selected = await open({
-        directory: true,  // only folders
-        multiple: false
-      });
-
-      if (typeof selected === "string") {
-        await invoke("set_download_directory", { newPath: selected });
-        console.log("Download directory set to:", selected);
-      } else {
-        console.log("No directory selected. Download directory unchanged.");
-      }
-    } catch (error) {
-      console.error("Error setting download directory:", error);
-    }
-  }
-
   async function send() {
     (document.getElementById("send_input") as HTMLInputElement).value = "";
     // Invoke Tauri command here to send the file and receive the code.
