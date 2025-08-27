@@ -64,20 +64,14 @@ pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
 }
 
 // Saves the current list of `ReceivedFile` structs to the `received_files.json` file.
-pub fn save_received_files(
-    files: &Vec<ReceivedFile>,
-    path: &Path,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_received_files(files: &Vec<ReceivedFile>, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(files)?;
     fs::write(path, json)?;
     Ok(())
 }
 
 // Adds a new received file to the list and saves the updated list.
-pub fn add_received_file(
-    app_handle: AppHandle,
-    new_file: ReceivedFile,
-) -> Result<Vec<ReceivedFile>, String> {
+pub fn add_received_file(app_handle: AppHandle, new_file: ReceivedFile) -> Result<Vec<ReceivedFile>, String> {
     let path = settings::get_received_files_path(&app_handle);
     let mut files = init_received_files(&app_handle); // Load current files
 
@@ -87,4 +81,19 @@ pub fn add_received_file(
         Ok(_) => Ok(files), // Return updated list on success
         Err(e) => Err(format!("Failed to save received files: {}", e)),
     }
+}
+
+pub async fn get_received_files_json_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>, String> {
+    let received_files_path = settings::get_received_files_path(&app_handle);
+    println!("Reading received files history from: {}", received_files_path.display());
+    
+    // Read the file contents into a string
+    let contents = fs::read_to_string(&received_files_path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    // Parse it as a JSON array
+    let files: Vec<serde_json::Value> = serde_json::from_str(&contents)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    
+    Ok(files)
 }

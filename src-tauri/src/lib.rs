@@ -263,14 +263,9 @@ async fn get_download_path(app_handle: AppHandle) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn get_received_files_path(app_handle: AppHandle) -> Result<String, String> {
-    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
-    let app_settings_lock = app_settings_state.lock().await;
-    let dir = app_settings_lock
-        .get_received_files_directory()
-        .to_string_lossy()
-        .to_string();
-    Ok(dir)
+async fn received_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>, String> {
+    let files = files_json::get_received_files_json_data(app_handle).await?;
+    Ok(files)
 }
 
 //TODO:: Create a function that checks if a file under that name/directory already exists and prompt the user to overwrite if they want instead of hard overwriting it.
@@ -293,7 +288,7 @@ pub fn run() {
             receiving_file_accept,
             receiving_file_deny,
             set_download_directory,
-            get_received_files_path,
+            received_files_data,
             get_download_path
         ])
         .run(tauri::generate_context!())

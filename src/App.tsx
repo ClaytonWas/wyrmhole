@@ -1,10 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
-import { open } from '@tauri-apps/plugin-dialog';
+import { confirm } from '@tauri-apps/plugin-dialog';
+import { useEffect, useState } from "react";
 import ReceiveFileCard from "./RecieveFileCardComponent";
 import SettingsMenu from "./SettingsMenu";
 import "./App.css";
 
 function App() {
+  const [receivedFiles, setReceivedFiles] = useState<Array<any>>([]);
+  const [showAll, setShowAll] = useState(false);
+  
   async function deny_file_receive(id: string) {
     try {
       const response = await invoke("receiving_file_deny", { id });
@@ -18,6 +22,7 @@ function App() {
     try {
       const response = await invoke("receiving_file_accept", { id });
       console.log("File result:", response);
+      recieved_files_data();
     } catch (error) {
       console.error("Error accepting file:", error);
     }
@@ -32,14 +37,25 @@ function App() {
       const data = JSON.parse(response as string);
       console.log("File request initiated successfully.");
       console.log("Request ID:", data.id, "File Name:", data.file_name, "File Size:", data.file_size);
-      const accept = window.confirm(`File offer for ${JSON.stringify(data.file_name, null, 2)} received. \nFile Size: ${data.file_size} bytes \n\nAccept and download?`);
-        if (accept) {
-          accept_file_receive(data.id);
-        } else {
-          deny_file_receive(data.id);
-        } 
+      let message = `File offer for ${data.file_name} received.\nFile Size: ${data.file_size} bytes\n\nAccept and download?`;
+      const accept = await confirm(message, {title: "File Receive Confirmation"});
+      if (accept) {
+        const result = await accept_file_receive(data.id);
+        alert(result);
+      } else {
+        await deny_file_receive(data.id);
+      }
     } catch (e) {
       console.error("Response from Tauri backend:", response);
+    }
+  }
+
+  async function recieved_files_data() {
+    try {
+      const response = await invoke("received_files_data");
+      setReceivedFiles(response as Array<any>);
+    } catch (error) {
+      console.error("Error getting received files json data:", error);
     }
   }
 
@@ -48,6 +64,9 @@ function App() {
     // Invoke Tauri command here to send the file and receive the code.
   }
 
+  useEffect(() => {
+    recieved_files_data();
+  }, []);
 
   return (
     <>
@@ -89,11 +108,27 @@ function App() {
           </button>
         </form>
         <div className="py-2">
-          <h3 className="text-sm text-gray-600 mb-1">History</h3>
-          <ul className="list-none flex flex-row py-0.5">
-            <ReceiveFileCard file_name="readme" file_extension=".md" file_size={345} />
-            <ReceiveFileCard file_name="IMG_1992" file_extension=".jpg" file_size={67890} />
-          </ul>
+          <p className="text-sm text-gray-700">Received File History</p>
+          <div className="grid grid-cols-3 select-none px-2 rounded bg-gray-50 hover:bg-gray-200 active:bg-blue-200 transition-colors">
+            <div className="text-sm text-gray-400">Filename</div>
+            <div className="text-sm text-gray-400">Extension</div>
+            <div className="text-sm text-gray-400">Size</div>
+          </div>
+          <div>
+            {(showAll ? receivedFiles.slice().reverse() : receivedFiles.slice(-5).reverse()).map((file, idx) => (
+              <ReceiveFileCard key={idx} file_name={file.file_name} file_extension={file.file_extension} file_size={file.file_size}/>
+            ))}
+            {receivedFiles.length > 5 && (
+              <div className="flex justify-center">
+                <button
+                  className="rounded transition-colors cursor-pointer text-sm text-gray-400 hover:text-gray-950 hover:bg-gray-200 w-full"
+                  onClick={() => setShowAll(!showAll)}
+                >
+                  {showAll ? "Show Less" : "Show More"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
