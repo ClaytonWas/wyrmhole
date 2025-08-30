@@ -204,8 +204,6 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
                         file_name: file_name,
                         file_size: file_size,
                         file_extension: file_extension,
-                        progress: 0,
-                        status: "in-progress".to_string(),
                         download_url: download_dir,
                         download_time: Local::now(),
                         connection_type: connection_type,

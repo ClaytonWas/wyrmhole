@@ -13,8 +13,6 @@ pub struct ReceivedFile {
     pub file_name: String,
     pub file_size: u64,
     pub file_extension: String,
-    pub progress: u8,
-    pub status: String,
     pub download_url: PathBuf,
     pub download_time: DateTime<Local>,
     pub connection_type: String, // Cast from ConnectionType to String because serde doesn't have a serializer for ConnectionType and I don't know if it will even matter.

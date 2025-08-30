@@ -109,14 +109,14 @@ function App() {
         </form>
         <div className="py-2">
           <p className="text-sm text-gray-700">Received File History</p>
-          <div className="grid grid-cols-3 select-none px-2 rounded bg-gray-50 hover:bg-gray-200 active:bg-blue-200 transition-colors">
+          <div className="grid grid-cols-3 select-none px-2 rounded bg-gray-50 hover:bg-gray-200 transition-colors">
             <div className="text-sm text-gray-400">Filename</div>
             <div className="text-sm text-gray-400">Extension</div>
             <div className="text-sm text-gray-400">Size</div>
           </div>
           <div>
             {(showAll ? receivedFiles.slice().reverse() : receivedFiles.slice(-5).reverse()).map((file, idx) => (
-              <ReceiveFileCard key={idx} file_name={file.file_name} file_extension={file.file_extension} file_size={file.file_size}/>
+              <ReceiveFileCard key={idx} connection_type={file.connection_type} download_time={file.download_time} download_url={file.download_url} file_extension={file.file_extension} file_name={file.file_name} file_size={file.file_size} peer_address={file.peer_address}/>
             ))}
             {receivedFiles.length > 5 && (
               <div className="flex justify-center">
