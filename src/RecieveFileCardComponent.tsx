@@ -31,7 +31,7 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
             </div>
             {isOpen && (
                 <div className="fixed inset-0 bg-gray-500/10 flex items-center justify-center z-50">
-                    <div className="bg-gray-100 rounded-lg shadow-lg w-1/2 py-1 px-2">
+                    <div className="bg-gray-100 rounded-lg shadow-lg w-1/2 py-1 px-2 overflow-x-auto">
                         {/* Modal Header */}
                         <div className="items-center">
                             <div className="justify-between items-center flex">
@@ -77,7 +77,7 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
                                 <div className="grid grid-rows-2 xl:grid-cols-2 gap-x-5 gap-y-1">
                                     <div className="flex justify-between mx-2">
                                         <p className="text-sm xl:text-base text-gray-500">IP Address:</p>
-                                        <p className="text-sm xl:text-base text-gray-900">{peer_address}</p>
+                                        <p className="text-sm xl:text-base text-gray-900 lg:overflow-x-hidden">{peer_address}</p>
                                     </div>
                                     <div className="flex justify-between mx-2">
                                         <p className="text-sm xl:text-base text-gray-500">Connection Type:</p>
