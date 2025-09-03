@@ -7,6 +7,7 @@ import "./App.css";
 
 function App() {
   const [selectedFiles, setSelectedFiles] = useState<string[] | null>(null);
+  const [fileInputContextString, setFileInputContextString] = useState<string>("Click to Upload File(s)");
   const [receivedFiles, setReceivedFiles] = useState<Array<any>>([]);
   const [showAll, setShowAll] = useState(false);
   
@@ -39,13 +40,19 @@ function App() {
     if (selected === null) {
       // user 
       setSelectedFiles(null);
+      setFileInputContextString("Click to Upload File(s)");
       //console.log("No file selected");
     } else if (Array.isArray(selected)) {
       if (selected.length > 1) {
         setSelectedFiles(selected); // multiple (or single wrapped in array)
+        let contextString = selected.length + " files selected";
+        setFileInputContextString(contextString);
         //console.log("Multiple files selected:", selected);
       } else if (selected.length === 1) {
-        setSelectedFiles([selected[0]]); // single string → make it an array for consistency
+        setSelectedFiles([selected[0]].slice()); // single string → make it an array for consistency
+        let filePath = selected[0];
+        let fileName = filePath.split(/[/\\]/).pop() ?? "File Uploaded"; 
+        setFileInputContextString(fileName);
         //console.log("One file selected:", selected[0]);
       }
     }
@@ -58,7 +65,8 @@ function App() {
     } else if (selectedFiles.length > 1) {
       console.log("Implement multiple files selected from send:", selectedFiles);
     } else if (selectedFiles.length === 1) {
-      console.log("One file selected from send:", selectedFiles[0]);
+      const response = await invoke("send_file_call", { filePath: selectedFiles[0] });
+      console.log("One file selected from send:", response);
     }
   }
 
@@ -101,7 +109,7 @@ function App() {
     <>
       <nav>
         <div className="p-4 flex justify-between items-center shadow-md">
-          <h1 className="font-bold flex items-center gap-2">
+          <h1 className="font-bold flex items-center select-none gap-2">
             <span className="spin-on-hover cursor-pointer">🌀</span> 
             wyrmhole
           </h1>
@@ -115,7 +123,7 @@ function App() {
           onSubmit={(e) => { e.preventDefault();}}
         >
           <div id="send_form_input_div">
-            <button onClick={select_files} className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">aaaa</button>
+            <button onClick={select_files} className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">{fileInputContextString}</button>
             <button onClick={send_files} type="submit" className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
               <span className="cursor-default">Send</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path className="fill-black" d="M3 20v-6l8-2l-8-2V4l19 8z"/></svg>
@@ -130,17 +138,17 @@ function App() {
         </div>
       </div>
 
-      <div className="m-4 select-none">
+      <div className="m-4">
         <h2 className="font-bold select-none cursor-default">Receiving</h2> {/* functional equivalent in CLI would be 'wormhole receive 5-funny-earth' */}
         <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex content-center gap-4">
           <input id="request_file_input" placeholder="ex. 5-funny-earth" className="border-2 rounded-lg p-1 select-none focus:outline-gray-400 border-gray-100 hover:border-gray-200 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors"/>
           <button type="submit" className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z"/></svg>            
-            <span className="cursor-default">Receive</span>
+            <span className="cursor-default select-none">Receive</span>
           </button>
         </form>
         <div className="py-2">
-          <p className="text-sm text-gray-700 cursor-default">Received File History</p>
+          <p className="text-sm text-gray-700 cursor-default select-none">Received File History</p>
           <div className="grid grid-cols-3 select-none px-2 rounded bg-gray-50 hover:bg-gray-200 transition-colors">
             <div className="text-sm text-gray-400">Filename</div>
             <div className="text-sm text-gray-400">Extension</div>

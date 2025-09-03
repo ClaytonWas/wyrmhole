@@ -1,9 +1,12 @@
 use chrono::prelude::*;
 use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, WormholeError};
 use once_cell::sync::Lazy;
-use std::{collections::HashMap, net::SocketAddr, path::PathBuf};
+use std::{collections::HashMap, net::SocketAddr, path::PathBuf, path::Path};
+use tokio::fs::File;
+use tokio::io::BufReader;
 use tauri::{AppHandle, Manager};
 use tokio::sync::Mutex;
+use tokio_util::compat::TokioAsyncReadCompatExt;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
 use uuid::Uuid;
 
@@ -17,6 +20,76 @@ static REQUESTS_HASHMAP: Lazy<Mutex<HashMap<String, OpenRequests>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+#[tauri::command]
+async fn send_file_call(file_path: &str) -> Result<String, String> {
+    let config = transfer::APP_CONFIG.clone();
+
+    let mailbox_connection = match MailboxConnection::create(config, 2).await {
+        Ok(conn) => {
+            println!("{}", conn.code());
+            println!("Successfully created a mailbox.");
+            conn
+        }
+        Err(e) => {
+            let msg = format!("Failed to connect: {}", e);
+            println!("{}", msg);
+            return Err(msg);
+        }
+    };
+
+    // Constructing default send_file(...) variables
+    // TODO: (Temporary, should allow the use to change these themselves in a later build.)
+    let relay_hint = transit::RelayHint::from_urls(
+        None, // no friendly name
+        [transit::DEFAULT_RELAY_SERVER.parse().unwrap()],
+    )
+    .unwrap();
+    let relay_hints = vec![relay_hint];
+    let abilities = transit::Abilities::ALL;
+    let cancel_call = futures::future::pending::<()>();
+    let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
+        let msg = format!("Failed to connect to Wormhole: {}", e);
+        println!("{}", msg);
+        msg
+    })?;
+    let path = Path::new(file_path);
+    let file_name = path
+        .file_name()
+        .and_then(|os| os.to_str())
+        .unwrap_or("unknown")
+        .to_string();
+
+    let file = File::open(path)
+        .await
+        .map_err(|e| format!("Failed to open file: {}", e))?;
+    let metadata = file
+        .metadata()
+        .await
+        .map_err(|e| format!("Failed to get metadata: {}", e))?;
+    let file_size = metadata.len();
+    let mut compat_file = file.compat();
+
+    transfer::send_file(
+        wormhole,
+        relay_hints,
+        &mut compat_file,
+        file_name,
+        file_size,
+        abilities,
+        |_info| println!("Transit established!"),
+        |sent, total| println!("Progress: {}/{}", sent, total),
+        cancel_call,
+    )
+    .await
+    .map_err(|e| format!("Failed to send file: {}", e))?;
+
+    Ok(format!(
+        "Successfully sent file '{}' ({} bytes)",
+        file_path, file_size
+    ))
+}
+
+
 #[tauri::command]
 async fn request_file_call(receive_code: &str) -> Result<String, String> {
     // Parsing input
@@ -45,21 +118,13 @@ async fn request_file_call(receive_code: &str) -> Result<String, String> {
             println!("Successfully connected to the mailbox. Attempting to establish Wormhole...");
             conn
         }
-        Err(WormholeError::UnclaimedNameplate(e)) => {
-            let msg = format!(
-                "Failed to connect to mailbox: No sender found for this code. {}",
-                e
-            );
-            println!("{}", msg);
-            return Err(msg);
-        }
         Err(e) => {
-            let msg = format!("Failed to connect: {}", e);
+            let msg = format!("Failed to create mailbox: {}", e);
             println!("{}", msg);
             return Err(msg);
         }
     };
-    let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
+    let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e: WormholeError| {
         let msg = format!("Failed to connect to Wormhole: {}", e);
         println!("{}", msg);
         msg
@@ -282,6 +347,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            send_file_call,
             request_file_call,
             receiving_file_accept,
             receiving_file_deny,
