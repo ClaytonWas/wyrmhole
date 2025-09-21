@@ -1,20 +1,33 @@
 import { invoke } from "@tauri-apps/api/core";
 import { confirm, open } from '@tauri-apps/plugin-dialog';
 import { useEffect, useState } from "react";
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import ReceiveFileCard from "./RecieveFileCardComponent";
 import SettingsMenu from "./SettingsMenu";
 import "./App.css";
 
+interface ReceivedFile {
+  connection_type: string;
+  download_time: string;
+  download_url: string;
+  file_extension: string;
+  file_name: string;
+  file_size: number;
+  peer_address: string;
+}
+
 function App() {
+  const [receiveCode, setReceiveCode] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<string[] | null>(null);
-  const [fileInputContextString, setFileInputContextString] = useState<string>("Click to Upload File(s)");
-  const [receivedFiles, setReceivedFiles] = useState<Array<any>>([]);
+  const [fileInputContextString, setFileInputContextString] = useState("Click to Upload File(s)");
+  const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const [showAll, setShowAll] = useState(false);
-  
+
   async function deny_file_receive(id: string) {
     try {
-      const response = await invoke("receiving_file_deny", { id });
-      console.log("File result:", response);
+      await invoke("receiving_file_deny", { id });
+      console.log("Denied file:", id);
     } catch (error) {
       console.error("Error denying file:", error);
     }
@@ -22,82 +35,108 @@ function App() {
 
   async function accept_file_receive(id: string) {
     try {
-      const response = await invoke("receiving_file_accept", { id });
-      console.log("File result:", response);
+      await invoke("receiving_file_accept", { id });
+      console.log("Accepted file:", id);
       recieved_files_data();
     } catch (error) {
       console.error("Error accepting file:", error);
     }
   }
 
-  // opens file dialog and modifies the selectedFiles state variable
   async function select_files() {
-    const selected = await open({
-      multiple: true,
-      filters: [{ name: 'Image', extensions: ['png', 'jpeg'] }]
-    });
-
-    if (selected === null) {
-      // user 
-      setSelectedFiles(null);
-      setFileInputContextString("Click to Upload File(s)");
-      //console.log("No file selected");
-    } else if (Array.isArray(selected)) {
-      if (selected.length > 1) {
-        setSelectedFiles(selected); // multiple (or single wrapped in array)
-        let contextString = selected.length + " files selected";
-        setFileInputContextString(contextString);
-        //console.log("Multiple files selected:", selected);
-      } else if (selected.length === 1) {
-        setSelectedFiles([selected[0]].slice()); // single string → make it an array for consistency
-        let filePath = selected[0];
-        let fileName = filePath.split(/[/\\]/).pop() ?? "File Uploaded"; 
-        setFileInputContextString(fileName);
-        //console.log("One file selected:", selected[0]);
+    try {
+      const selected = await open({ multiple: true });
+      if (!selected) {
+        setSelectedFiles(null);
+        setFileInputContextString("Click to Upload File(s)");
+        return;
       }
+
+      const files = Array.isArray(selected) ? selected : [selected];
+      // Filter out non-strings for safety
+      const stringFiles = files.filter(f => typeof f === "string") as string[];
+      setSelectedFiles(stringFiles);
+
+      if (stringFiles.length === 1) {
+        const fileName = stringFiles[0].split(/[/\\]/).pop() ?? "File Uploaded";
+        setFileInputContextString(fileName);
+      } else {
+        setFileInputContextString(`${stringFiles.length} files selected`);
+      }
+    } catch (err) {
+      console.error("Error selecting files:", err);
     }
   }
 
-  // sends the selected files to the backend for processing
   async function send_files() {
-    if (selectedFiles === null) {
-      return; // user cancelled the file selection
-    } else if (selectedFiles.length > 1) {
-      console.log("Implement multiple files selected from send:", selectedFiles);
-    } else if (selectedFiles.length === 1) {
-      const response = await invoke("send_file_call", { filePath: selectedFiles[0] });
-      console.log("One file selected from send:", response);
+    if (!selectedFiles || selectedFiles.length === 0) return;
+
+    if (selectedFiles.length === 1) {
+      try {
+        const response = await invoke("send_file_call", { filePath: selectedFiles[0] });
+        console.log("Sent file:", response);
+        toast.success(`Sent ${selectedFiles[0].split(/[/\\]/).pop()}`);
+      } catch (err) {
+        console.error("Error sending file:", err);
+        toast.error("Failed to send file");
+      }
+    } else {
+      console.log("Multiple file send not implemented yet", selectedFiles);
+      toast("Multiple file send not implemented yet");
     }
   }
 
   async function request_file() {
-    const receive_code = (document.getElementById("request_file_input") as HTMLInputElement).value;
-    console.log("Receive code:", receive_code, "attempting push to Tauri backend.");
-    const response = await invoke("request_file_call", { receiveCode: receive_code });
-
     try {
+      const response = await invoke("request_file_call", { receiveCode });
       const data = JSON.parse(response as string);
-      console.log("File request initiated successfully.");
-      console.log("Request ID:", data.id, "File Name:", data.file_name, "File Size:", data.file_size);
-      let message = `File offer for ${data.file_name} received.\nFile Size: ${data.file_size} bytes\n\nAccept and download?`;
-      const accept = await confirm(message, {title: "File Receive Confirmation"});
-      if (accept) {
-        const result = await accept_file_receive(data.id);
-        alert(result);
-      } else {
-        await deny_file_receive(data.id);
+
+      if (!data || !data.id || !data.file_name) {
+        toast.error("Invalid file offer from backend.");
+        return;
       }
+
+      toast((t) => (
+        <div className="flex flex-col gap-1">
+          <span className="font-bold">File offer received</span>
+          <span>{data.file_name} ({data.file_size ?? "unknown"} bytes)</span>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={async () => {
+                await accept_file_receive(data.id);
+                toast.success(`Accepted ${data.file_name}`);
+                toast.dismiss(t.id);
+              }}
+              className="bg-green-500 text-white rounded px-2 py-1 text-sm"
+            >
+              Accept
+            </button>
+            <button
+              onClick={async () => {
+                await deny_file_receive(data.id);
+                toast.error(`Denied ${data.file_name}`);
+                toast.dismiss(t.id);
+              }}
+              className="bg-red-500 text-white rounded px-2 py-1 text-sm"
+            >
+              Deny
+            </button>
+          </div>
+        </div>
+      ));
     } catch (e) {
-      console.error("Response from Tauri backend:", response);
+      toast.error("Failed to parse backend response.");
+      console.error("Request file error:", e);
     }
   }
 
   async function recieved_files_data() {
     try {
       const response = await invoke("received_files_data");
-      setReceivedFiles(response as Array<any>);
+      if (Array.isArray(response)) setReceivedFiles(response as ReceivedFile[]);
+      else setReceivedFiles([]);
     } catch (error) {
-      console.error("Error getting received files json data:", error);
+      console.error("Error getting received files data:", error);
     }
   }
 
@@ -106,7 +145,9 @@ function App() {
   }, []);
 
   return (
-    <>
+    <div className="app-container">
+      <Toaster position="bottom-right" reverseOrder={false} />
+
       <nav>
         <div className="p-4 flex justify-between items-center shadow-md">
           <h1 className="font-bold flex items-center select-none gap-2">
@@ -116,12 +157,35 @@ function App() {
           <SettingsMenu />
         </div>
       </nav>
-      
+
       <div className="m-4 select-none">
-        <h2 className="text-lg font-bold select-none cursor-default">Sending</h2> {/* functional equivalent in CLI would be 'wormhole send path/to/file.deb' */}
-        <form
-          onSubmit={(e) => { e.preventDefault();}}
-        >
+        <h2 className="text-lg font-bold select-none cursor-default">Sending</h2>
+        <label htmlFor="File" className="block rounded border border-gray-300 p-4 text-gray-900 shadow-sm sm:p-6">
+          <div className="flex items-center justify-center gap-4" onClick={select_files}>
+            <span className="font-medium"> Upload your file(s) </span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"/>
+            </svg>
+          </div>
+        </label>
+
+        {selectedFiles && selectedFiles.length > 0 && (
+          <ul className="space-y-1 rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+            {selectedFiles.map((file, idx) => {
+              const name = typeof file === "string" ? file.split(/[/\\]/).pop() : "Unknown";
+              return (
+                <li key={idx} className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-4 text-gray-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                  </svg>
+                  {name}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <form onSubmit={(e) => { e.preventDefault(); }}>
           <div id="send_form_input_div">
             <button onClick={select_files} className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">{fileInputContextString}</button>
             <button onClick={send_files} type="submit" className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
@@ -130,6 +194,7 @@ function App() {
             </button>
           </div>
         </form>
+
         <div className="m-2">
           <h3 className="text-sm mb-1">Sent File History</h3>
           <ul className="file_display_ul list-none flex flex-row">
@@ -139,14 +204,15 @@ function App() {
       </div>
 
       <div className="m-4">
-        <h2 className="font-bold select-none cursor-default">Receiving</h2> {/* functional equivalent in CLI would be 'wormhole receive 5-funny-earth' */}
+        <h2 className="font-bold select-none cursor-default">Receiving</h2>
         <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex content-center gap-4">
-          <input id="request_file_input" placeholder="ex. 5-funny-earth" className="border-2 rounded-lg p-1 select-none focus:outline-gray-400 border-gray-100 hover:border-gray-200 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors"/>
+          <input value={receiveCode} onChange={(e) => setReceiveCode(e.target.value)} placeholder="ex. 5-funny-earth" className="border-2 rounded-lg p-1 select-none focus:outline-gray-400 border-gray-100 hover:border-gray-200 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors"/>
           <button type="submit" className="font-bold rounded-lg flex items-center p-0.5 drop-shadow-md border-2 border-gray-100 hover:border-gray-200 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-gray-300 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 16l-5-5l1.4-1.45l2.6 2.6V4h2v8.15l2.6-2.6L17 11zm-6 4q-.825 0-1.412-.587T4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413T18 20z"/></svg>            
             <span className="cursor-default select-none">Receive</span>
           </button>
         </form>
+
         <div className="py-2">
           <p className="text-sm text-gray-700 cursor-default select-none">Received File History</p>
           <div className="grid grid-cols-3 select-none px-2 rounded bg-gray-50 hover:bg-gray-200 transition-colors">
@@ -156,7 +222,7 @@ function App() {
           </div>
           <div>
             {(showAll ? receivedFiles.slice().reverse() : receivedFiles.slice(-5).reverse()).map((file, idx) => (
-              <ReceiveFileCard key={idx} connection_type={file.connection_type} download_time={file.download_time} download_url={file.download_url} file_extension={file.file_extension} file_name={file.file_name} file_size={file.file_size} peer_address={file.peer_address}/>
+              <ReceiveFileCard key={idx} {...file}/>
             ))}
             {receivedFiles.length > 5 && (
               <div className="flex justify-center">
@@ -171,7 +237,7 @@ function App() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -42,16 +42,16 @@ export default function SettingsMenu() {
       {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-gray-500/70 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg w-96 p-6">
+          <div className="bg-white rounded-xl shadow-lg w-96 p-2">
             <div className="justify-between items-center flex mb-2">
-              <p className="font-bold">Settings</p>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" onClick={() => setIsOpen(false)} className="cursor-pointer p-0.5 fill-black hover:fill-gray-500 active:fill-red-500 transition-colors">
+              <p className="font-bold select-none">Settings</p>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" onClick={() => setIsOpen(false)} className="cursor-pointer p-0.5 fill-black hover:fill-red-500 active:fill-red-700 transition-colors">
                 <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
               </svg>
             </div>
 
             {/* Download directory field */}
-            <div className="p-2 mb-2 rounded-lg cursor-pointer hover:bg-gray-200/70 group" onClick={(e) => {
+            <div className="p-2 mb-2 rounded-lg cursor-pointer hover:bg-gray-200/70 group" onClick={() => {
                 const selection = window.getSelection?.();
                 if (!selection || selection.toString() === "") {
                   choose_download_directory();
