@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 type Props = {
     connection_type: any;
@@ -29,8 +30,8 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
                 <div className="text-sm">.{file_extension}</div>
                 <div className="text-sm">{format_file_size(file_size)}</div>
             </div>
-            {isOpen && (
-                <div className="fixed inset-0 bg-gray-500/10 flex items-center justify-center z-50">
+            {isOpen && createPortal(
+                <div className="fixed inset-0 bg-gray-500/50 flex items-center justify-center z-50">
                     <div className="bg-gray-100 rounded-lg shadow-lg w-1/2 py-1 px-2 overflow-x-auto">
                         {/* Modal Header */}
                         <div className="items-center">
@@ -87,10 +88,11 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
-    )
-}
+    );
+};
 
 export default ReceiveFileCard;
