@@ -159,8 +159,8 @@ function App() {
       <div className="m-4 select-none">
         <h2 className="select-none cursor-default">Sending</h2>
         {!selectedFiles && (
-          <label htmlFor="File" className="block rounded border border-gray-300 text-gray-900 shadow-sm sm:p-6">
-          <div className="flex items-center justify-center gap-4" onClick={select_files}>
+          <label htmlFor="File" className="block rounded cursor-pointer bg-white border border-gray-300 text-gray-900 shadow-sm sm:p-6" onClick={select_files}>
+          <div className="flex items-center justify-center gap-4">
             <span className="font-medium"> Upload your file(s) </span>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"/>
@@ -170,7 +170,7 @@ function App() {
         )}
 
         {selectedFiles && selectedFiles.length > 0 && (
-          <div className="relative rounded border border-gray-300">
+          <div className="relative rounded bg-white border border-gray-300">
             <ul className="flex flex-row p-2 gap-2 text-sm text-gray-700 my-2 overflow-x-auto">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" onClick={() => setSelectedFiles(null)} className="absolute right-0.5 top-0.5 cursor-pointer p-0.5 fill-black hover:fill-red-500 active:fill-red-700 transition-colors">
                 <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
@@ -178,7 +178,7 @@ function App() {
               {selectedFiles.map((file, idx) => {
                 const name = typeof file === "string" ? file.split(/[/\\]/).pop() : "Unknown";
                 return (
-                  <li key={idx} className="relative flex items-center gap-2 bg-gray-200/50 rounded px-2 py-1 min-w-60 max-w-60">
+                  <li key={idx} className="relative flex items-center gap-2 bg-gray-100 rounded px-2 py-1 min-w-60 max-w-60">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-4 text-gray-500">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                     </svg>
@@ -198,25 +198,25 @@ function App() {
                 );
               })}
             </ul>
-            <button onClick={send_files} type="submit" className="w-full font-bold rounded-b flex items-center justify-center p-1 drop-shadow-md border-t border-gray-200 hover:border-gray-300 active:border-gray-400 bg-gray-50 hover:bg-gray-100 active:bg-blue-200 transition-colors">
-              <span className="cursor-default">Send</span>
+            <button onClick={send_files} type="submit" className="w-full font-bold rounded-b flex items-center justify-center p-2 border-t cursor-pointer border-gray-200 hover:border-gray-300 active:border-gray-400 hover:bg-gray-100 active:bg-blue-200 transition-colors">
+              Send
             </button>
           </div>
         )}
 
-        <div className="m-2">
+        <div className="my-2">
           <h3 className="text-sm mb-1">Sent File History</h3>
           <ul className="file_display_ul list-none flex flex-row">
-            <li>IMG_1992.png</li>
+            <li>not-implemented!</li>
           </ul>
         </div>
       </div>
 
       <div className="m-4 mt-10">
         <h2 className="select-none cursor-default">Receiving</h2>
-        <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex w-full border border-gray-300 justify-between rounded">
+        <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex w-full bg-white border border-gray-300 justify-between rounded">
           <input value={receiveCode} onChange={(e) => setReceiveCode(e.target.value)} placeholder="ex. 5-funny-earth" className="p-2 w-full select-none focus:outline-gray-700 hover:bg-gray-100 active:bg-gray-200 transition-colors"/>
-          <button type="submit" className="font-bold flex items-center justify-center px-2 w-30 border-l border-gray-200 hover:border-gray-300 hover:bg-gray-100 active:bg-blue-200 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
+          <button type="submit" className="font-bold flex items-center justify-center px-2 w-30 border-l cursor-pointer border-gray-200 hover:border-gray-300 hover:bg-gray-100 active:bg-blue-200 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
             Receive
           </button>
         </form>
