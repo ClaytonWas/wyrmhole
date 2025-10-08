@@ -115,7 +115,7 @@ function App() {
             </button>
           </div>
         </div>
-      ), { duration: Infinity, icon: '📥' });
+      ), { duration: Infinity, icon: '📩' });
     } catch (e) {
       toast.error("Failed to parse backend response.");
       console.error("Request file error:", e);
@@ -158,7 +158,7 @@ function App() {
                 navigator.clipboard.writeText(payload.code ?? "");
               }}
             >
-              <span>📮 Connection code: {payload.code}</span>
+              <span>📨 Connection code: {payload.code}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
