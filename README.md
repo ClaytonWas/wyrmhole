@@ -5,7 +5,8 @@ Built with Tauri + React + Typescript
 
 ## Current Build
 
-<img width="712" height="910" alt="Image" src="https://github.com/user-attachments/assets/0dcb3339-31ac-49f7-9130-d7f8ad7830c6" />
+<img width="710" height="857" alt="image" style="width: 33%; height: auto;" src="https://github.com/user-attachments/assets/26eeb998-2b81-441e-b973-2d473d11f6e4" />
+
 
 <br/>
 <br/>
