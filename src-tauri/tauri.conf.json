@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "a-magic-wormhole-wrapper",
+  "productName": "wyrmhole",
   "version": "0.1.0",
-  "identifier": "com.a-magic-wormhole-wrapper.app",
+  "identifier": "com.wyrmhole.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "a-magic-wormhole-wrapper",
-        "width": 800,
-        "height": 600
+        "title": "wyrmhole",
+        "width": 480,
+        "height": 580
       }
     ],
     "security": {

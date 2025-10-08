@@ -3,8 +3,7 @@ use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, Wormh
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, net::SocketAddr, path::PathBuf, path::Path};
 use tokio::fs::File;
-use tokio::io::BufReader;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Emitter};
 use tokio::sync::Mutex;
 use tokio_util::compat::TokioAsyncReadCompatExt;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
@@ -21,24 +20,30 @@ static REQUESTS_HASHMAP: Lazy<Mutex<HashMap<String, OpenRequests>>> =
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
-async fn send_file_call(file_path: &str) -> Result<String, String> {
+async fn send_file_call(app_handle: AppHandle, file_path: &str) -> Result<String, String> {
     let config = transfer::APP_CONFIG.clone();
 
+    // Create the mailbox connection
     let mailbox_connection = match MailboxConnection::create(config, 2).await {
         Ok(conn) => {
-            println!("{}", conn.code());
-            println!("Successfully created a mailbox.");
+            let code = conn.code();
+            let _ = app_handle.emit("connection-code", serde_json::json!({
+                "status": "success",
+                "code": code.to_string()
+            }));
             conn
-        }
+        },
         Err(e) => {
-            let msg = format!("Failed to connect: {}", e);
-            println!("{}", msg);
-            return Err(msg);
+            let _ = app_handle.emit("connection-code", serde_json::json!({
+                "status": "error",
+                "message": format!("Failed to connect: {}", e)
+            }));
+            return Err(format!("Failed to connect: {}", e));
         }
     };
 
     // Constructing default send_file(...) variables
-    // TODO: (Temporary, should allow the use to change these themselves in a later build.)
+    // TODO: (Temporary, should allow the user to change these themselves in a later build.)
     let relay_hint = transit::RelayHint::from_urls(
         None, // no friendly name
         [transit::DEFAULT_RELAY_SERVER.parse().unwrap()],
@@ -47,11 +52,14 @@ async fn send_file_call(file_path: &str) -> Result<String, String> {
     let relay_hints = vec![relay_hint];
     let abilities = transit::Abilities::ALL;
     let cancel_call = futures::future::pending::<()>();
+    
+    // Connect the wormhole
     let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
         let msg = format!("Failed to connect to Wormhole: {}", e);
         println!("{}", msg);
         msg
     })?;
+
     let path = Path::new(file_path);
     let file_name = path
         .file_name()
@@ -69,15 +77,21 @@ async fn send_file_call(file_path: &str) -> Result<String, String> {
     let file_size = metadata.len();
     let mut compat_file = file.compat();
 
+    // Send the file, optionally emitting progress updates
     transfer::send_file(
         wormhole,
         relay_hints,
         &mut compat_file,
-        file_name,
+        file_name.clone(),
         file_size,
         abilities,
         |_info| println!("Transit established!"),
-        |sent, total| println!("Progress: {}/{}", sent, total),
+        // Progress handler
+        |sent, total| {
+            println!("Progress: {}/{}", sent, total);
+            // You can optionally emit progress to frontend like this:
+            // let _ = app_handle.emit("file-progress", serde_json::json!({ "sent": sent, "total": total }));
+        },
         cancel_call,
     )
     .await
@@ -88,6 +102,7 @@ async fn send_file_call(file_path: &str) -> Result<String, String> {
         file_path, file_size
     ))
 }
+
 
 
 #[tauri::command]
@@ -189,7 +204,7 @@ async fn receiving_file_deny(id: String) -> Result<String, String> {
 // Function that takes in a wormhole code and attempts to build a ReceiveRequest and store it for later acceptance or denial.
 #[tauri::command]
 async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<String, String> {
-    let mut requests = REQUESTS_HASHMAP.lock().await;
+    let mut requests: tokio::sync::MutexGuard<'_, HashMap<String, OpenRequests>> = REQUESTS_HASHMAP.lock().await;
     if let Some(entry) = requests.remove(&id) {
         println!("receiving_file_accept closing request with id: {}", id);
         println!("File name: {}", entry.request.file_name());

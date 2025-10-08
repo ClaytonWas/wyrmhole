@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { confirm, open } from '@tauri-apps/plugin-dialog';
+import { listen } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
@@ -133,6 +134,7 @@ function App() {
 
   function remove_file_at_index(idx: number) {
     setSelectedFiles(prev => {
+      if (!prev) return null;
       const next = prev.filter((_, i) => i !== idx);
       return next.length > 0 ? next : null;
     });
@@ -140,6 +142,46 @@ function App() {
 
   useEffect(() => {
     recieved_files_data();
+  }, []);
+
+  useEffect(() => {
+    console.log("Listening for connection-code event");
+
+    const unlistenPromise = listen("connection-code", (event) => {
+      const payload = event.payload as { status: string, code?: string, message?: string };
+      if (payload.status === "success") {
+        toast(
+          (t) => (
+            <div
+              className="flex items-center justify-between gap-2"
+              onClick={() => {
+                navigator.clipboard.writeText(payload.code ?? "");
+              }}
+            >
+              <span>📮 Connection code: {payload.code}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast.dismiss(t.id);
+                }}
+                className="cursor-pointer px-4 py-2 font-bold text-gray-900 hover:text-red-500 active:text-red-700"
+              >
+                ✕
+              </button> {/* TODO: Add functionality to close the connections actual mailbox on the computer. */}
+            </div>
+          ),
+          { duration: Infinity }
+      );
+    } else {
+        toast.error(payload.message ?? "Unknown error in mailbox creation");
+      }
+    });
+
+
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
   }, []);
 
   return (
@@ -160,7 +202,7 @@ function App() {
         <h2 className="select-none cursor-default">Sending</h2>
         {!selectedFiles && (
           <label htmlFor="File" className="block rounded cursor-pointer bg-white border border-gray-300 text-gray-900 shadow-sm sm:p-6" onClick={select_files}>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 h-20">
             <span className="font-medium"> Upload your file(s) </span>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"/>
@@ -171,27 +213,70 @@ function App() {
 
         {selectedFiles && selectedFiles.length > 0 && (
           <div className="relative rounded bg-white border border-gray-300">
-            <ul className="flex flex-row p-2 gap-2 text-sm text-gray-700 my-2 overflow-x-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" onClick={() => setSelectedFiles(null)} className="absolute right-0.5 top-0.5 cursor-pointer p-0.5 fill-black hover:fill-red-500 active:fill-red-700 transition-colors">
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-              </svg>
-              {selectedFiles.map((file, idx) => {
-                const name = typeof file === "string" ? file.split(/[/\\]/).pop() : "Unknown";
-                return (
-                  <li key={idx} className="relative flex items-center gap-2 bg-gray-100 rounded px-2 py-1 min-w-60 max-w-60">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-4 text-gray-500">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                    </svg>
-                    <p className="max-w-xs truncate">
-                      {name}
-                    </p>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" onClick={() => remove_file_at_index(idx)} className="absolute right-0 top-0 cursor-pointer fill-black hover:fill-red-500 active:fill-red-700 transition-colors" style={{ width: '25px', height: '25px', padding: 2 }}>
-                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                    </svg>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="relative w-full max-h-20 overflow-y-auto"
+              style={{
+                minHeight: "3.5rem",
+                // Always reserve space for scrollbar (width: 8px typical)
+                scrollbarWidth: "thin",
+                // For Chrome/Edge: always show scrollbar gutter
+                scrollbarGutter: "stable",
+              }}
+            >
+              <ul
+                className="flex flex-col p-2 gap-2 text-sm text-gray-700 my-2"
+                style={{
+                  minHeight: "3.5rem",
+                  paddingRight: "8px",
+                }}
+              >
+                {selectedFiles && selectedFiles.length > 1 && (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    onClick={() => setSelectedFiles(null)}
+                    className="absolute right-0.5 top-0.5 cursor-pointer p-0.5 fill-black hover:fill-red-500 active:fill-red-700 transition-colors"
+                    style={{ width: "32px", height: "32px", padding: 2 }}
+                  >
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                  </svg>
+                )}
+                {selectedFiles.map((file, idx) => {
+                  const name =
+                    typeof file === "string" ? file.split(/[/\\]/).pop() : "Unknown";
+                  return (
+                    <li
+                      key={idx}
+                      className="relative flex gap-2 bg-gray-100 rounded px-2 py-1 max-w-[calc(100%-1rem)] items-center"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="size-4 text-gray-500"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                      <p className="max-w-xs truncate">{name}</p>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 16 16"
+                        onClick={() => remove_file_at_index(idx)}
+                        className="absolute right-0 top-0 cursor-pointer fill-black hover:fill-red-500 active:fill-red-700 transition-colors"
+                        style={{ width: "25px", height: "25px", padding: 2 }}
+                      >
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                      </svg>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
             <button onClick={send_files} type="submit" className="w-full font-bold rounded-b flex items-center justify-center p-2 border-t cursor-pointer border-gray-200 hover:border-gray-300 active:border-gray-400 hover:bg-gray-100 active:bg-blue-200 transition-colors">
               Send
             </button>

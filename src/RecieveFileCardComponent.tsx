@@ -25,7 +25,7 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
     
     return (
         <>
-            <div onClick={() => setIsOpen(true)} className="grid grid-cols-3 items-center select-none rounded px-2 cursor-pointer text-gray-600 hover:bg-gray-100 hover:text-gray-950 active:bg-blue-200 transition-colors">
+            <div onClick={() => setIsOpen(true)} className="grid grid-cols-3 items-center select-none px-2 cursor-pointer text-gray-600 hover:bg-gray-100 hover:text-gray-950 active:bg-blue-200 transition-colors">
                 <div className="">{file_name}</div>
                 <div className="text-sm">.{file_extension}</div>
                 <div className="text-sm">{format_file_size(file_size)}</div>

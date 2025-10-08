@@ -48,7 +48,9 @@ svg {
   animation-play-state: running;
 }
 
-
+.scrollbar-gutter-stable {
+  scrollbar-gutter: stable both-edges;
+}
 /*
 @media (prefers-color-scheme: dark) {
   :root {
