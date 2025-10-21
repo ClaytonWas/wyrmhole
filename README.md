@@ -4,17 +4,21 @@ A lightweight GUI for [magic-wormhole.rs](https://github.com/magic-wormhole/magi
 Built with Tauri + React + Typescript
 
 ## Current Build
+**0.1.0**
 
-<img width="712" height="910" alt="Image" src="https://github.com/user-attachments/assets/0dcb3339-31ac-49f7-9130-d7f8ad7830c6" />
+![Image](https://github.com/user-attachments/assets/82acb92d-b679-47d5-b116-e5f4c47e6645)
 
 <br/>
 <br/>
 
-I'm currently working on simplifying this UI as I get closer to the 1.0 release! 
-
-The current goal is to build out the remaining UI to get an ideal width/height of the app to design more user friendly UI.
-
-Looking to push most of the interactable features and error notifications into toast elements for this reason. 
+**0.1.1 Roadmap:**
+- [ ] Switch all console logging systems over to react-hot-toast.
+- [ ] Get the toast for sending files to close the backend mailbox connection when the x button is clicked.
+- [ ] Display codes for file send operations through react-hot-toast.
+- [ ] Continuing work on sending files methods. Get single file sends working on the backend in the files_json.rs file. Then multiple. Then dynamically populating sends?
+- [ ] Reactor the code so functions are called in there own module and just have secure passthroughs that are called in the lib.rs.
+- [ ] Add checks and bindings for transfers that are cancelled or fail and add them to the received_files.json with what data can be taken depending on the stage of transfer. 
+- [ ] Create a separate type of received card component that has grid entries for its progress bar and download status. Should get deleted when the download completes, as they will be written into the .json and loaded dynamically that way.
 
 <br/>
 

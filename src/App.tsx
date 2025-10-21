@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { confirm, open } from '@tauri-apps/plugin-dialog';
+import { open } from '@tauri-apps/plugin-dialog';
 import { listen } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
@@ -99,7 +99,7 @@ function App() {
                 toast.success(`Accepted ${data.file_name}`);
                 toast.dismiss(t.id);
               }}
-              className="bg-green-500 text-white rounded px-2 py-1 text-sm"
+              className="bg-green-500 text-white cursor-pointer rounded px-2 py-1 text-sm"
             >
               Accept
             </button>
@@ -109,7 +109,7 @@ function App() {
                 toast.error(`Denied ${data.file_name}`);
                 toast.dismiss(t.id);
               }}
-              className="bg-red-500 text-white rounded px-2 py-1 text-sm"
+              className="bg-red-500 text-white cursor-pointer rounded px-2 py-1 text-sm"
             >
               Deny
             </button>
@@ -282,16 +282,9 @@ function App() {
             </button>
           </div>
         )}
-
-        <div className="my-2">
-          <h3 className="text-sm mb-1">Sent File History</h3>
-          <ul className="file_display_ul list-none flex flex-row">
-            <li>not-implemented!</li>
-          </ul>
-        </div>
       </div>
 
-      <div className="m-4 mt-10">
+      <div className="m-4">
         <h2 className="select-none cursor-default">Receiving</h2>
         <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex w-full bg-white border border-gray-300 justify-between rounded">
           <input value={receiveCode} onChange={(e) => setReceiveCode(e.target.value)} placeholder="ex. 5-funny-earth" className="p-2 w-full select-none focus:outline-gray-700 hover:bg-gray-100 active:bg-gray-200 transition-colors"/>
