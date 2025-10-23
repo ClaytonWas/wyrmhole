@@ -1,4 +1,4 @@
-# A Magic Wormhole Wrapper
+# Wyrmhole
 A lightweight GUI for [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/).
 
 Built with Tauri + React + Typescript
@@ -14,8 +14,9 @@ Built with Tauri + React + Typescript
 **0.1.1 Roadmap:**
 - [ ] Switch all console logging systems over to react-hot-toast.
 - [ ] Get the toast for sending files to close the backend mailbox connection when the x button is clicked.
-- [ ] Display codes for file send operations through react-hot-toast.
-- [ ] Continuing work on sending files methods. Get single file sends working on the backend in the files_json.rs file. Then multiple. Then dynamically populating sends?
+- [x] Display codes for file send operations through react-hot-toast.
+- [x] Continuing work on sending files methods. Get single file sends working on the backend in the files_json.rs file.
+- [ ] Multiple file sends; including non-tarball?
 - [ ] Reactor the code so functions are called in there own module and just have secure passthroughs that are called in the lib.rs.
 - [ ] Add checks and bindings for transfers that are cancelled or fail and add them to the received_files.json with what data can be taken depending on the stage of transfer. 
 - [ ] Create a separate type of received card component that has grid entries for its progress bar and download status. Should get deleted when the download completes, as they will be written into the .json and loaded dynamically that way.
