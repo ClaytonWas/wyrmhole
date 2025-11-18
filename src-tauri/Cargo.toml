@@ -30,3 +30,5 @@ futures = "0.3.31"
 tokio-util = { version = "0.7.16", features = ["compat"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 tauri-plugin-dialog = "2"
+tar = "0.4"
+flate2 = "1.0"

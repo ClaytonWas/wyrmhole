@@ -122,17 +122,19 @@ function App() {
   async function send_files() {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
+    const sendId = crypto.randomUUID();
+    let displayName: string;
+    
     if (selectedFiles.length === 1) {
       const filePath = selectedFiles[0];
-      const fileName = filePath.split(/[/\\]/).pop() || "Unknown file";
-      const sendId = crypto.randomUUID();
+      displayName = filePath.split(/[/\\]/).pop() || "Unknown file";
       
       // Initialize send progress
       setSendProgress(prev => {
         const next = new Map(prev);
         next.set(sendId, {
           id: sendId,
-          file_name: fileName,
+          file_name: displayName,
           sent: 0,
           total: 0,
           percentage: 0
@@ -146,7 +148,7 @@ function App() {
       } catch (err) {
         console.error("Error sending file:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
-        toast.error(`Failed to send ${fileName}`, { duration: 5000 });
+        toast.error(`Failed to send ${displayName}`, { duration: 5000 });
         
         // Update send progress with error state
         setSendProgress(prev => {
@@ -160,7 +162,7 @@ function App() {
           } else {
             next.set(sendId, {
               id: sendId,
-              file_name: fileName,
+              file_name: displayName,
               sent: 0,
               total: 0,
               percentage: 0,
@@ -171,8 +173,55 @@ function App() {
         });
       }
     } else {
-      console.log("Multiple file send not implemented yet", selectedFiles);
-      toast("Multiple file send not implemented yet");
+      // Multiple files - create tarball and send
+      displayName = `${selectedFiles.length}_files.tar.gz`;
+      
+      // Initialize send progress
+      setSendProgress(prev => {
+        const next = new Map(prev);
+        next.set(sendId, {
+          id: sendId,
+          file_name: displayName,
+          sent: 0,
+          total: 0,
+          percentage: 0
+        });
+        return next;
+      });
+
+      try {
+        const response = await invoke("send_multiple_files_call", { 
+          filePaths: selectedFiles, 
+          sendId 
+        });
+        console.log("Sent files:", response);
+      } catch (err) {
+        console.error("Error sending files:", err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        toast.error(`Failed to send ${selectedFiles.length} files`, { duration: 5000 });
+        
+        // Update send progress with error state
+        setSendProgress(prev => {
+          const next = new Map(prev);
+          const existing = next.get(sendId);
+          if (existing) {
+            next.set(sendId, {
+              ...existing,
+              error: errorMessage
+            });
+          } else {
+            next.set(sendId, {
+              id: sendId,
+              file_name: displayName,
+              sent: 0,
+              total: 0,
+              percentage: 0,
+              error: errorMessage
+            });
+          }
+          return next;
+        });
+      }
     }
   }
 

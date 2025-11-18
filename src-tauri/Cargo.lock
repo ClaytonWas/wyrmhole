@@ -7,11 +7,13 @@ name = "a-magic-wormhole-wrapper"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "flate2",
  "futures",
  "magic-wormhole",
  "once_cell",
  "serde",
  "serde_json",
+ "tar",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
