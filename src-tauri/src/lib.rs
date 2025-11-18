@@ -18,27 +18,47 @@ struct OpenRequests {
 static REQUESTS_HASHMAP: Lazy<Mutex<HashMap<String, OpenRequests>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
+struct ActiveSend {
+    code: String,
+}
+static ACTIVE_SENDS: Lazy<Mutex<HashMap<String, ActiveSend>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
-async fn send_file_call(app_handle: AppHandle, file_path: &str) -> Result<String, String> {
+async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String) -> Result<String, String> {
     let config = transfer::APP_CONFIG.clone();
 
     // Create the mailbox connection
     let mailbox_connection = match MailboxConnection::create(config, 2).await {
         Ok(conn) => {
             let code = conn.code();
+            let code_string = code.to_string();
+            
+            // Store the connection code for this send
+            ACTIVE_SENDS.lock().await.insert(send_id.clone(), ActiveSend {
+                code: code_string.clone(),
+            });
+            
             let _ = app_handle.emit("connection-code", serde_json::json!({
                 "status": "success",
-                "code": code.to_string()
+                "code": code_string.clone(),
+                "send_id": send_id
             }));
             conn
         },
         Err(e) => {
+            let error_msg = format!("Failed to connect: {}", e);
             let _ = app_handle.emit("connection-code", serde_json::json!({
                 "status": "error",
-                "message": format!("Failed to connect: {}", e)
+                "message": error_msg.clone()
             }));
-            return Err(format!("Failed to connect: {}", e));
+            let _ = app_handle.emit("send-error", serde_json::json!({
+                "id": send_id,
+                "file_name": Path::new(file_path).file_name().and_then(|os| os.to_str()).unwrap_or("unknown"),
+                "error": error_msg.clone()
+            }));
+            return Err(error_msg);
         }
     };
 
@@ -53,29 +73,66 @@ async fn send_file_call(app_handle: AppHandle, file_path: &str) -> Result<String
     let abilities = transit::Abilities::ALL;
     let cancel_call = futures::future::pending::<()>();
     
-    // Connect the wormhole
-    let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
-        let msg = format!("Failed to connect to Wormhole: {}", e);
-        println!("{}", msg);
-        msg
-    })?;
-
     let path = Path::new(file_path);
     let file_name = path
         .file_name()
         .and_then(|os| os.to_str())
         .unwrap_or("unknown")
         .to_string();
+    
+    // Connect the wormhole
+    let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
+        let msg = format!("Failed to connect to Wormhole: {}", e);
+        println!("{}", msg);
+        let _ = app_handle.emit("send-error", serde_json::json!({
+            "id": send_id.clone(),
+            "file_name": file_name.clone(),
+            "error": msg.clone()
+        }));
+        msg
+    })?;
 
     let file = File::open(path)
         .await
-        .map_err(|e| format!("Failed to open file: {}", e))?;
+        .map_err(|e| {
+            let error_msg = format!("Failed to open file: {}", e);
+            let _ = app_handle.emit("send-error", serde_json::json!({
+                "id": send_id.clone(),
+                "file_name": file_name.clone(),
+                "error": error_msg.clone()
+            }));
+            error_msg
+        })?;
     let metadata = file
         .metadata()
         .await
-        .map_err(|e| format!("Failed to get metadata: {}", e))?;
+        .map_err(|e| {
+            let error_msg = format!("Failed to get metadata: {}", e);
+            let _ = app_handle.emit("send-error", serde_json::json!({
+                "id": send_id.clone(),
+                "file_name": file_name.clone(),
+                "error": error_msg.clone()
+            }));
+            error_msg
+        })?;
     let file_size = metadata.len();
     let mut compat_file = file.compat();
+
+    // Clone values needed for progress handler
+    let progress_id = send_id.clone();
+    let progress_file_name = file_name.clone();
+    let progress_app_handle = app_handle.clone();
+    let error_app_handle = app_handle.clone();
+    let error_id = send_id.clone();
+    let error_file_name = file_name.clone();
+    
+    // Get the connection code before the closure (since closure can't be async)
+    let send_code = {
+        let active_sends = ACTIVE_SENDS.lock().await;
+        active_sends.get(&send_id)
+            .map(|s| s.code.clone())
+            .unwrap_or_default()
+    };
 
     // Send the file, optionally emitting progress updates
     transfer::send_file(
@@ -87,20 +144,58 @@ async fn send_file_call(app_handle: AppHandle, file_path: &str) -> Result<String
         abilities,
         |_info| println!("Transit established!"),
         // Progress handler
-        |sent, total| {
+        move |sent, total| {
             println!("Progress: {}/{}", sent, total);
-            // You can optionally emit progress to frontend like this:
-            // let _ = app_handle.emit("file-progress", serde_json::json!({ "sent": sent, "total": total }));
+            let percentage = if total > 0 {
+                (sent as f64 / total as f64 * 100.0) as u64
+            } else {
+                0
+            };
+            
+            let _ = progress_app_handle.emit("send-progress", serde_json::json!({
+                "id": progress_id,
+                "file_name": progress_file_name,
+                "sent": sent,
+                "total": total,
+                "percentage": percentage,
+                "code": send_code.clone()
+            }));
         },
         cancel_call,
     )
     .await
-    .map_err(|e| format!("Failed to send file: {}", e))?;
+    .map_err(|e| {
+        let error_message = format!("Failed to send file: {}", e);
+        let _ = error_app_handle.emit("send-error", serde_json::json!({
+            "id": error_id,
+            "file_name": error_file_name,
+            "error": error_message.clone()
+        }));
+        error_message
+    })?;
 
+    // Remove from active sends when complete
+    ACTIVE_SENDS.lock().await.remove(&send_id);
+    
     Ok(format!(
         "Successfully sent file '{}' ({} bytes)",
         file_path, file_size
     ))
+}
+
+#[tauri::command]
+async fn cancel_send(send_id: String) -> Result<String, String> {
+    // Remove from active sends
+    let code = ACTIVE_SENDS.lock().await.remove(&send_id)
+        .map(|s| s.code)
+        .unwrap_or_default();
+    
+    if code.is_empty() {
+        return Err("No active send found for this ID".to_string());
+    }
+    
+    println!("Cancelled send with id: {} (code: {})", send_id, code);
+    Ok(format!("Send cancelled (code: {})", code))
 }
 
 
@@ -202,6 +297,43 @@ async fn receiving_file_deny(id: String) -> Result<String, String> {
 }
 
 // Function that takes in a wormhole code and attempts to build a ReceiveRequest and store it for later acceptance or denial.
+/// Helper function to find a unique filename by appending a number if the file already exists
+fn find_unique_file_path(download_dir: &Path, file_name_with_extension: &str) -> PathBuf {
+    let base_path = download_dir.join(file_name_with_extension);
+    
+    // If the file doesn't exist, return the original path
+    if !base_path.exists() {
+        return base_path;
+    }
+    
+    // Split filename and extension
+    let (file_name, extension) = file_name_with_extension
+        .rsplit_once('.')
+        .map(|(name, ext)| (name.to_string(), format!(".{}", ext)))
+        .unwrap_or_else(|| (file_name_with_extension.to_string(), String::new()));
+    
+    // Try incrementing numbers until we find a unique filename
+    let mut counter = 1;
+    loop {
+        let new_file_name = format!("{}({}){}", file_name, counter, extension);
+        let new_path = download_dir.join(&new_file_name);
+        
+        if !new_path.exists() {
+            return new_path;
+        }
+        
+        counter += 1;
+        
+        // Safety check to prevent infinite loops (unlikely but good practice)
+        if counter > 10000 {
+            // Fall back to adding a timestamp
+            let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+            let fallback_name = format!("{}_{}{}", file_name, timestamp, extension);
+            return download_dir.join(fallback_name);
+        }
+    }
+}
+
 #[tauri::command]
 async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<String, String> {
     let mut requests: tokio::sync::MutexGuard<'_, HashMap<String, OpenRequests>> = REQUESTS_HASHMAP.lock().await;
@@ -238,10 +370,13 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         drop(app_settings_lock); // Drop lock so we can get the app_handle again later.
         let file_name_with_extension = entry.request.file_name();
         
-        // Clone values needed for progress handler
+        // Clone values needed for progress handler and error handling
         let progress_id = id.clone();
         let progress_file_name = file_name_with_extension.clone();
         let progress_app_handle = app_handle.clone();
+        let error_app_handle = app_handle.clone();
+        let error_id = id.clone();
+        let error_file_name = file_name_with_extension.clone();
         
         let progress_handler = move |transferred: u64, total: u64| {
             println!("Progress: {}/{}", transferred, total);
@@ -258,29 +393,52 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
                 "percentage": percentage
             }));
         };
-        let file_name = file_name_with_extension
-            .rsplit_once('.')
-            .map(|(before, _)| before.to_string())
-            .unwrap_or_default();
-        let file_extension = file_name_with_extension
-            .rsplit_once('.')
-            .map(|(_, after)| after.to_string())
-            .unwrap_or_default();
         let file_size = entry.request.file_size();
-        let file_path = download_dir.join(file_name_with_extension.clone());
 
         // Check and create the download directory if it doesn't exist
         if let Err(e) = tokio::fs::create_dir_all(&download_dir).await {
-            return Err(format!("Failed to create download directory: {}", e));
+            let error_msg = format!("Failed to create download directory: {}", e);
+            let _ = error_app_handle.emit("download-error", serde_json::json!({
+                "id": error_id,
+                "file_name": error_file_name,
+                "error": error_msg
+            }));
+            return Err(error_msg);
         }
+
+        // Find a unique file path (adds number incrementer if file already exists)
+        let file_path = find_unique_file_path(&download_dir, &file_name_with_extension);
+        
+        // Get the final filename (may have been modified with incrementer)
+        let final_file_name_with_extension = file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(&file_name_with_extension)
+            .to_string();
+        
+        // Parse the final filename for JSON metadata
+        let file_name = final_file_name_with_extension
+            .rsplit_once('.')
+            .map(|(before, _)| before.to_string())
+            .unwrap_or_else(|| final_file_name_with_extension.clone());
+        let file_extension = final_file_name_with_extension
+            .rsplit_once('.')
+            .map(|(_, after)| after.to_string())
+            .unwrap_or_default();
 
         // Create the file at the full, correct path
         let file = tokio::fs::File::create(&file_path).await.map_err(|e| {
-            format!(
+            let error_msg = format!(
                 "Failed to create file at path: {}: {}",
                 file_path.display(),
                 e
-            )
+            );
+            let _ = error_app_handle.emit("download-error", serde_json::json!({
+                "id": error_id,
+                "file_name": error_file_name,
+                "error": error_msg
+            }));
+            error_msg
         })?;
 
         let mut compat_file = file.compat_write();
@@ -293,6 +451,11 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
             .map_err(|e| {
                 let error_message = format!("Error accepting file: {}", e);
                 println!("{}", error_message);
+                let _ = error_app_handle.emit("download-error", serde_json::json!({
+                    "id": error_id,
+                    "file_name": error_file_name,
+                    "error": error_message
+                }));
                 error_message
             })
             .and_then(|_| {
@@ -381,6 +544,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             send_file_call,
+            cancel_send,
             request_file_call,
             receiving_file_accept,
             receiving_file_deny,

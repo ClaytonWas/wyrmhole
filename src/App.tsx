@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 import ReceiveFileCard from "./RecieveFileCardComponent";
+import ActiveDownloadCard from "./ActiveDownloadCard";
+import ActiveSendCard from "./ActiveSendCard";
 import SettingsMenu from "./SettingsMenu";
 import "./App.css";
 
@@ -24,6 +26,17 @@ interface DownloadProgress {
   transferred: number;
   total: number;
   percentage: number;
+  error?: string;
+}
+
+interface SendProgress {
+  id: string;
+  file_name: string;
+  sent: number;
+  total: number;
+  percentage: number;
+  error?: string;
+  code?: string;
 }
 
 function App() {
@@ -31,6 +44,7 @@ function App() {
   const [selectedFiles, setSelectedFiles] = useState<string[] | null>(null);
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(new Map());
+  const [sendProgress, setSendProgress] = useState<Map<string, SendProgress>>(new Map());
 
   async function deny_file_receive(id: string) {
     try {
@@ -43,34 +57,45 @@ function App() {
 
   async function accept_file_receive(id: string, file_name?: string) {
     try {
-      // Show progress toast
-      toast.loading(
-        (t) => (
-          <div className="flex flex-col gap-1">
-            <span className="font-bold">Downloading...</span>
-            <span>{file_name || "File"}</span>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                style={{ width: "0%" }}
-              ></div>
-            </div>
-            <span className="text-sm text-gray-600">0%</span>
-          </div>
-        ),
-        { duration: 5000, id: `download-${id}` }
-      );
+      // Initialize download progress
+      setDownloadProgress(prev => {
+        const next = new Map(prev);
+        next.set(id, {
+          id,
+          file_name: file_name || "Unknown file",
+          transferred: 0,
+          total: 0,
+          percentage: 0
+        });
+        return next;
+      });
 
       await invoke("receiving_file_accept", { id });
       console.log("Accepted file:", id);
-      
-      // The progress events will handle updating the toast and completion
     } catch (error) {
       console.error("Error accepting file:", error);
-      toast.error(`Failed to download ${file_name || "file"}`, { id: `download-${id}` });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to download ${file_name || "file"}`, { duration: 5000 });
+      
+      // Update download progress with error state
       setDownloadProgress(prev => {
         const next = new Map(prev);
-        next.delete(id);
+        const existing = next.get(id);
+        if (existing) {
+          next.set(id, {
+            ...existing,
+            error: errorMessage
+          });
+        } else {
+          next.set(id, {
+            id,
+            file_name: file_name || "Unknown file",
+            transferred: 0,
+            total: 0,
+            percentage: 0,
+            error: errorMessage
+          });
+        }
         return next;
       });
     }
@@ -98,13 +123,52 @@ function App() {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
     if (selectedFiles.length === 1) {
+      const filePath = selectedFiles[0];
+      const fileName = filePath.split(/[/\\]/).pop() || "Unknown file";
+      const sendId = crypto.randomUUID();
+      
+      // Initialize send progress
+      setSendProgress(prev => {
+        const next = new Map(prev);
+        next.set(sendId, {
+          id: sendId,
+          file_name: fileName,
+          sent: 0,
+          total: 0,
+          percentage: 0
+        });
+        return next;
+      });
+
       try {
-        const response = await invoke("send_file_call", { filePath: selectedFiles[0] });
+        const response = await invoke("send_file_call", { filePath, sendId });
         console.log("Sent file:", response);
-        toast.success(`Sent ${selectedFiles[0].split(/[/\\]/).pop()}`);
       } catch (err) {
         console.error("Error sending file:", err);
-        toast.error("Failed to send file");
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        toast.error(`Failed to send ${fileName}`, { duration: 5000 });
+        
+        // Update send progress with error state
+        setSendProgress(prev => {
+          const next = new Map(prev);
+          const existing = next.get(sendId);
+          if (existing) {
+            next.set(sendId, {
+              ...existing,
+              error: errorMessage
+            });
+          } else {
+            next.set(sendId, {
+              id: sendId,
+              file_name: fileName,
+              sent: 0,
+              total: 0,
+              percentage: 0,
+              error: errorMessage
+            });
+          }
+          return next;
+        });
       }
     } else {
       console.log("Multiple file send not implemented yet", selectedFiles);
@@ -173,14 +237,6 @@ function App() {
     });
   }
 
-  function formatBytes(bytes: number): string {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  }
-
   useEffect(() => {
     recieved_files_data();
   }, []);
@@ -189,8 +245,47 @@ function App() {
     console.log("Listening for connection-code event");
 
     const unlistenPromise = listen("connection-code", (event) => {
-      const payload = event.payload as { status: string, code?: string, message?: string };
-      if (payload.status === "success") {
+      const payload = event.payload as { status: string, code?: string, message?: string, send_id?: string };
+      if (payload.status === "success" && payload.send_id) {
+        // Update send progress with connection code
+        setSendProgress(prev => {
+          const next = new Map(prev);
+          const existing = next.get(payload.send_id!);
+          if (existing) {
+            next.set(payload.send_id!, {
+              ...existing,
+              code: payload.code
+            });
+          }
+          return next;
+        });
+        
+        // Show toast with connection code (click to copy)
+        toast(
+          (t) => (
+            <div
+              className="flex items-center justify-between gap-2"
+              onClick={() => {
+                navigator.clipboard.writeText(payload.code ?? "");
+                toast.success("Code copied to clipboard", { id: t.id });
+              }}
+            >
+              <span>📨 Connection code: {payload.code}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast.dismiss(t.id);
+                }}
+                className="cursor-pointer px-4 py-2 font-bold text-gray-900 hover:text-red-500 active:text-red-700"
+              >
+                ✕
+              </button>
+            </div>
+          ),
+          { duration: 5000 }
+        );
+      } else if (payload.status === "success") {
+        // Legacy toast for non-send connections
         toast(
           (t) => (
             <div
@@ -208,12 +303,12 @@ function App() {
                 className="cursor-pointer px-4 py-2 font-bold text-gray-900 hover:text-red-500 active:text-red-700"
               >
                 ✕
-              </button> {/* TODO: Add functionality to close the connections actual mailbox on the computer. */}
+              </button>
             </div>
           ),
           { duration: Infinity }
-      );
-    } else {
+        );
+      } else {
         toast.error(payload.message ?? "Unknown error in mailbox creation");
       }
     });
@@ -228,19 +323,18 @@ function App() {
 
     const unlistenPromise = listen("download-progress", (event) => {
       const payload = event.payload as DownloadProgress;
+      
+      // Update download progress
       setDownloadProgress(prev => {
         const next = new Map(prev);
         next.set(payload.id, payload);
         return next;
       });
-
-      // Update the toast with progress
-      const toastId = `download-${payload.id}`;
       
       // Check if download is complete
       if (payload.percentage >= 100) {
         setTimeout(() => {
-          toast.success(`Downloaded ${payload.file_name}`, { id: toastId, duration: 5000 });
+          toast.success(`Downloaded ${payload.file_name}`, { duration: 5000 });
           recieved_files_data();
           setDownloadProgress(prev => {
             const next = new Map(prev);
@@ -248,26 +342,112 @@ function App() {
             return next;
           });
         }, 500);
-      } else {
-        toast.loading(
-          (t) => (
-            <div className="flex flex-col gap-1">
-              <span className="font-bold">Downloading...</span>
-              <span>{payload.file_name}</span>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${payload.percentage}%` }}
-                ></div>
-              </div>
-              <span className="text-sm text-gray-600">
-                {payload.percentage}% ({formatBytes(payload.transferred)} / {formatBytes(payload.total)})
-              </span>
-            </div>
-          ),
-          { duration: 5000, id: toastId }
-        );
       }
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("Listening for download-error event");
+
+    const unlistenPromise = listen("download-error", (event) => {
+      const payload = event.payload as { id: string; file_name: string; error: string };
+      
+      // Update download progress with error state
+      setDownloadProgress(prev => {
+        const next = new Map(prev);
+        const existing = next.get(payload.id);
+        if (existing) {
+          next.set(payload.id, {
+            ...existing,
+            error: payload.error
+          });
+        } else {
+          // If download wasn't tracked yet, add it with error
+          next.set(payload.id, {
+            id: payload.id,
+            file_name: payload.file_name,
+            transferred: 0,
+            total: 0,
+            percentage: 0,
+            error: payload.error
+          });
+        }
+        return next;
+      });
+
+      toast.error(`Download failed: ${payload.file_name}`, { duration: 5000 });
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("Listening for send-progress event");
+
+    const unlistenPromise = listen("send-progress", (event) => {
+      const payload = event.payload as SendProgress;
+      
+      // Update send progress (includes code from backend)
+      setSendProgress(prev => {
+        const next = new Map(prev);
+        next.set(payload.id, payload);
+        return next;
+      });
+      
+      // Check if send is complete
+      if (payload.percentage >= 100) {
+        setTimeout(() => {
+          toast.success(`Sent ${payload.file_name}`, { duration: 5000 });
+          setSendProgress(prev => {
+            const next = new Map(prev);
+            next.delete(payload.id);
+            return next;
+          });
+        }, 500);
+      }
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("Listening for send-error event");
+
+    const unlistenPromise = listen("send-error", (event) => {
+      const payload = event.payload as { id: string; file_name: string; error: string };
+      
+      // Update send progress with error state
+      setSendProgress(prev => {
+        const next = new Map(prev);
+        const existing = next.get(payload.id);
+        if (existing) {
+          next.set(payload.id, {
+            ...existing,
+            error: payload.error
+          });
+        } else {
+          // If send wasn't tracked yet, add it with error
+          next.set(payload.id, {
+            id: payload.id,
+            file_name: payload.file_name,
+            sent: 0,
+            total: 0,
+            percentage: 0,
+            error: payload.error
+          });
+        }
+        return next;
+      });
+
+      toast.error(`Send failed: ${payload.file_name}`, { duration: 5000 });
     });
 
     return () => {
@@ -291,6 +471,34 @@ function App() {
 
       <div className="m-4 select-none">
         <h2 className="select-none cursor-default">Sending</h2>
+        {sendProgress.size > 0 && (
+          <div className="mb-4">
+            <p className="text-sm text-gray-700 cursor-default select-none mb-2">Active Sends</p>
+            <div className="border border-gray-300 rounded drop-shadow-sm bg-white">
+              <div className="grid grid-cols-4 select-none border-b border-gray-300 bg-gray-50 px-2 py-1 text-sm text-gray-500">
+                <div>Filename</div>
+                <div>Progress</div>
+                <div className="text-center">Percentage</div>
+                <div className="text-right">Status</div>
+              </div>
+              <div>
+                {Array.from(sendProgress.values()).map((progress) => (
+                  <ActiveSendCard 
+                    key={progress.id} 
+                    {...progress} 
+                    onDismiss={(id) => {
+                      setSendProgress(prev => {
+                        const next = new Map(prev);
+                        next.delete(id);
+                        return next;
+                      });
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         {!selectedFiles && (
           <label htmlFor="File" className="block rounded cursor-pointer bg-white border border-gray-300 text-gray-900 shadow-sm sm:p-6" onClick={select_files}>
           <div className="flex items-center justify-center gap-4 h-20">
@@ -385,6 +593,35 @@ function App() {
         </form>
 
         <div className="py-2">
+          {downloadProgress.size > 0 && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-700 cursor-default select-none mb-2">Active Downloads</p>
+              <div className="border border-gray-300 rounded drop-shadow-sm bg-white">
+                <div className="grid grid-cols-4 select-none border-b border-gray-300 bg-gray-50 px-2 py-1 text-sm text-gray-500">
+                  <div>Filename</div>
+                  <div>Progress</div>
+                  <div className="text-center">Percentage</div>
+                  <div className="text-right">Status</div>
+                </div>
+                <div>
+                  {Array.from(downloadProgress.values()).map((progress) => (
+                    <ActiveDownloadCard 
+                      key={progress.id} 
+                      {...progress} 
+                      onDismiss={(id) => {
+                        setDownloadProgress(prev => {
+                          const next = new Map(prev);
+                          next.delete(id);
+                          return next;
+                        });
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
           <p className="text-sm text-gray-700 cursor-default select-none">Received File History</p>
           
           <div className="border border-gray-300 rounded drop-shadow-sm my-2 mt-1 bg-white">
