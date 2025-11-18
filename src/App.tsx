@@ -18,10 +18,19 @@ interface ReceivedFile {
   peer_address: string;
 }
 
+interface DownloadProgress {
+  id: string;
+  file_name: string;
+  transferred: number;
+  total: number;
+  percentage: number;
+}
+
 function App() {
   const [receiveCode, setReceiveCode] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<string[] | null>(null);
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
+  const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(new Map());
 
   async function deny_file_receive(id: string) {
     try {
@@ -32,13 +41,38 @@ function App() {
     }
   }
 
-  async function accept_file_receive(id: string) {
+  async function accept_file_receive(id: string, file_name?: string) {
     try {
+      // Show progress toast
+      toast.loading(
+        (t) => (
+          <div className="flex flex-col gap-1">
+            <span className="font-bold">Downloading...</span>
+            <span>{file_name || "File"}</span>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                style={{ width: "0%" }}
+              ></div>
+            </div>
+            <span className="text-sm text-gray-600">0%</span>
+          </div>
+        ),
+        { duration: 5000, id: `download-${id}` }
+      );
+
       await invoke("receiving_file_accept", { id });
       console.log("Accepted file:", id);
-      recieved_files_data();
+      
+      // The progress events will handle updating the toast and completion
     } catch (error) {
       console.error("Error accepting file:", error);
+      toast.error(`Failed to download ${file_name || "file"}`, { id: `download-${id}` });
+      setDownloadProgress(prev => {
+        const next = new Map(prev);
+        next.delete(id);
+        return next;
+      });
     }
   }
 
@@ -95,9 +129,8 @@ function App() {
           <div className="flex gap-2 pt-1">
             <button
               onClick={async () => {
-                await accept_file_receive(data.id);
-                toast.success(`Accepted ${data.file_name}`);
                 toast.dismiss(t.id);
+                await accept_file_receive(data.id, data.file_name);
               }}
               className="bg-green-500 text-white cursor-pointer rounded px-2 py-1 text-sm"
             >
@@ -140,6 +173,14 @@ function App() {
     });
   }
 
+  function formatBytes(bytes: number): string {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }
+
   useEffect(() => {
     recieved_files_data();
   }, []);
@@ -177,7 +218,57 @@ function App() {
       }
     });
 
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
 
+  useEffect(() => {
+    console.log("Listening for download-progress event");
+
+    const unlistenPromise = listen("download-progress", (event) => {
+      const payload = event.payload as DownloadProgress;
+      setDownloadProgress(prev => {
+        const next = new Map(prev);
+        next.set(payload.id, payload);
+        return next;
+      });
+
+      // Update the toast with progress
+      const toastId = `download-${payload.id}`;
+      
+      // Check if download is complete
+      if (payload.percentage >= 100) {
+        setTimeout(() => {
+          toast.success(`Downloaded ${payload.file_name}`, { id: toastId, duration: 5000 });
+          recieved_files_data();
+          setDownloadProgress(prev => {
+            const next = new Map(prev);
+            next.delete(payload.id);
+            return next;
+          });
+        }, 500);
+      } else {
+        toast.loading(
+          (t) => (
+            <div className="flex flex-col gap-1">
+              <span className="font-bold">Downloading...</span>
+              <span>{payload.file_name}</span>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${payload.percentage}%` }}
+                ></div>
+              </div>
+              <span className="text-sm text-gray-600">
+                {payload.percentage}% ({formatBytes(payload.transferred)} / {formatBytes(payload.total)})
+              </span>
+            </div>
+          ),
+          { duration: 5000, id: toastId }
+        );
+      }
+    });
 
     return () => {
       unlistenPromise.then((unlisten) => unlisten());

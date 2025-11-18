@@ -229,9 +229,6 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
             connection_type = connection_type_str;
             peer_address = info.peer_addr.to_owned();
         };
-        let progress_handler = |transferred: u64, total: u64| {
-            println!("Progress: {}/{}", transferred, total);
-        };
 
         // Build the full file path by joining the directory and the filename
         // Get the download directory from settings using app_handle
@@ -240,6 +237,27 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         let download_dir = app_settings_lock.get_download_directory().to_path_buf();
         drop(app_settings_lock); // Drop lock so we can get the app_handle again later.
         let file_name_with_extension = entry.request.file_name();
+        
+        // Clone values needed for progress handler
+        let progress_id = id.clone();
+        let progress_file_name = file_name_with_extension.clone();
+        let progress_app_handle = app_handle.clone();
+        
+        let progress_handler = move |transferred: u64, total: u64| {
+            println!("Progress: {}/{}", transferred, total);
+            let percentage = if total > 0 {
+                (transferred as f64 / total as f64 * 100.0) as u64
+            } else {
+                0
+            };
+            let _ = progress_app_handle.emit("download-progress", serde_json::json!({
+                "id": progress_id,
+                "file_name": progress_file_name,
+                "transferred": transferred,
+                "total": total,
+                "percentage": percentage
+            }));
+        };
         let file_name = file_name_with_extension
             .rsplit_once('.')
             .map(|(before, _)| before.to_string())
