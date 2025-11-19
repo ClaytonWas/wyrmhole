@@ -44,29 +44,30 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
         <>
             <div 
                 onClick={() => setIsOpen(true)} 
-                className={`grid grid-cols-4 items-center gap-2 px-2 py-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors ${hasError ? "bg-red-50" : ""}`}
+                className={`grid grid-cols-4 items-center gap-1.5 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${hasError ? "bg-red-50/50 hover:bg-red-50" : ""}`}
             >
-                <div className={`text-sm truncate ${hasError ? "text-red-700" : "text-gray-700"}`}>
+                <div className={`text-xs sm:text-sm truncate ${hasError ? "text-red-700" : "text-gray-700"}`}>
                     {file_name}
                 </div>
-                <div className="flex-1">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="flex-1 hidden sm:block">
+                    <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 shadow-inner">
                         <div 
-                            className={`${progressBarColor} h-2 rounded-full transition-all duration-300`}
+                            className={`${progressBarColor} h-2 sm:h-2.5 rounded-full transition-all duration-300 shadow-sm`}
                             style={{ width: `${Math.min(percentage, 100)}%` }}
                         ></div>
                     </div>
                     {hasError && (
-                        <div className="text-xs text-red-600 mt-1 truncate" title={error}>
+                        <div className="text-[10px] sm:text-xs text-red-600 mt-1 truncate" title={error}>
                             {error}
                         </div>
                     )}
                 </div>
-                <div className={`text-sm text-center ${hasError ? "text-red-600" : "text-gray-600"}`}>
+                <div className={`text-[10px] sm:text-sm text-center ${hasError ? "text-red-600" : "text-gray-600"}`}>
                     {percentage}%
                 </div>
-                <div className={`text-sm text-right flex items-center justify-end gap-2 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
-                    {status}
+                <div className={`text-[10px] sm:text-sm text-right flex items-center justify-end gap-1 sm:gap-2 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
+                    <span className="hidden sm:inline">{status}</span>
+                    <span className="sm:hidden truncate">{status.substring(0, 4)}</span>
                     {hasError && onDismiss && (
                         <button
                             onClick={(e) => {
@@ -84,50 +85,56 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                 </div>
             </div>
             {isOpen && createPortal(
-                <div className="fixed inset-0 bg-gray-500/50 flex items-center justify-center z-50" onClick={() => setIsOpen(false)}>
-                    <div className="bg-gray-100 rounded-lg shadow-lg w-1/2 py-1 px-2 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="items-center">
-                            <div className="justify-between items-center flex">
-                                <span className="flex gap-2 items-center">
-                                    <p>Downloading File: </p>
-                                    <p>{file_name}</p>
-                                </span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" onClick={() => setIsOpen(false)} className="cursor-pointer p-0.5 fill-black hover:fill-gray-500 active:fill-red-500 transition-colors">
-                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                                </svg>
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setIsOpen(false)}>
+                    <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 z-10">
+                            <div className="flex justify-between items-center gap-2">
+                                <div className="flex gap-1 sm:gap-2 items-center min-w-0 flex-1">
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 whitespace-nowrap">Downloading File</h3>
+                                    <span className="text-gray-600 font-medium truncate text-xs sm:text-sm">{file_name}</span>
+                                </div>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                                    title="Close"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" className="fill-gray-500 hover:fill-gray-700">
+                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
-                        <div className="mt-4">
-                            <p className="text-sm xl:text-base text-gray-700 bg-gray-200 rounded-md mb-1 pl-1">File Information:</p>
-                            <div className="grid grid-rows-2 xl:grid-cols-2 gap-x-5 gap-y-1">
-                                <div className="flex justify-between mx-2">
-                                    <p className="text-sm xl:text-base text-gray-500">Filename:</p>
-                                    <p className="text-sm xl:text-base text-gray-900">{file_name || 'No provided filename.'}</p>
+                        <div className="px-3 sm:px-6 py-3 sm:py-4">
+                            <p className="text-xs sm:text-sm font-semibold text-gray-700 bg-gray-100 rounded-md mb-2 sm:mb-3 px-2 sm:px-3 py-1.5 sm:py-2">File Information</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Filename:</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate ml-2">{file_name || 'No provided filename.'}</p>
                                 </div>
-                                <div className="flex justify-between mx-2">
-                                    <p className="text-sm xl:text-base text-gray-600">Size:</p>
-                                    <p className="text-sm xl:text-base text-gray-900">{formatBytes(total)}</p>
+                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Size:</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-900">{formatBytes(total)}</p>
                                 </div>
-                                <div className="flex justify-between mx-2">
-                                    <p className="text-sm xl:text-base text-gray-500">Progress:</p>
-                                    <p className="text-sm xl:text-base text-gray-900">{percentage}% ({formatBytes(transferred)} / {formatBytes(total)})</p>
+                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Progress:</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-900">{percentage}% ({formatBytes(transferred)} / {formatBytes(total)})</p>
                                 </div>
-                                <div className="flex justify-between mx-2">
-                                    <p className="text-sm xl:text-base text-gray-500">Status:</p>
-                                    <p className="text-sm xl:text-base text-gray-900">{status}</p>
+                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Status:</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-900">{status}</p>
                                 </div>
                             </div>
                             {error && (
-                                <div className="mt-2 mx-2">
-                                    <p className="text-sm xl:text-base text-red-600 bg-red-50 rounded-md p-2">Error: {error}</p>
+                                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-xs sm:text-sm text-red-800 font-medium">Error: {error}</p>
                                 </div>
                             )}
                         </div>
                         {!isComplete && !hasError && (
-                            <div className="mt-4 mx-2">
+                            <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200">
                                 <button
                                     onClick={handleCancel}
-                                    className="w-full bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 active:bg-red-700 transition-colors"
+                                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-semibold px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md"
                                 >
                                     Cancel Download
                                 </button>

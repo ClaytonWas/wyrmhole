@@ -124,6 +124,7 @@ function App() {
     }
   }
 
+
   async function send_files() {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
@@ -540,30 +541,31 @@ function App() {
   }, []);
 
   return (
-    <div className="app-container">
+    <div className="app-container min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Toaster position="bottom-right" reverseOrder={false} />
 
-      <nav>
-        <div className="p-4 flex justify-between items-center shadow-md">
-          <h1 className="font-bold flex items-center select-none gap-2">
-            <span className="spin-on-hover cursor-pointer">🌀</span> 
-            wyrmhole
+      <nav className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+          <h1 className="text-lg sm:text-2xl font-bold flex items-center select-none gap-1 sm:gap-2 text-gray-800">
+            <span className="spin-on-hover cursor-pointer text-lg sm:text-2xl">🌀</span> 
+            <span className="bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent">wyrmhole</span>
           </h1>
           <SettingsMenu />
         </div>
       </nav>
 
-      <div className="m-4 select-none">
-        <h2 className="select-none cursor-default">Sending</h2>
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 select-none">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 select-none cursor-default">Sending</h2>
         {sendProgress.size > 0 && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-700 cursor-default select-none mb-2">Active Sends</p>
-            <div className="border border-gray-300 rounded drop-shadow-sm bg-white">
-              <div className="grid grid-cols-4 select-none border-b border-gray-300 bg-gray-50 px-2 py-1 text-sm text-gray-500">
-                <div>Filename</div>
-                <div>Progress</div>
-                <div className="text-center">Percentage</div>
-                <div className="text-right">Status</div>
+          <div className="mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 cursor-default select-none mb-2 sm:mb-3">Active Sends</p>
+            <div className="border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden">
+              <div className="grid grid-cols-4 select-none border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <div className="truncate">Filename</div>
+                <div className="hidden sm:block">Progress</div>
+                <div className="text-center text-[10px] sm:text-xs">%</div>
+                <div className="text-right truncate">Status</div>
               </div>
               <div>
                 {Array.from(sendProgress.values()).map((progress) => (
@@ -584,47 +586,59 @@ function App() {
           </div>
         )}
         {!selectedFiles && (
-          <label htmlFor="File" className="block rounded cursor-pointer bg-white border border-gray-300 text-gray-900 shadow-sm sm:p-6" onClick={select_files}>
-          <div className="flex items-center justify-center gap-4 h-20">
-            <span className="font-medium"> Upload your file(s) </span>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+          <label 
+            htmlFor="File" 
+            className="block rounded-lg cursor-pointer bg-white border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-200 p-4 sm:p-6 md:p-8 text-gray-700 shadow-sm"
+            onClick={select_files}
+          >
+          <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 min-h-[80px] sm:min-h-[100px] md:min-h-[120px] py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"/>
             </svg>
+            <span className="font-medium text-sm sm:text-base md:text-lg text-center text-gray-700">
+              Click to upload your files
+            </span>
+            <span className="text-[10px] sm:text-xs md:text-sm text-gray-500 text-center">
+              Select one or multiple files to send
+            </span>
           </div>
         </label>
         )}
 
         {selectedFiles && selectedFiles.length > 0 && (
-          <div className="relative rounded bg-white border border-gray-300">
-            <div className="relative w-full max-h-20 overflow-y-auto"
+          <div className="relative rounded-lg bg-white border border-gray-200 shadow-sm overflow-hidden">
+            <div className="relative w-full max-h-24 overflow-y-auto bg-gray-50/50"
               style={{
                 minHeight: "3.5rem",
-                // Always reserve space for scrollbar (width: 8px typical)
                 scrollbarWidth: "thin",
-                // For Chrome/Edge: always show scrollbar gutter
                 scrollbarGutter: "stable",
               }}
             >
               <ul
-                className="flex flex-col p-2 gap-2 text-sm text-gray-700 my-2"
+                className="flex flex-col p-3 gap-2 text-sm text-gray-700"
                 style={{
                   minHeight: "3.5rem",
                   paddingRight: "8px",
                 }}
               >
                 {selectedFiles && selectedFiles.length > 1 && (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    onClick={() => {
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedFiles(null);
                       setFolderName("");
                     }}
-                    className="absolute right-0.5 top-0.5 cursor-pointer p-0.5 fill-black hover:fill-red-500 active:fill-red-700 transition-colors"
-                    style={{ width: "32px", height: "32px", padding: 2 }}
+                    className="absolute right-2 top-2 cursor-pointer p-1.5 rounded-md hover:bg-red-100 active:bg-red-200 transition-colors group"
+                    title="Clear all files"
                   >
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-                  </svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      className="w-4 h-4 fill-gray-500 group-hover:fill-red-600 transition-colors"
+                    >
+                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                    </svg>
+                  </button>
                 )}
                 {selectedFiles.map((file, idx) => {
                   const name =
@@ -632,40 +646,47 @@ function App() {
                   return (
                     <li
                       key={idx}
-                      className="relative flex gap-2 bg-gray-100 rounded px-2 py-1 max-w-[calc(100%-1rem)] items-center"
+                      className="relative flex gap-2 bg-white rounded-md px-3 py-2 max-w-[calc(100%-1rem)] items-center border border-gray-200 shadow-sm hover:shadow transition-shadow"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
-                        strokeWidth="1.5"
+                        strokeWidth="2"
                         stroke="currentColor"
-                        className="size-4 text-gray-500"
+                        className="w-4 h-4 text-blue-500 flex-shrink-0"
                       >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M12 4.5v15m7.5-7.5h-15"
+                          d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                         />
                       </svg>
-                      <p className="max-w-xs truncate">{name}</p>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        onClick={() => remove_file_at_index(idx)}
-                        className="absolute right-0 top-0 cursor-pointer fill-black hover:fill-red-500 active:fill-red-700 transition-colors"
-                        style={{ width: "25px", height: "25px", padding: 2 }}
+                      <p className="max-w-xs truncate text-gray-800 font-medium">{name}</p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          remove_file_at_index(idx);
+                        }}
+                        className="absolute right-1 top-1 cursor-pointer p-1 rounded-md hover:bg-red-100 active:bg-red-200 transition-colors group"
+                        title="Remove file"
                       >
-                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-                      </svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 16 16"
+                          className="w-3.5 h-3.5 fill-gray-400 group-hover:fill-red-600 transition-colors"
+                        >
+                          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                        </svg>
+                      </button>
                     </li>
                   );
                 })}
               </ul>
             </div>
             {selectedFiles && selectedFiles.length > 1 && (
-              <div className="px-2 py-1 border-t border-gray-200">
-                <label className="block text-xs text-gray-600 mb-1 select-none">
+              <div className="px-3 sm:px-4 py-2 sm:py-3 border-t border-gray-200 bg-gray-50/50">
+                <label className="block text-[10px] sm:text-xs font-medium text-gray-700 mb-1 sm:mb-2 select-none">
                   Folder Name (optional):
                 </label>
                 <input
@@ -673,36 +694,56 @@ function App() {
                   value={folderName}
                   onChange={(e) => setFolderName(e.target.value)}
                   placeholder={`Default: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-gray-700 hover:bg-gray-50 transition-colors"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-colors bg-white"
                 />
               </div>
             )}
-            <button onClick={send_files} type="submit" className="w-full font-bold rounded-b flex items-center justify-center p-2 border-t cursor-pointer border-gray-200 hover:border-gray-300 active:border-gray-400 hover:bg-gray-100 active:bg-blue-200 transition-colors">
-              Send
+            <button 
+              onClick={send_files} 
+              type="submit" 
+              className="w-full font-semibold flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 border-t border-gray-200 cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:from-blue-800 active:to-blue-900 text-white text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+              </svg>
+              <span className="hidden sm:inline">Send Files</span>
+              <span className="sm:hidden">Send</span>
             </button>
           </div>
         )}
+        </div>
       </div>
 
-      <div className="m-4">
-        <h2 className="select-none cursor-default">Receiving</h2>
-        <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex w-full bg-white border border-gray-300 justify-between rounded">
-          <input value={receiveCode} onChange={(e) => setReceiveCode(e.target.value)} placeholder="ex. 5-funny-earth" className="p-2 w-full select-none focus:outline-gray-700 hover:bg-gray-100 active:bg-gray-200 transition-colors"/>
-          <button type="submit" className="font-bold flex items-center justify-center px-2 w-30 border-l cursor-pointer border-gray-200 hover:border-gray-300 hover:bg-gray-100 active:bg-blue-200 fill-gray-400 hover:fill-gray-500 active:fill-gray-700 transition-colors">
-            Receive
-          </button>
-        </form>
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 select-none cursor-default">Receiving</h2>
+          <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex w-full bg-white border border-gray-200 shadow-sm justify-between rounded-lg overflow-hidden mb-4 sm:mb-6">
+            <input 
+              value={receiveCode} 
+              onChange={(e) => setReceiveCode(e.target.value)} 
+              placeholder="Enter connection code" 
+              className="p-2 sm:p-3 w-full text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white"
+            />
+            <button 
+              type="submit" 
+              className="font-semibold flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-6 border-l border-gray-200 cursor-pointer bg-gradient-to-r from-blue-600 to-blue-700 hover:from-sky-400 hover:to-sky-500 active:from-sky-600 active:to-sky-700 text-white text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              <span className="hidden sm:inline">Receive</span>
+            </button>
+          </form>
 
-        <div className="py-2">
           {downloadProgress.size > 0 && (
-            <div className="mb-4">
-              <p className="text-sm text-gray-700 cursor-default select-none mb-2">Active Downloads</p>
-              <div className="border border-gray-300 rounded drop-shadow-sm bg-white">
-                <div className="grid grid-cols-4 select-none border-b border-gray-300 bg-gray-50 px-2 py-1 text-sm text-gray-500">
-                  <div>Filename</div>
-                  <div>Progress</div>
-                  <div className="text-center">Percentage</div>
-                  <div className="text-right">Status</div>
+            <div className="mb-4 sm:mb-6">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 cursor-default select-none mb-2 sm:mb-3">Active Downloads</p>
+              <div className="border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden">
+                <div className="grid grid-cols-4 select-none border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  <div className="truncate">Filename</div>
+                  <div className="hidden sm:block">Progress</div>
+                  <div className="text-center text-[10px] sm:text-xs">%</div>
+                  <div className="text-right truncate">Status</div>
                 </div>
                 <div>
                   {Array.from(downloadProgress.values()).map((progress) => (
@@ -723,17 +764,17 @@ function App() {
             </div>
           )}
           
-          <p className="text-sm text-gray-700 cursor-default select-none">Received File History</p>
+          <p className="text-xs sm:text-sm font-medium text-gray-600 cursor-default select-none mb-2 sm:mb-3">Received File History</p>
           
-          <div className="border border-gray-300 rounded drop-shadow-sm my-2 mt-1 bg-white">
-            <div className="h-30 overflow-y-auto">
-              <div className="grid grid-cols-3 select-none border-b border-gray-300 bg-white sticky top-0 z-10 px-1">
-                <div className="text-sm text-gray-400">Filename</div>
-                <div className="text-sm text-gray-400">Extension</div>
-                <div className="text-sm text-gray-400">Size</div>
+          <div className="border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden">
+            <div className="max-h-64 sm:max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-3 select-none border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wide sticky top-0 z-10">
+                <div className="truncate">Filename</div>
+                <div className="truncate">Extension</div>
+                <div className="truncate">Size</div>
               </div>
               
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-100">
                 {(receivedFiles.slice().reverse()).map((file, idx) => (
                   <ReceiveFileCard key={idx} {...file} />
                 ))}
@@ -741,7 +782,6 @@ function App() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -876,6 +876,7 @@ fn find_unique_file_path(download_dir: &Path, file_name_with_extension: &str) ->
     }
 }
 
+
 #[tauri::command]
 async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<String, String> {
     let mut requests: tokio::sync::MutexGuard<'_, HashMap<String, OpenRequests>> = REQUESTS_HASHMAP.lock().await;
