@@ -8,6 +8,7 @@ import ReceiveFileCard from "./RecieveFileCardComponent";
 import ActiveDownloadCard from "./ActiveDownloadCard";
 import ActiveSendCard from "./ActiveSendCard";
 import PendingFileOfferCard from "./PendingFileOfferCard";
+import ConnectingCard from "./ConnectingCard";
 import SettingsMenu from "./SettingsMenu";
 import { FileIcon } from "./FileIcon";
 import "./App.css";
@@ -57,6 +58,7 @@ function App() {
   const [sendProgress, setSendProgress] = useState<Map<string, SendProgress>>(new Map());
   const [pendingFileOffers, setPendingFileOffers] = useState<Map<string, PendingFileOffer>>(new Map());
   const [defaultFolderNameFormat, setDefaultFolderNameFormat] = useState<string>("#-files-via-wyrmhole");
+  const [connectingCodes, setConnectingCodes] = useState<Map<string, string>>(new Map()); // Map<id, code>
 
   async function deny_file_receive(id: string) {
     try {
@@ -259,14 +261,44 @@ function App() {
   }
 
   async function request_file() {
+    if (!receiveCode.trim()) {
+      return;
+    }
+    
+    const codeToUse = receiveCode.trim();
+    const connectionId = `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Add to connecting codes
+    setConnectingCodes(prev => {
+      const next = new Map(prev);
+      next.set(connectionId, codeToUse);
+      return next;
+    });
+    
+    // Clear the receive code input
+    setReceiveCode("");
+    
     try {
-      const response = await invoke("request_file_call", { receiveCode });
+      const response = await invoke("request_file_call", { receiveCode: codeToUse });
       const data = JSON.parse(response as string);
 
       if (!data || !data.id || !data.file_name) {
         toast.error("Invalid file offer from backend.");
+        // Remove from connecting codes
+        setConnectingCodes(prev => {
+          const next = new Map(prev);
+          next.delete(connectionId);
+          return next;
+        });
         return;
       }
+
+      // Remove from connecting codes
+      setConnectingCodes(prev => {
+        const next = new Map(prev);
+        next.delete(connectionId);
+        return next;
+      });
 
       // Add to pending file offers instead of showing toast
       setPendingFileOffers(prev => {
@@ -278,13 +310,33 @@ function App() {
         });
         return next;
       });
-
-      // Clear the receive code input
-      setReceiveCode("");
     } catch (e) {
-      toast.error("Failed to parse backend response.");
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      toast.error(errorMessage || "Failed to connect to sender.");
       console.error("Request file error:", e);
+      
+      // Remove from connecting codes
+      setConnectingCodes(prev => {
+        const next = new Map(prev);
+        next.delete(connectionId);
+        return next;
+      });
     }
+  }
+
+  function cancelConnection(code: string) {
+    // Find and remove the connection by code
+    setConnectingCodes(prev => {
+      const next = new Map(prev);
+      for (const [id, connCode] of next.entries()) {
+        if (connCode === code) {
+          next.delete(id);
+          break;
+        }
+      }
+      return next;
+    });
+    toast.success("Connection cancelled");
   }
 
   async function recieved_files_data() {
@@ -806,14 +858,20 @@ function App() {
                 </form>
               </div>
               <div className="flex-1 flex flex-col p-3 min-h-0">
-                {/* Pending File Offers */}
-                {pendingFileOffers.size > 0 ? (
+                {/* Connecting Cards and Pending File Offers */}
+                {connectingCodes.size > 0 || pendingFileOffers.size > 0 ? (
                   <div className="flex-1 flex flex-col min-h-0">
-                    <div className="text-[10px] sm:text-xs font-semibold text-yellow-700 uppercase tracking-wide mb-2 flex-shrink-0">
-                      Pending Offers ({pendingFileOffers.size})
-                    </div>
+                    {(connectingCodes.size > 0 || pendingFileOffers.size > 0) && (
+                      <div className="text-[10px] sm:text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2 flex-shrink-0">
+                        {connectingCodes.size > 0 && pendingFileOffers.size > 0 
+                          ? `Connecting (${connectingCodes.size}) • Pending Offers (${pendingFileOffers.size})`
+                          : connectingCodes.size > 0 
+                          ? `Connecting (${connectingCodes.size})`
+                          : `Pending Offers (${pendingFileOffers.size})`}
+                      </div>
+                    )}
                     <div 
-                      className="flex-1 overflow-y-auto min-h-0" 
+                      className="flex-1 overflow-y-auto min-h-0 space-y-1" 
                       style={{ scrollbarWidth: "thin" }}
                       onWheel={(e) => {
                         const target = e.currentTarget;
@@ -824,6 +882,15 @@ function App() {
                         }
                       }}
                     >
+                      {/* Connecting Cards */}
+                      {Array.from(connectingCodes.entries()).map(([id, code]) => (
+                        <ConnectingCard 
+                          key={id}
+                          code={code}
+                          onCancel={cancelConnection}
+                        />
+                      ))}
+                      {/* Pending File Offers */}
                       {Array.from(pendingFileOffers.values()).map((offer) => (
                         <PendingFileOfferCard 
                           key={offer.id} 
