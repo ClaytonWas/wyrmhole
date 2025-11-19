@@ -45,7 +45,7 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
     }
     
     const status = statusText;
-    const progressBarColor = hasError ? "bg-red-600" : "bg-green-600";
+    const progressBarColor = hasError ? "bg-red-600" : "bg-blue-600";
     const isComplete = percentage >= 100;
     
     async function handleCancel() {

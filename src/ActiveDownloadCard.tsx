@@ -26,7 +26,7 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
     const [isOpen, setIsOpen] = useState(false);
     const hasError = !!error;
     const status = hasError ? "Failed" : (percentage >= 100 ? "Completed" : "Downloading...");
-    const progressBarColor = hasError ? "bg-red-600" : "bg-blue-600";
+    const progressBarColor = hasError ? "bg-red-600" : "bg-green-600";
     const isComplete = percentage >= 100;
     
     async function handleCancel() {
