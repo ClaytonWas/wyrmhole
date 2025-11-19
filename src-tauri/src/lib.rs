@@ -3,11 +3,12 @@ use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, Wormh
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, net::SocketAddr, path::PathBuf, path::Path};
 use tauri::{AppHandle, Manager, Emitter};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, oneshot};
 use tokio::fs::File;
 use tokio_util::compat::TokioAsyncReadCompatExt;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
 use uuid::Uuid;
+use futures::FutureExt;
 use tar::{Archive, Builder};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
@@ -24,8 +25,16 @@ static REQUESTS_HASHMAP: Lazy<Mutex<HashMap<String, OpenRequests>>> =
 
 struct ActiveSend {
     code: String,
+    cancel_tx: Option<oneshot::Sender<()>>,
 }
 static ACTIVE_SENDS: Lazy<Mutex<HashMap<String, ActiveSend>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
+
+struct ActiveDownload {
+    cancel_tx: oneshot::Sender<()>,
+    file_name: String,
+}
+static ACTIVE_DOWNLOADS: Lazy<Mutex<HashMap<String, ActiveDownload>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -33,15 +42,38 @@ static ACTIVE_SENDS: Lazy<Mutex<HashMap<String, ActiveSend>>> =
 async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String) -> Result<String, String> {
     let config = transfer::APP_CONFIG.clone();
 
+    // Get file name early for status updates
+    let path = Path::new(file_path);
+    let file_name = path
+        .file_name()
+        .and_then(|os| os.to_str())
+        .unwrap_or("unknown")
+        .to_string();
+
+    // Emit "Preparing..." status before mailbox connection
+    let _ = app_handle.emit("send-progress", serde_json::json!({
+        "id": send_id.clone(),
+        "file_name": file_name.clone(),
+        "sent": 0,
+        "total": 0,
+        "percentage": 0,
+        "code": "",
+        "status": "preparing"
+    }));
+
+    // Create cancel channel for this send
+    let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
+
     // Create the mailbox connection
     let mailbox_connection = match MailboxConnection::create(config, 2).await {
         Ok(conn) => {
             let code = conn.code();
             let code_string = code.to_string();
             
-            // Store the connection code for this send
+            // Store the connection code and cancel sender for this send
             ACTIVE_SENDS.lock().await.insert(send_id.clone(), ActiveSend {
                 code: code_string.clone(),
+                cancel_tx: Some(cancel_tx),
             });
             
             let _ = app_handle.emit("connection-code", serde_json::json!({
@@ -49,6 +81,18 @@ async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String)
                 "code": code_string.clone(),
                 "send_id": send_id
             }));
+            
+            // Emit "Waiting..." status after mailbox connection is established
+            let _ = app_handle.emit("send-progress", serde_json::json!({
+                "id": send_id.clone(),
+                "file_name": file_name.clone(),
+                "sent": 0,
+                "total": 0,
+                "percentage": 0,
+                "code": code_string.clone(),
+                "status": "waiting"
+            }));
+            
             conn
         },
         Err(e) => {
@@ -59,7 +103,7 @@ async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String)
             }));
             let _ = app_handle.emit("send-error", serde_json::json!({
                 "id": send_id,
-                "file_name": Path::new(file_path).file_name().and_then(|os| os.to_str()).unwrap_or("unknown"),
+                "file_name": file_name.clone(),
                 "error": error_msg.clone()
             }));
             return Err(error_msg);
@@ -75,16 +119,11 @@ async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String)
     .unwrap();
     let relay_hints = vec![relay_hint];
     let abilities = transit::Abilities::ALL;
-    let cancel_call = futures::future::pending::<()>();
     
-    let path = Path::new(file_path);
-    let file_name = path
-        .file_name()
-        .and_then(|os| os.to_str())
-        .unwrap_or("unknown")
-        .to_string();
+    // Use the cancel receiver as the cancel future
+    let cancel_call = cancel_rx.map(|_| ());
     
-    // Connect the wormhole
+    // Connect the wormhole - this will wait until the receiver connects
     let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
         let msg = format!("Failed to connect to Wormhole: {}", e);
         println!("{}", msg);
@@ -178,7 +217,8 @@ async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String)
                 "sent": sent,
                 "total": total,
                 "percentage": percentage,
-                "code": send_code.clone()
+                "code": send_code.clone(),
+                "status": "sending"
             }));
         },
         cancel_call,
@@ -205,7 +245,7 @@ async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String)
 }
 
 #[tauri::command]
-async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>, send_id: String) -> Result<String, String> {
+async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>, send_id: String, folder_name: Option<String>) -> Result<String, String> {
     if file_paths.is_empty() {
         return Err("No files provided".to_string());
     }
@@ -214,6 +254,62 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
     let temp_dir = std::env::temp_dir();
     let temp_folder_name = format!("wyrmhole_send_{}", Uuid::new_v4());
     let temp_folder_path = temp_dir.join(&temp_folder_name);
+    
+    // Generate a display name for the folder and tarball
+    let display_name = if let Some(custom_name) = folder_name {
+        // Use custom name if provided
+        custom_name
+    } else if file_paths.len() == 1 {
+        // Check if it's a single folder - if so, use the folder name
+        let path = Path::new(&file_paths[0]);
+        if path.is_dir() {
+            // Single folder - use the folder name
+            path.file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("folder")
+                .to_string()
+        } else {
+            // Single file - use the file name
+            path.file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("file")
+                .to_string()
+        }
+    } else {
+        // Multiple files/folders - use the default format from settings
+        let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+        let app_settings_lock = app_settings_state.lock().await;
+        let format_template = app_settings_lock.get_default_folder_name_format().clone();
+        drop(app_settings_lock);
+        
+        // If the format is empty or just whitespace, default to "#-files-via-wyrmhole"
+        let format_template = if format_template.trim().is_empty() {
+            "#-files-via-wyrmhole".to_string()
+        } else {
+            format_template
+        };
+        
+        // Replace # with the number of files
+        format_template.replace("#", &file_paths.len().to_string())
+    };
+    
+    // Calculate the tarball name immediately
+    let tarball_name = format!("{}.tar.gz", display_name);
+    
+    // Emit an initial progress event with "Preparing..." status
+    // This happens synchronously before any async operations, so the frontend gets the correct name right away
+    // Note: connection code will be empty initially, but will be updated when the mailbox connection is created
+    println!("Emitting initial progress event for send_id: {} with filename: {}", send_id, tarball_name);
+    let _ = app_handle.emit("send-progress", serde_json::json!({
+        "id": send_id.clone(),
+        "file_name": tarball_name.clone(),
+        "sent": 0,
+        "total": 0,
+        "percentage": 0,
+        "code": "",  // Will be updated when connection code is available
+        "status": "preparing"
+    }));
+    println!("Initial progress event emitted for send_id: {}", send_id);
     
     // Copy all files into the temp folder (run in blocking task for file operations)
     tokio::task::spawn_blocking({
@@ -254,17 +350,19 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
     .map_err(|e| format!("Failed to copy files: {}", e))?
     .map_err(|e| e)?;
     
-    // Generate a display name for the folder and tarball
-    // Format: #-files-via-wyrmhole (e.g., "4-files-via-wyrmhole")
-    let display_name = if file_paths.len() == 1 {
-        Path::new(&file_paths[0])
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("file")
-            .to_string()
-    } else {
-        format!("{}-files-via-wyrmhole", file_paths.len())
-    };
+    // Emit "Waiting..." status after files are copied, before mailbox connection
+    let _ = app_handle.emit("send-progress", serde_json::json!({
+        "id": send_id.clone(),
+        "file_name": tarball_name.clone(),
+        "sent": 0,
+        "total": 0,
+        "percentage": 0,
+        "code": "",
+        "status": "waiting"
+    }));
+    
+    // Create cancel channel for this send (before mailbox connection)
+    let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
     
     // Send the folder using send_file_or_folder (which will create a tarball automatically)
     let config = transfer::APP_CONFIG.clone();
@@ -275,9 +373,10 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
             let code = conn.code();
             let code_string = code.to_string();
             
-            // Store the connection code for this send
+            // Store the connection code and cancel sender for this send
             ACTIVE_SENDS.lock().await.insert(send_id.clone(), ActiveSend {
                 code: code_string.clone(),
+                cancel_tx: Some(cancel_tx),
             });
             
             let _ = app_handle.emit("connection-code", serde_json::json!({
@@ -285,6 +384,19 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
                 "code": code_string.clone(),
                 "send_id": send_id
             }));
+            
+            // Keep "Waiting..." status - it will change to "Sending..." when transfer actually begins
+            // Update the code in the waiting status now that we have it
+            let _ = app_handle.emit("send-progress", serde_json::json!({
+                "id": send_id.clone(),
+                "file_name": tarball_name.clone(),
+                "sent": 0,
+                "total": 0,
+                "percentage": 0,
+                "code": code_string.clone(),
+                "status": "waiting"
+            }));
+            
             conn
         },
         Err(e) => {
@@ -315,9 +427,11 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
     .unwrap();
     let relay_hints = vec![relay_hint];
     let abilities = transit::Abilities::ALL;
-    let cancel_call = futures::future::pending::<()>();
     
-    // Connect the wormhole
+    // Use the cancel receiver as the cancel future
+    let cancel_call = cancel_rx.map(|_| ());
+    
+    // Connect the wormhole - this will wait until the receiver connects
     let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
         let msg = format!("Failed to connect to Wormhole: {}", e);
         let _ = app_handle.emit("send-error", serde_json::json!({
@@ -332,21 +446,32 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
         msg
     })?;
     
-    // Clone values needed for progress handler
-    let progress_id = send_id.clone();
-    let progress_file_name = display_name.clone();
-    let progress_app_handle = app_handle.clone();
-    let error_app_handle = app_handle.clone();
-    let error_id = send_id.clone();
-    let error_file_name = display_name.clone();
-    
-    // Get the connection code before the closure
+    // Receiver has connected! Now create the tarball and show "Packaging..." status
+    // Get the connection code first
     let send_code = {
         let active_sends = ACTIVE_SENDS.lock().await;
         active_sends.get(&send_id)
             .map(|s| s.code.clone())
             .unwrap_or_default()
     };
+    
+    // Emit "Packaging..." status while creating tarball
+    let _ = app_handle.emit("send-progress", serde_json::json!({
+        "id": send_id.clone(),
+        "file_name": tarball_name.clone(),
+        "sent": 0,
+        "total": 0,
+        "percentage": 0,
+        "code": send_code.clone(),
+        "status": "packaging"
+    }));
+    
+    // Clone values needed for progress handler
+    let progress_id = send_id.clone();
+    let progress_app_handle = app_handle.clone();
+    let error_app_handle = app_handle.clone();
+    let error_id = send_id.clone();
+    let error_file_name = display_name.clone();
     
     // Verify the temp folder exists and has files
     if !temp_folder_path.exists() {
@@ -364,8 +489,10 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
     }
     
     // Create a tarball from the temp folder
-    let tarball_name = format!("{}.tar.gz", display_name);
     let tarball_path = temp_dir.join(&tarball_name);
+    
+    // Use the tarball name (with .tar.gz) for progress events since that's what's actually being sent
+    let progress_file_name = tarball_name.clone();
     
     // Use the same display_name for the folder inside the tarball
     let tarball_folder_name = display_name.clone();
@@ -435,7 +562,8 @@ async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>
                 "sent": sent,
                 "total": total,
                 "percentage": percentage,
-                "code": send_code.clone()
+                "code": send_code.clone(),
+                "status": "sending"
             }));
         },
         cancel_call,
@@ -522,18 +650,33 @@ fn copy_dir_all_sync(src: &Path, dst: &Path) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn cancel_send(send_id: String) -> Result<String, String> {
-    // Remove from active sends
-    let code = ACTIVE_SENDS.lock().await.remove(&send_id)
-        .map(|s| s.code)
-        .unwrap_or_default();
+async fn cancel_send(send_id: String, app_handle: AppHandle) -> Result<String, String> {
+    // Get the cancel sender and remove from active sends
+    let cancel_tx = {
+        let mut active_sends = ACTIVE_SENDS.lock().await;
+        if let Some(active_send) = active_sends.remove(&send_id) {
+            active_send.cancel_tx
+        } else {
+            return Err("No active send found for this ID".to_string());
+        }
+    };
     
-    if code.is_empty() {
-        return Err("No active send found for this ID".to_string());
+    // Send the cancel signal
+    if let Some(tx) = cancel_tx {
+        let _ = tx.send(());
+        println!("Cancelled send with id: {}", send_id);
+        
+        // Emit a send-error event to notify the frontend
+        let _ = app_handle.emit("send-error", serde_json::json!({
+            "id": send_id.clone(),
+            "file_name": "Transfer cancelled",
+            "error": "Transfer cancelled by user"
+        }));
+        
+        Ok("Send cancelled".to_string())
+    } else {
+        Err("No cancel channel found for this send".to_string())
     }
-    
-    println!("Cancelled send with id: {} (code: {})", send_id, code);
-    Ok(format!("Send cancelled (code: {})", code))
 }
 
 
@@ -841,7 +984,19 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
         })?;
 
         let mut compat_file = file.compat_write();
-        let cancel = futures::future::pending::<()>(); //TODO: Add a proper timeout or cancel instead of leaving connections hanging forever.
+        
+        // Create cancel channel for this download
+        let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
+        
+        // Store the cancel sender and file name in ACTIVE_DOWNLOADS
+        let download_file_name = file_name_with_extension.clone();
+        ACTIVE_DOWNLOADS.lock().await.insert(id.clone(), ActiveDownload {
+            cancel_tx,
+            file_name: download_file_name.clone(),
+        });
+        
+        // Use the cancel receiver as the cancel future
+        let cancel = cancel_rx.map(|_| ());
 
         entry
             .request
@@ -850,6 +1005,11 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
             .map_err(|e| {
                 let error_message = format!("Error accepting file: {}", e);
                 println!("{}", error_message);
+                // Remove from active downloads on error
+                let id_clone = id.clone();
+                tokio::spawn(async move {
+                    ACTIVE_DOWNLOADS.lock().await.remove(&id_clone);
+                });
                 let _ = error_app_handle.emit("download-error", serde_json::json!({
                     "id": error_id,
                     "file_name": error_file_name,
@@ -858,54 +1018,88 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
                 error_message
             })?;
         
+        // Remove from active downloads when complete
+        ACTIVE_DOWNLOADS.lock().await.remove(&id);
+        
         // Check if the file is a tarball (.tar.gz)
         let is_tarball = final_file_name_with_extension.ends_with(".tar.gz") || 
                         final_file_name_with_extension.ends_with(".tgz");
         
         if is_tarball {
-            // Extract the tarball
-            let extracted_files = tokio::task::spawn_blocking({
-                let file_path = file_path.clone();
-                let download_dir = download_dir.clone();
-                move || extract_tarball(&file_path, &download_dir)
-            })
-            .await
-            .map_err(|e| format!("Failed to extract tarball: {}", e))??;
+            // Check if auto-extract is enabled
+            let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+            let app_settings_lock = app_settings_state.lock().await;
+            let auto_extract = app_settings_lock.get_auto_extract_tarballs();
+            drop(app_settings_lock);
             
-            let file_count = extracted_files.len();
-            
-            // Add all extracted files to the received files JSON
-            for (extracted_file_name, extracted_file_size) in extracted_files {
-                let (name, ext) = extracted_file_name
-                    .rsplit_once('.')
-                    .map(|(n, e)| (n.to_string(), e.to_string()))
-                    .unwrap_or_else(|| (extracted_file_name.clone(), String::new()));
+            if auto_extract {
+                // Auto-extract enabled - extract the tarball
+                let extracted_files = tokio::task::spawn_blocking({
+                    let file_path = file_path.clone();
+                    let download_dir = download_dir.clone();
+                    move || extract_tarball(&file_path, &download_dir)
+                })
+                .await
+                .map_err(|e| format!("Failed to extract tarball: {}", e))??;
                 
-                let _ = files_json::add_received_file(
-                    app_handle.clone(),
+                let file_count = extracted_files.len();
+                
+                // Add all extracted files to the received files JSON
+                for (extracted_file_name, extracted_file_size) in extracted_files {
+                    let (name, ext) = extracted_file_name
+                        .rsplit_once('.')
+                        .map(|(n, e)| (n.to_string(), e.to_string()))
+                        .unwrap_or_else(|| (extracted_file_name.clone(), String::new()));
+                    
+                    let _ = files_json::add_received_file(
+                        app_handle.clone(),
+                        files_json::ReceivedFile {
+                            file_name: name,
+                            file_size: extracted_file_size,
+                            file_extension: ext,
+                            download_url: download_dir.clone(),
+                            download_time: Local::now(),
+                            connection_type: connection_type.clone(),
+                            peer_address: peer_address.clone(),
+                        },
+                    );
+                }
+                
+                // Remove the tarball file after extraction
+                let file_path_clone = file_path.clone();
+                tokio::spawn(async move {
+                    let _ = tokio::fs::remove_file(&file_path_clone).await;
+                });
+                
+                Ok(format!(
+                    "Tarball extracted! {} file(s) saved to {}",
+                    file_count,
+                    download_dir.display()
+                ))
+            } else {
+                // Auto-extract disabled - keep as tarball file
+                files_json::add_received_file(
+                    app_handle,
                     files_json::ReceivedFile {
-                        file_name: name,
-                        file_size: extracted_file_size,
-                        file_extension: ext,
-                        download_url: download_dir.clone(),
+                        file_name: file_name,
+                        file_size: file_size,
+                        file_extension: file_extension,
+                        download_url: download_dir,
                         download_time: Local::now(),
-                        connection_type: connection_type.clone(),
-                        peer_address: peer_address.clone(),
+                        connection_type: connection_type,
+                        peer_address: peer_address,
                     },
-                );
+                )
+                .map_err(|e| {
+                    println!("Failed to add received file: {}", e);
+                    e
+                })?;
+                
+                Ok(format!(
+                    "File transfer completed! Tarball saved to {} (auto-extract is disabled)",
+                    file_path.display()
+                ))
             }
-            
-            // Remove the tarball file after extraction
-            let file_path_clone = file_path.clone();
-            tokio::spawn(async move {
-                let _ = tokio::fs::remove_file(&file_path_clone).await;
-            });
-            
-            Ok(format!(
-                "Tarball extracted! {} file(s) saved to {}",
-                file_count,
-                download_dir.display()
-            ))
         } else {
             // Regular file - add to received files JSON
             files_json::add_received_file(
@@ -933,6 +1127,32 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
     } else {
         Err("No request found for this id".to_string())
     }
+}
+
+#[tauri::command]
+async fn cancel_download(download_id: String, app_handle: AppHandle) -> Result<String, String> {
+    // Get the cancel sender and file name, then remove from active downloads
+    let (cancel_tx, file_name) = {
+        let mut active_downloads = ACTIVE_DOWNLOADS.lock().await;
+        if let Some(active_download) = active_downloads.remove(&download_id) {
+            (active_download.cancel_tx, active_download.file_name)
+        } else {
+            return Err("No active download found for this ID".to_string());
+        }
+    };
+    
+    // Send the cancel signal
+    let _ = cancel_tx.send(());
+    println!("Cancelled download with id: {} (file: {})", download_id, file_name);
+    
+    // Emit a download-error event to notify the frontend with the actual file name
+    let _ = app_handle.emit("download-error", serde_json::json!({
+        "id": download_id.clone(),
+        "file_name": file_name,
+        "error": "Transfer cancelled by user"
+    }));
+    
+    Ok("Download cancelled".to_string())
 }
 
 #[tauri::command]
@@ -972,6 +1192,55 @@ async fn get_download_path(app_handle: AppHandle) -> Result<String, String> {
 }
 
 #[tauri::command]
+async fn get_auto_extract_tarballs(app_handle: AppHandle) -> Result<bool, String> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_auto_extract_tarballs())
+}
+
+#[tauri::command]
+async fn set_auto_extract_tarballs(app_handle: AppHandle, value: bool) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_auto_extract_tarballs(value);
+
+    // Save settings
+    let settings_path = settings::get_settings_path(&app_handle);
+    if let Err(e) = settings::save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_default_folder_name_format(app_handle: AppHandle) -> Result<String, String> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_default_folder_name_format().clone())
+}
+
+#[tauri::command]
+async fn set_default_folder_name_format(app_handle: AppHandle, value: String) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_default_folder_name_format(value.clone());
+
+    // Save settings
+    let settings_path = settings::get_settings_path(&app_handle);
+    if let Err(e) = settings::save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+
+    // Emit event to notify frontend that the setting has been updated
+    let _ = app_handle.emit("default-folder-name-format-updated", serde_json::json!({
+        "value": value
+    }));
+
+    Ok(())
+}
+
+#[tauri::command]
 async fn received_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>, String> {
     let files = files_json::get_received_files_json_data(app_handle).await?;
     Ok(files)
@@ -996,12 +1265,17 @@ pub fn run() {
             send_file_call,
             send_multiple_files_call,
             cancel_send,
+            cancel_download,
             request_file_call,
             receiving_file_accept,
             receiving_file_deny,
             set_download_directory,
             received_files_data,
-            get_download_path
+            get_download_path,
+            get_auto_extract_tarballs,
+            set_auto_extract_tarballs,
+            get_default_folder_name_format,
+            set_default_folder_name_format
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

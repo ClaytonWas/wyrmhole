@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 export default function SettingsMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [downloadDirectory, setDownloadDirectory] = useState<string>("");
+  const [autoExtractTarballs, setAutoExtractTarballs] = useState<boolean>(false);
+  const [defaultFolderNameFormat, setDefaultFolderNameFormat] = useState<string>("#-files-via-wyrmhole");
 
   async function choose_download_directory() {
     const selected = await open({ directory: true, multiple: false });
@@ -24,12 +26,50 @@ export default function SettingsMenu() {
     }
   }
 
-    useEffect(() => {
-      (async () => {
-        const downloadPath = await get_download_directory();
-        if (downloadPath) setDownloadDirectory(downloadPath);
-      })();
-    }, []);
+  async function get_auto_extract_tarballs() {
+    try {
+      const value = await invoke<boolean>("get_auto_extract_tarballs");
+      setAutoExtractTarballs(value);
+    } catch (error) {
+      console.error("Error getting auto-extract setting:", error);
+    }
+  }
+
+  async function toggle_auto_extract_tarballs() {
+    try {
+      const newValue = !autoExtractTarballs;
+      await invoke("set_auto_extract_tarballs", { value: newValue });
+      setAutoExtractTarballs(newValue);
+    } catch (error) {
+      console.error("Error setting auto-extract:", error);
+    }
+  }
+
+  async function get_default_folder_name_format() {
+    try {
+      const value = await invoke<string>("get_default_folder_name_format");
+      setDefaultFolderNameFormat(value);
+    } catch (error) {
+      console.error("Error getting default folder name format:", error);
+    }
+  }
+
+  async function save_default_folder_name_format() {
+    try {
+      await invoke("set_default_folder_name_format", { value: defaultFolderNameFormat });
+    } catch (error) {
+      console.error("Error setting default folder name format:", error);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      const downloadPath = await get_download_directory();
+      if (downloadPath) setDownloadDirectory(downloadPath);
+      await get_auto_extract_tarballs();
+      await get_default_folder_name_format();
+    })();
+  }, []);
 
   return (
     <div>
@@ -61,6 +101,40 @@ export default function SettingsMenu() {
               <div className="flex-1 border rounded px-2 py-1 bg-gray-100 text-sm select-none">
                 {downloadDirectory || "No directory set"}
               </div>
+            </div>
+
+            {/* Auto-extract tarballs setting */}
+            <div className="p-2 mb-2 rounded-lg hover:bg-gray-200/70">
+              <label className="block font-medium text-xs select-none mb-0.5 text-gray-600">Auto-Extract Tarballs</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={autoExtractTarballs}
+                  onChange={toggle_auto_extract_tarballs}
+                  className="cursor-pointer"
+                />
+                <span className="text-xs text-gray-600 select-none">
+                  Automatically extract received tarballs (default: off)
+                </span>
+              </div>
+            </div>
+
+            {/* Default folder name format setting */}
+            <div className="p-2 mb-2 rounded-lg hover:bg-gray-200/70">
+              <label className="block font-medium text-xs select-none mb-0.5 text-gray-600">Default Folder Name Format</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={defaultFolderNameFormat}
+                  onChange={(e) => setDefaultFolderNameFormat(e.target.value)}
+                  onBlur={save_default_folder_name_format}
+                  placeholder="#-files-via-wyrmhole"
+                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-gray-700 hover:bg-gray-50 transition-colors"
+                />
+              </div>
+              <span className="text-xs text-gray-500 select-none mt-1 block">
+                Use # as a placeholder for the number of files (e.g., "#-files-via-wyrmhole")
+              </span>
             </div>
           </div>
         </div>

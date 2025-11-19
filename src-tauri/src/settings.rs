@@ -9,6 +9,18 @@ use tauri::{AppHandle, Manager};
 pub struct AppSettings {
     pub download_directory: PathBuf,
     pub received_files_directory: PathBuf,
+    #[serde(default = "default_auto_extract")]
+    pub auto_extract_tarballs: bool,
+    #[serde(default = "default_folder_name_format")]
+    pub default_folder_name_format: String,
+}
+
+fn default_auto_extract() -> bool {
+    false
+}
+
+fn default_folder_name_format() -> String {
+    "#-files-via-wyrmhole".to_string()
 }
 
 impl AppSettings {
@@ -26,6 +38,22 @@ impl AppSettings {
 
     pub fn set_received_files_directory(&mut self, path: PathBuf) {
         self.received_files_directory = path;
+    }
+
+    pub fn get_auto_extract_tarballs(&self) -> bool {
+        self.auto_extract_tarballs
+    }
+
+    pub fn set_auto_extract_tarballs(&mut self, value: bool) {
+        self.auto_extract_tarballs = value;
+    }
+
+    pub fn get_default_folder_name_format(&self) -> &String {
+        &self.default_folder_name_format
+    }
+
+    pub fn set_default_folder_name_format(&mut self, value: String) {
+        self.default_folder_name_format = value;
     }
 }
 
@@ -76,6 +104,8 @@ fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
     AppSettings {
         download_directory: download_dir,
         received_files_directory: received_dir,
+        auto_extract_tarballs: false,
+        default_folder_name_format: default_folder_name_format(),
     }
 }
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 
 type Props = {
     id: string;
@@ -24,6 +26,19 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
     const hasError = !!error;
     const status = hasError ? "Failed" : (percentage >= 100 ? "Completed" : "Downloading...");
     const progressBarColor = hasError ? "bg-red-600" : "bg-blue-600";
+    const isComplete = percentage >= 100;
+    
+    async function handleCancel() {
+        try {
+            await invoke("cancel_download", { downloadId: id });
+            // Don't dismiss immediately - let the error event update the state
+            // The error event will mark it as failed, and the user can dismiss it
+            setIsOpen(false);
+        } catch (err) {
+            console.error("Error cancelling download:", err);
+            toast.error("Failed to cancel download");
+        }
+    }
     
     return (
         <>
@@ -108,6 +123,16 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                                 </div>
                             )}
                         </div>
+                        {!isComplete && !hasError && (
+                            <div className="mt-4 mx-2">
+                                <button
+                                    onClick={handleCancel}
+                                    className="w-full bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 active:bg-red-700 transition-colors"
+                                >
+                                    Cancel Download
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>,
                 document.body

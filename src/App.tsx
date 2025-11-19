@@ -37,14 +37,17 @@ interface SendProgress {
   percentage: number;
   error?: string;
   code?: string;
+  status?: string;
 }
 
 function App() {
   const [receiveCode, setReceiveCode] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<string[] | null>(null);
+  const [folderName, setFolderName] = useState<string>("");
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(new Map());
   const [sendProgress, setSendProgress] = useState<Map<string, SendProgress>>(new Map());
+  const [defaultFolderNameFormat, setDefaultFolderNameFormat] = useState<string>("#-files-via-wyrmhole");
 
   async function deny_file_receive(id: string) {
     try {
@@ -106,6 +109,7 @@ function App() {
       const selected = await open({ multiple: true });
       if (!selected) {
         setSelectedFiles(null);
+        setFolderName("");
         return;
       }
 
@@ -113,6 +117,7 @@ function App() {
       // Filter out non-strings for safety
       const stringFiles = files.filter(f => typeof f === "string") as string[];
       setSelectedFiles(stringFiles);
+      setFolderName(""); // Clear folder name when selecting new files
 
     } catch (err) {
       console.error("Error selecting files:", err);
@@ -129,7 +134,7 @@ function App() {
       const filePath = selectedFiles[0];
       displayName = filePath.split(/[/\\]/).pop() || "Unknown file";
       
-      // Initialize send progress
+      // Initialize send progress with "preparing" status
       setSendProgress(prev => {
         const next = new Map(prev);
         next.set(sendId, {
@@ -137,7 +142,8 @@ function App() {
           file_name: displayName,
           sent: 0,
           total: 0,
-          percentage: 0
+          percentage: 0,
+          status: "preparing"
         });
         return next;
       });
@@ -173,15 +179,16 @@ function App() {
         });
       }
     } else {
-      // Multiple files - create tarball and send
-      displayName = `${selectedFiles.length}_files.tar.gz`;
+      // Multiple files/folders - create tarball and send
+      // Don't set an initial name - let the backend emit it immediately via progress event
+      // This ensures we show the correct name (custom, folder name, or default format) from the start
       
-      // Initialize send progress
+      // Initialize send progress with a temporary placeholder that will be updated immediately
       setSendProgress(prev => {
         const next = new Map(prev);
         next.set(sendId, {
           id: sendId,
-          file_name: displayName,
+          file_name: "Preparing...", // Temporary placeholder, backend will update immediately
           sent: 0,
           total: 0,
           percentage: 0
@@ -192,9 +199,12 @@ function App() {
       try {
         const response = await invoke("send_multiple_files_call", { 
           filePaths: selectedFiles, 
-          sendId 
+          sendId,
+          folderName: folderName.trim() || null
         });
         console.log("Sent files:", response);
+        // Clear folder name after sending
+        setFolderName("");
       } catch (err) {
         console.error("Error sending files:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
@@ -286,8 +296,32 @@ function App() {
     });
   }
 
+  async function get_default_folder_name_format() {
+    try {
+      const value = await invoke<string>("get_default_folder_name_format");
+      setDefaultFolderNameFormat(value);
+    } catch (error) {
+      console.error("Error getting default folder name format:", error);
+    }
+  }
+
   useEffect(() => {
     recieved_files_data();
+    get_default_folder_name_format();
+  }, []);
+
+  useEffect(() => {
+    console.log("Listening for default-folder-name-format-updated event");
+
+    const unlistenPromise = listen("default-folder-name-format-updated", (event) => {
+      const payload = event.payload as { value: string };
+      console.log("Default folder name format updated:", payload.value);
+      setDefaultFolderNameFormat(payload.value);
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
   }, []);
 
   useEffect(() => {
@@ -441,6 +475,7 @@ function App() {
 
     const unlistenPromise = listen("send-progress", (event) => {
       const payload = event.payload as SendProgress;
+      console.log("Received send-progress event:", payload);
       
       // Update send progress (includes code from backend)
       setSendProgress(prev => {
@@ -581,7 +616,10 @@ function App() {
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 16 16"
-                    onClick={() => setSelectedFiles(null)}
+                    onClick={() => {
+                      setSelectedFiles(null);
+                      setFolderName("");
+                    }}
                     className="absolute right-0.5 top-0.5 cursor-pointer p-0.5 fill-black hover:fill-red-500 active:fill-red-700 transition-colors"
                     style={{ width: "32px", height: "32px", padding: 2 }}
                   >
@@ -625,6 +663,20 @@ function App() {
                 })}
               </ul>
             </div>
+            {selectedFiles && selectedFiles.length > 1 && (
+              <div className="px-2 py-1 border-t border-gray-200">
+                <label className="block text-xs text-gray-600 mb-1 select-none">
+                  Folder Name (optional):
+                </label>
+                <input
+                  type="text"
+                  value={folderName}
+                  onChange={(e) => setFolderName(e.target.value)}
+                  placeholder={`Default: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-gray-700 hover:bg-gray-50 transition-colors"
+                />
+              </div>
+            )}
             <button onClick={send_files} type="submit" className="w-full font-bold rounded-b flex items-center justify-center p-2 border-t cursor-pointer border-gray-200 hover:border-gray-300 active:border-gray-400 hover:bg-gray-100 active:bg-blue-200 transition-colors">
               Send
             </button>

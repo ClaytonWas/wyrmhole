@@ -11,6 +11,7 @@ type Props = {
     percentage: number;
     error?: string;
     code?: string;
+    status?: string;
     onDismiss?: (id: string) => void;
 };
 
@@ -22,10 +23,27 @@ function formatBytes(bytes: number): string {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
-const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, onDismiss }: Props) => {
+const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, status: statusProp, onDismiss }: Props) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasError = !!error;
-    const status = hasError ? "Failed" : (percentage >= 100 ? "Completed" : "Sending...");
+    
+    // Determine status text based on statusProp
+    let statusText = "Preparing..."; // Default to "Preparing..." instead of "Sending..."
+    if (hasError) {
+        statusText = "Failed";
+    } else if (percentage >= 100) {
+        statusText = "Completed";
+    } else if (statusProp === "preparing") {
+        statusText = "Preparing...";
+    } else if (statusProp === "waiting") {
+        statusText = "Waiting...";
+    } else if (statusProp === "packaging") {
+        statusText = "Packaging...";
+    } else if (statusProp === "sending") {
+        statusText = "Sending...";
+    }
+    
+    const status = statusText;
     const progressBarColor = hasError ? "bg-red-600" : "bg-green-600";
     const isComplete = percentage >= 100;
     
