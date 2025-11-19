@@ -1,4 +1,4 @@
-# A Magic Wormhole Wrapper
+# 🧙‍♂️ Wyrmhole
 A lightweight GUI for [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/).
 
 Built with Tauri + React + Typescript
