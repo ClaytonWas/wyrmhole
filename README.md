@@ -10,6 +10,7 @@ TODO:
 - [ ] Change sending and receiving progress bars to be the correct colours
 - [ ] Make send files space flex correctly 
 - [ ] find a way to help with recieve files dead space (maybe move aroud elements some more)
+- [ ] find a better way to get codes and download deny/accepts to users over react toast, thats more for errors
 <br/>
 <br/>
 
