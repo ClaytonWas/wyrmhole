@@ -76,7 +76,7 @@ export default function SettingsMenu() {
       {/* Settings Open Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+        className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
         title="Settings"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" className="fill-gray-600 hover:fill-gray-800 transition-colors">
@@ -94,7 +94,7 @@ export default function SettingsMenu() {
                 <h2 className="text-lg sm:text-xl font-bold text-gray-800 select-none">Settings</h2>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
                   title="Close"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" className="fill-gray-500 hover:fill-gray-700">

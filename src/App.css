@@ -71,6 +71,32 @@ h2 {
   background: #94a3b8;
 }
 
+/* Gradient Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.gradient-shimmer {
+  background: linear-gradient(
+    90deg,
+    #2563eb 0%,
+    #0ea5e9 25%,
+    #3b82f6 50%,
+    #0ea5e9 75%,
+    #2563eb 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 20s linear infinite;
+}
+
 /* Smooth transitions */
 * {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;

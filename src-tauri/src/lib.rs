@@ -1131,9 +1131,9 @@ async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<Stri
 }
 
 #[tauri::command]
-async fn cancel_download(download_id: String, app_handle: AppHandle) -> Result<String, String> {
+async fn cancel_download(download_id: String, _app_handle: AppHandle) -> Result<String, String> {
     // Get the cancel sender and file name, then remove from active downloads
-    let (cancel_tx, file_name) = {
+    let (cancel_tx, _file_name) = {
         let mut active_downloads = ACTIVE_DOWNLOADS.lock().await;
         if let Some(active_download) = active_downloads.remove(&download_id) {
             (active_download.cancel_tx, active_download.file_name)
@@ -1144,14 +1144,10 @@ async fn cancel_download(download_id: String, app_handle: AppHandle) -> Result<S
     
     // Send the cancel signal
     let _ = cancel_tx.send(());
-    println!("Cancelled download with id: {} (file: {})", download_id, file_name);
+    println!("Cancelled download with id: {}", download_id);
     
-    // Emit a download-error event to notify the frontend with the actual file name
-    let _ = app_handle.emit("download-error", serde_json::json!({
-        "id": download_id.clone(),
-        "file_name": file_name,
-        "error": "Transfer cancelled by user"
-    }));
+    // Don't emit error event for user cancellations - frontend handles dismissal directly
+    // The frontend's onDismiss callback will remove it from the UI immediately
     
     Ok("Download cancelled".to_string())
 }

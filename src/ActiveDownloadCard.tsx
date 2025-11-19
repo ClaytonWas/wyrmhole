@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import toast from "react-hot-toast";
+import { FileIcon } from "./FileIcon";
 
 type Props = {
     id: string;
@@ -31,8 +32,10 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
     async function handleCancel() {
         try {
             await invoke("cancel_download", { downloadId: id });
-            // Don't dismiss immediately - let the error event update the state
-            // The error event will mark it as failed, and the user can dismiss it
+            // Dismiss immediately when cancelled
+            if (onDismiss) {
+                onDismiss(id);
+            }
             setIsOpen(false);
         } catch (err) {
             console.error("Error cancelling download:", err);
@@ -46,8 +49,9 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                 onClick={() => setIsOpen(true)} 
                 className={`grid grid-cols-4 items-center gap-1.5 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${hasError ? "bg-red-50/50 hover:bg-red-50" : ""}`}
             >
-                <div className={`text-xs sm:text-sm truncate ${hasError ? "text-red-700" : "text-gray-700"}`}>
-                    {file_name}
+                <div className={`flex items-center gap-1.5 sm:gap-2 ${hasError ? "text-red-700" : "text-gray-700"}`}>
+                    <FileIcon fileName={file_name} className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm truncate">{file_name}</span>
                 </div>
                 <div className="flex-1 hidden sm:block">
                     <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 shadow-inner">
@@ -90,6 +94,7 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                         <div className="sticky top-0 bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 z-10">
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex gap-1 sm:gap-2 items-center min-w-0 flex-1">
+                                    <FileIcon fileName={file_name} className="w-5 h-5 flex-shrink-0" />
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-800 whitespace-nowrap">Downloading File</h3>
                                     <span className="text-gray-600 font-medium truncate text-xs sm:text-sm">{file_name}</span>
                                 </div>

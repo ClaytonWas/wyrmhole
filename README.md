@@ -4,21 +4,23 @@ A lightweight GUI for [magic-wormhole.rs](https://github.com/magic-wormhole/magi
 Built with Tauri + React + Typescript
 
 ## Current Build
-**0.1.0**
+**0.1.3**
 
-![Image](https://github.com/user-attachments/assets/82acb92d-b679-47d5-b116-e5f4c47e6645)
-
+TODO:
+- [ ] Change sending and receiving progress bars to be the correct colours
+- [ ] Make send files space flex correctly 
+- [ ] find a way to help with recieve files dead space (maybe move aroud elements some more)
 <br/>
 <br/>
 
-**0.1.1 Roadmap:**
+**0.2.0 Roadmap:**
 - [ ] Switch all console logging systems over to react-hot-toast.
-- [ ] Get the toast for sending files to close the backend mailbox connection when the x button is clicked.
-- [ ] Display codes for file send operations through react-hot-toast.
-- [ ] Continuing work on sending files methods. Get single file sends working on the backend in the files_json.rs file. Then multiple. Then dynamically populating sends?
+- [x] Get the toast for sending files to close the backend mailbox connection when the x button is clicked.
+- [x] Display codes for file send operations through react-hot-toast.
+- [x] Continuing work on sending files methods. Get single file sends working on the backend in the files_json.rs file. Then multiple. Then dynamically populating sends?
 - [ ] Reactor the code so functions are called in there own module and just have secure passthroughs that are called in the lib.rs.
-- [ ] Add checks and bindings for transfers that are cancelled or fail and add them to the received_files.json with what data can be taken depending on the stage of transfer. 
-- [ ] Create a separate type of received card component that has grid entries for its progress bar and download status. Should get deleted when the download completes, as they will be written into the .json and loaded dynamically that way.
+- [x] Add checks and bindings for transfers that are cancelled or fail and add them to the received_files.json with what data can be taken depending on the stage of transfer. 
+- [x] Create a separate type of received card component that has grid entries for its progress bar and download status. Should get deleted when the download completes, as they will be written into the .json and loaded dynamically that way.
 
 <br/>
 

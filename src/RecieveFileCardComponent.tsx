@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { FileIcon } from "./FileIcon";
 
 type Props = {
     connection_type: any;
@@ -25,8 +26,11 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
     
     return (
         <>
-            <div onClick={() => setIsOpen(true)} className="grid grid-cols-3 items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 hover:bg-gray-50 hover:text-gray-900 active:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0">
-                <div className="font-medium truncate text-xs sm:text-sm">{file_name}</div>
+            <div onClick={() => setIsOpen(true)} className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 hover:bg-gray-50 hover:text-gray-900 active:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 font-medium truncate text-xs sm:text-sm">
+                    <FileIcon fileName={`${file_name}.${file_extension}`} className="w-4 h-4 flex-shrink-0" />
+                    <span>{file_name}</span>
+                </div>
                 <div className="text-[10px] sm:text-sm text-gray-500">.{file_extension}</div>
                 <div className="text-[10px] sm:text-sm font-medium text-gray-600">{format_file_size(file_size)}</div>
             </div>
@@ -37,6 +41,7 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
                         <div className="sticky top-0 bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 z-10">
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex gap-1 sm:gap-2 items-center min-w-0 flex-1">
+                                    <FileIcon fileName={`${file_name}.${file_extension}`} className="w-5 h-5 flex-shrink-0" />
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-800 whitespace-nowrap">Received File</h3>
                                     <span className="text-gray-600 font-medium truncate text-xs sm:text-sm">{file_name}.{file_extension}</span>
                                 </div>
