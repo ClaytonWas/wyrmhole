@@ -10,8 +10,6 @@
 
 </div>
 
----
-
 ## 📖 About
 
 Wyrmhole is a cross-platform desktop application that provides a beautiful, user-friendly interface for secure peer-to-peer file transfers using the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) protocol. It combines the security and efficiency of Rust and the Magic Wormhome protocol with the flexibility of modern React web technologies.
