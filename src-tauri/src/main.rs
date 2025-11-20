@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    a_magic_wormhole_wrapper_lib::run()
+    wyrmhole_lib::run()
 }
