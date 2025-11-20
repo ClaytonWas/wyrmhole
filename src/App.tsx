@@ -662,12 +662,12 @@ function App() {
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 sm:py-4 select-none">
         {/* Active Transfers Section - Always Visible */}
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-sm sm:text-base xl:text-lg font-semibold text-gray-800 mb-2 select-none cursor-default">Active Transfers</h2>
+          <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">Active Transfers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {/* Active Sends */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[140px] flex flex-col">
               <div className="px-2 sm:px-3 py-1.5 bg-blue-50 border-b border-gray-200 flex-shrink-0">
-                <p className="text-[10px] sm:text-xs xl:text-sm font-semibold text-blue-700 uppercase tracking-wide">
+                <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-blue-700 uppercase tracking-wide">
                   Sending {sendProgress.size > 0 && `(${sendProgress.size})`}
                 </p>
               </div>
@@ -706,7 +706,7 @@ function App() {
             {/* Active Downloads */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[140px] flex flex-col">
               <div className="px-2 sm:px-3 py-1.5 bg-green-50 border-b border-gray-200 flex-shrink-0">
-                <p className="text-[10px] sm:text-xs xl:text-sm font-semibold text-green-700 uppercase tracking-wide">
+                <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-green-700 uppercase tracking-wide">
                   Receiving {downloadProgress.size > 0 && `(${downloadProgress.size})`}
                 </p>
               </div>

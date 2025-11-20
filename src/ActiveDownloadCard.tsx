@@ -57,7 +57,7 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
             >
                 <div className={`flex items-center gap-1.5 sm:gap-2 ${hasError ? "text-red-700" : "text-gray-700"}`}>
                     <FileIcon fileName={file_name} className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm xl:text-base truncate">{file_name}</span>
+                    <span className="text-[10px] sm:text-xs xl:text-sm truncate">{file_name}</span>
                 </div>
                 <div className="flex-1 hidden sm:block">
                     <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 shadow-inner">
@@ -67,15 +67,15 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                         ></div>
                     </div>
                     {hasError && (
-                        <div className="text-[10px] sm:text-xs xl:text-sm text-red-600 mt-1 truncate" title={error}>
+                        <div className="text-[9px] sm:text-[10px] xl:text-xs text-red-600 mt-1 truncate" title={error}>
                             {error}
                         </div>
                     )}
                 </div>
-                <div className={`text-[10px] sm:text-sm xl:text-base text-center ${hasError ? "text-red-600" : "text-gray-600"}`}>
+                <div className={`text-[9px] sm:text-[10px] xl:text-xs text-center ${hasError ? "text-red-600" : "text-gray-600"}`}>
                     {percentage}%
                 </div>
-                <div className={`text-[10px] sm:text-sm xl:text-base text-right flex items-center justify-end gap-1 sm:gap-2 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
+                <div className={`text-[9px] sm:text-[10px] xl:text-xs text-right flex items-center justify-end gap-1 sm:gap-2 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
                     <span className="hidden sm:inline flex items-center">{status}</span>
                     <span className="sm:hidden truncate">{typeof status === 'string' ? status.substring(0, 4) : '...'}</span>
                     {hasError && onDismiss && (
@@ -84,10 +84,10 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                                 e.stopPropagation();
                                 onDismiss(id);
                             }}
-                            className="text-red-600 hover:text-red-800 active:text-red-900 cursor-pointer"
+                            className="p-1.5 sm:p-2 rounded-md hover:bg-red-100 active:bg-red-200 text-red-600 hover:text-red-800 active:text-red-900 cursor-pointer transition-colors flex items-center justify-center"
                             title="Dismiss"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
                                 <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
                             </svg>
                         </button>

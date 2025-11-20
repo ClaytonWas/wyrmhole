@@ -1300,6 +1300,23 @@ async fn received_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Va
     Ok(files)
 }
 
+#[tauri::command]
+async fn export_received_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+    use std::fs;
+    
+    let received_files_path = settings::get_received_files_path(&app_handle);
+    
+    // Read the JSON file content
+    let json_content = fs::read_to_string(&received_files_path)
+        .map_err(|e| format!("Failed to read received files JSON: {}", e))?;
+    
+    // Write to the user-selected location
+    fs::write(&file_path, json_content)
+        .map_err(|e| format!("Failed to write exported file: {}", e))?;
+    
+    Ok(())
+}
+
 //TODO:: Create a function that checks if a file under that name/directory already exists and prompt the user to overwrite if they want instead of hard overwriting it.
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -1330,7 +1347,8 @@ pub fn run() {
             get_auto_extract_tarballs,
             set_auto_extract_tarballs,
             get_default_folder_name_format,
-            set_default_folder_name_format
+            set_default_folder_name_format,
+            export_received_files_json
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
