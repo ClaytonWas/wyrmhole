@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from '@tauri-apps/plugin-dialog';
 import { listen } from "@tauri-apps/api/event";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 import ReceiveFileCard from "./RecieveFileCardComponent";
@@ -59,6 +59,7 @@ function App() {
   const [pendingFileOffers, setPendingFileOffers] = useState<Map<string, PendingFileOffer>>(new Map());
   const [defaultFolderNameFormat, setDefaultFolderNameFormat] = useState<string>("#-files-via-wyrmhole");
   const [connectingCodes, setConnectingCodes] = useState<Map<string, string>>(new Map()); // Map<id, code>
+  const cancelledConnections = useRef<Set<string>>(new Set()); // Track cancelled connection IDs
 
   async function deny_file_receive(id: string) {
     try {
@@ -102,8 +103,7 @@ function App() {
     } catch (error) {
       console.error("Error accepting file:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(`Failed to download ${file_name || "file"}`, { duration: 5000 });
-      
+      // Don't show toast here - the download-error event handler will show it
       // Update download progress with error state
       setDownloadProgress(prev => {
         const next = new Map(prev);
@@ -179,8 +179,7 @@ function App() {
       } catch (err) {
         console.error("Error sending file:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
-        toast.error(`Failed to send ${displayName}`, { duration: 5000 });
-        
+        // Don't show toast here - the send-error event handler will show it
         // Update send progress with error state
         setSendProgress(prev => {
           const next = new Map(prev);
@@ -233,8 +232,7 @@ function App() {
       } catch (err) {
         console.error("Error sending files:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
-        toast.error(`Failed to send ${selectedFiles.length} files`, { duration: 5000 });
-        
+        // Don't show toast here - the send-error event handler will show it
         // Update send progress with error state
         setSendProgress(prev => {
           const next = new Map(prev);
@@ -279,26 +277,37 @@ function App() {
     setReceiveCode("");
     
     try {
-      const response = await invoke("request_file_call", { receiveCode: codeToUse });
+      const response = await invoke("request_file_call", { receiveCode: codeToUse, connectionId });
       const data = JSON.parse(response as string);
 
-      if (!data || !data.id || !data.file_name) {
-        toast.error("Invalid file offer from backend.");
-        // Remove from connecting codes
-        setConnectingCodes(prev => {
-          const next = new Map(prev);
-          next.delete(connectionId);
-          return next;
-        });
-        return;
-      }
-
+      // Check if this connection was cancelled while waiting
+      const wasCancelled = cancelledConnections.current.has(connectionId);
+      cancelledConnections.current.delete(connectionId); // Clean up
+      
       // Remove from connecting codes
       setConnectingCodes(prev => {
         const next = new Map(prev);
         next.delete(connectionId);
         return next;
       });
+
+      if (!data || !data.id || !data.file_name) {
+        if (!wasCancelled) {
+          toast.error("Invalid file offer from backend.");
+        }
+        return;
+      }
+
+      // If the connection was cancelled, automatically deny the file offer
+      if (wasCancelled) {
+        try {
+          await invoke("receiving_file_deny", { id: data.id });
+          console.log("Automatically denied file offer from cancelled connection:", data.id);
+        } catch (error) {
+          console.error("Error denying file from cancelled connection:", error);
+        }
+        return;
+      }
 
       // Add to pending file offers instead of showing toast
       setPendingFileOffers(prev => {
@@ -312,8 +321,10 @@ function App() {
       });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
-      toast.error(errorMessage || "Failed to connect to sender.");
-      console.error("Request file error:", e);
+      
+      // Check if this connection was cancelled while waiting
+      const wasCancelled = cancelledConnections.current.has(connectionId);
+      cancelledConnections.current.delete(connectionId); // Clean up
       
       // Remove from connecting codes
       setConnectingCodes(prev => {
@@ -321,22 +332,42 @@ function App() {
         next.delete(connectionId);
         return next;
       });
+      
+      // Only show error if it wasn't cancelled
+      if (!wasCancelled) {
+        toast.error(errorMessage || "Failed to connect to sender.");
+        console.error("Request file error:", e);
+      }
     }
   }
 
-  function cancelConnection(code: string) {
-    // Find and remove the connection by code
+  async function cancelConnection(code: string) {
+    // Find the connection ID by code
+    let connectionId: string | null = null;
     setConnectingCodes(prev => {
       const next = new Map(prev);
       for (const [id, connCode] of next.entries()) {
         if (connCode === code) {
+          connectionId = id;
+          // Mark this connection as cancelled
+          cancelledConnections.current.add(id);
           next.delete(id);
           break;
         }
       }
       return next;
     });
-    toast.success("Connection cancelled");
+    
+    // Call backend to actually cancel the connection
+    if (connectionId) {
+      try {
+        await invoke("cancel_connection", { connectionId });
+        toast.success("Connection cancelled");
+      } catch (err) {
+        console.error("Error cancelling connection:", err);
+        toast.error("Failed to cancel connection");
+      }
+    }
   }
 
   async function recieved_files_data() {
@@ -602,7 +633,10 @@ function App() {
         return next;
       });
 
-      toast.error(`Send failed: ${payload.file_name}`, { duration: 5000 });
+      // Don't show error toast if it was cancelled by user (success toast already shown)
+      if (payload.error !== "Transfer cancelled by user") {
+        toast.error(`Send failed: ${payload.file_name}`, { duration: 5000 });
+      }
     });
 
     return () => {
@@ -611,34 +645,34 @@ function App() {
   }, []);
 
   return (
-    <div className="app-container min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+    <div className="app-container h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col overflow-hidden">
       <Toaster position="bottom-right" reverseOrder={false} />
 
-      <nav className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
-        <div className="px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-          <h1 className="text-lg sm:text-2xl font-bold flex items-center select-none gap-1 sm:gap-2 text-gray-800">
-            <span className="spin-on-hover cursor-pointer text-lg sm:text-2xl flex items-center">🌀</span> 
+      <nav className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0 z-10">
+        <div className="px-3 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center">
+          <h1 className="text-lg sm:text-2xl xl:text-3xl font-bold flex items-center select-none gap-1 sm:gap-2 text-gray-800">
+            <span className="spin-on-hover cursor-pointer text-lg sm:text-2xl xl:text-3xl flex items-center">🌀</span> 
             <span className="gradient-shimmer flex items-center">wyrmhole</span>
           </h1>
           <SettingsMenu />
         </div>
       </nav>
 
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+      <div className="flex-1 overflow-y-auto min-h-0" style={{ scrollbarWidth: "thin" }}>
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 sm:py-4 select-none">
         {/* Active Transfers Section - Always Visible */}
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-sm sm:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">Active Transfers</h2>
+          <h2 className="text-sm sm:text-base xl:text-lg font-semibold text-gray-800 mb-2 select-none cursor-default">Active Transfers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {/* Active Sends */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[140px] flex flex-col">
               <div className="px-2 sm:px-3 py-1.5 bg-blue-50 border-b border-gray-200 flex-shrink-0">
-                <p className="text-[10px] sm:text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                <p className="text-[10px] sm:text-xs xl:text-sm font-semibold text-blue-700 uppercase tracking-wide">
                   Sending {sendProgress.size > 0 && `(${sendProgress.size})`}
                 </p>
               </div>
               <div 
-                className="flex-1 overflow-y-auto"
+                className={`flex-1 overflow-y-auto ${sendProgress.size === 0 ? 'flex items-center justify-center' : ''}`}
                 style={{ scrollbarWidth: "thin" }}
                 onWheel={(e) => {
                   const target = e.currentTarget;
@@ -664,7 +698,7 @@ function App() {
                     />
                   ))
                 ) : (
-                  <div className="p-3 text-center text-xs text-gray-400">No active sends</div>
+                  <div className="text-center text-xs xl:text-sm text-gray-400">No active sends</div>
                 )}
               </div>
             </div>
@@ -672,12 +706,12 @@ function App() {
             {/* Active Downloads */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[140px] flex flex-col">
               <div className="px-2 sm:px-3 py-1.5 bg-green-50 border-b border-gray-200 flex-shrink-0">
-                <p className="text-[10px] sm:text-xs font-semibold text-green-700 uppercase tracking-wide">
+                <p className="text-[10px] sm:text-xs xl:text-sm font-semibold text-green-700 uppercase tracking-wide">
                   Receiving {downloadProgress.size > 0 && `(${downloadProgress.size})`}
                 </p>
               </div>
               <div 
-                className="flex-1 overflow-y-auto"
+                className={`flex-1 overflow-y-auto ${downloadProgress.size === 0 ? 'flex items-center justify-center' : ''}`}
                 style={{ scrollbarWidth: "thin" }}
                 onWheel={(e) => {
                   const target = e.currentTarget;
@@ -703,7 +737,7 @@ function App() {
                     />
                   ))
                 ) : (
-                  <div className="p-3 text-center text-xs text-gray-400">No active downloads</div>
+                  <div className="text-center text-xs xl:text-sm text-gray-400">No active downloads</div>
                 )}
               </div>
             </div>
@@ -712,34 +746,36 @@ function App() {
 
         {/* Actions Section - Fixed Height */}
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-sm sm:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">Actions</h2>
+          <h2 className="text-sm sm:text-base xl:text-lg font-semibold text-gray-800 mb-2 select-none cursor-default">Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {/* Send Files Section - Fixed Height */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col">
               <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs sm:text-sm font-semibold text-gray-700 flex-shrink-0">Send Files</h3>
-                  {selectedFiles && selectedFiles.length > 1 && (
-                    <input
-                      type="text"
-                      value={folderName}
-                      onChange={(e) => setFolderName(e.target.value)}
-                      placeholder={`Folder Name: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
-                      className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      title="Custom name for the folder when sending multiple files. Leave empty to use the default format."
-                    />
-                  )}
-                  {selectedFiles && (
-                    <button 
-                      onClick={send_files} 
-                      className="font-medium flex items-center justify-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors cursor-pointer flex-shrink-0"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-3.5 h-3.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                      </svg>
-                      <span>Send</span>
-                    </button>
-                  )}
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">Send Files</h3>
+                  <div className="flex items-center gap-2 flex-1 justify-end">
+                    {selectedFiles && selectedFiles.length > 1 && (
+                      <input
+                        type="text"
+                        value={folderName}
+                        onChange={(e) => setFolderName(e.target.value)}
+                        placeholder={`Folder Name: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
+                        className="flex-1 px-2 py-1 text-xs xl:text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        title="Custom name for the folder when sending multiple files. Leave empty to use the default format."
+                      />
+                    )}
+                    {selectedFiles && (
+                      <button 
+                        onClick={send_files} 
+                        className="font-medium flex items-center justify-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs xl:text-sm rounded transition-colors cursor-pointer flex-shrink-0"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-3.5 h-3.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                        </svg>
+                        <span>Send</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex-1 flex flex-col p-3 min-h-0">
@@ -752,12 +788,12 @@ function App() {
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5 text-gray-400 mb-1">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"/>
                     </svg>
-                    <span className="text-xs text-gray-600">Click to select files</span>
+                    <span className="text-xs xl:text-sm text-gray-600">Click to select files</span>
                   </label>
                 ) : (
                   <div className="flex-1 flex flex-col min-h-0">
                     <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                      <span className="text-xs font-medium text-gray-700">
+                      <span className="text-xs xl:text-sm font-medium text-gray-700">
                         {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'}
                       </span>
                       <button
@@ -766,7 +802,7 @@ function App() {
                           setSelectedFiles(null);
                           setFolderName("");
                         }}
-                        className="text-[10px] text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
+                        className="text-[10px] xl:text-xs text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
                         title="Clear"
                       >
                         Clear
@@ -787,7 +823,7 @@ function App() {
                       {selectedFiles.length === 1 ? (
                         <div className="group flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
                           <FileIcon fileName={selectedFiles[0].split(/[/\\]/).pop() || "Unknown"} className="w-4 h-4 flex-shrink-0" />
-                          <p className="text-xs font-medium text-gray-900 truncate flex-1">
+                          <p className="text-xs xl:text-sm font-medium text-gray-900 truncate flex-1">
                             {selectedFiles[0].split(/[/\\]/).pop() || "Unknown"}
                           </p>
                           <button
@@ -810,7 +846,7 @@ function App() {
                             return (
                               <div key={idx} className="group flex items-center gap-2 p-1.5 bg-gray-50 rounded border border-gray-200">
                                 <FileIcon fileName={name} className="w-3.5 h-3.5 flex-shrink-0" />
-                                <p className="text-[11px] font-medium text-gray-900 truncate flex-1">{name}</p>
+                                <p className="text-[11px] xl:text-xs font-medium text-gray-900 truncate flex-1">{name}</p>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -838,17 +874,17 @@ function App() {
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col">
               <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
                 <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex items-center gap-2">
-                  <h3 className="text-xs sm:text-sm font-semibold text-gray-700 flex-shrink-0">Receive Files</h3>
+                  <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">Receive Files</h3>
                   <input 
                     value={receiveCode} 
                     onChange={(e) => setReceiveCode(e.target.value)} 
                     placeholder="Enter code: ex. 7-helpful-tiger" 
-                    className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-2 py-1 text-xs xl:text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     title="Enter the connection code provided by the sender. The code format is typically numbers and words separated by hyphens, like '7-helpful-tiger'."
                   />
                   <button 
                     type="submit" 
-                    className="font-medium flex items-center justify-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors cursor-pointer flex-shrink-0"
+                    className="font-medium flex items-center justify-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs xl:text-sm rounded transition-colors cursor-pointer flex-shrink-0"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -862,7 +898,7 @@ function App() {
                 {connectingCodes.size > 0 || pendingFileOffers.size > 0 ? (
                   <div className="flex-1 flex flex-col min-h-0">
                     {(connectingCodes.size > 0 || pendingFileOffers.size > 0) && (
-                      <div className="text-[10px] sm:text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2 flex-shrink-0">
+                      <div className="text-[10px] sm:text-xs xl:text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 flex-shrink-0">
                         {connectingCodes.size > 0 && pendingFileOffers.size > 0 
                           ? `Connecting (${connectingCodes.size}) • Pending Offers (${pendingFileOffers.size})`
                           : connectingCodes.size > 0 
@@ -909,7 +945,7 @@ function App() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-xs text-gray-400">
+                  <div className="flex-1 flex items-center justify-center text-xs xl:text-sm text-gray-400">
                     No pending offers
                   </div>
                 )}
@@ -920,9 +956,9 @@ function App() {
 
         {/* File History Section */}
         <div>
-          <h2 className="text-sm sm:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">File History</h2>
+          <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">File History</h2>
           <div className="border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden">
-            <div className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0">
+            <div className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0">
               <div className="truncate">Filename</div>
               <div className="truncate">Extension</div>
               <div className="truncate">Size</div>

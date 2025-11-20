@@ -76,10 +76,10 @@ export default function SettingsMenu() {
       {/* Settings Open Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
+        className="p-3 sm:p-3.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
         title="Settings"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" className="fill-gray-600 hover:fill-gray-800 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16" className="fill-gray-600 hover:fill-gray-800 transition-colors">
           <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
           <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
         </svg>
@@ -91,7 +91,7 @@ export default function SettingsMenu() {
           <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 rounded-t-lg sm:rounded-t-xl">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-800 select-none">Settings</h2>
+                <h2 className="text-lg sm:text-xl xl:text-2xl font-bold text-gray-800 select-none">Settings</h2>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
@@ -112,16 +112,16 @@ export default function SettingsMenu() {
                     choose_download_directory();
                   }
                 }}>
-                <label className="block font-semibold text-xs sm:text-sm select-none cursor-pointer mb-1 sm:mb-2 text-gray-700 group-hover:text-gray-900">Download Directory</label>
-                <div className="flex-1 border-2 border-gray-300 rounded-lg px-2 sm:px-4 py-2 sm:py-3 bg-gray-50 text-xs sm:text-sm select-none hover:border-blue-400 hover:bg-blue-50/30 transition-all group-hover:shadow-sm">
+                <label className="block font-semibold text-xs sm:text-sm xl:text-base select-none cursor-pointer mb-1 sm:mb-2 text-gray-700 group-hover:text-gray-900">Download Directory</label>
+                <div className="flex-1 border-2 border-gray-300 rounded-lg px-2 sm:px-4 py-2 sm:py-3 bg-gray-50 text-xs sm:text-sm xl:text-base select-none hover:border-blue-400 hover:bg-blue-50/30 transition-all group-hover:shadow-sm">
                   <p className="text-gray-700 truncate">{downloadDirectory || "No directory set"}</p>
                 </div>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Click to change download location</p>
+                <p className="text-[10px] sm:text-xs xl:text-sm text-gray-500 mt-1">Click to change download location</p>
               </div>
 
               {/* Auto-extract tarballs setting */}
               <div className="p-3 sm:p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 transition-all">
-                <label className="block font-semibold text-xs sm:text-sm select-none mb-2 sm:mb-3 text-gray-700">Auto-Extract Tarballs</label>
+                <label className="block font-semibold text-xs sm:text-sm xl:text-base select-none mb-2 sm:mb-3 text-gray-700">Auto-Extract Tarballs</label>
                 <div className="flex items-center gap-2 sm:gap-3">
                   <input
                     type="checkbox"
@@ -129,7 +129,7 @@ export default function SettingsMenu() {
                     onChange={toggle_auto_extract_tarballs}
                     className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-xs sm:text-sm text-gray-600 select-none">
+                  <span className="text-xs sm:text-sm xl:text-base text-gray-600 select-none">
                     Automatically extract received tarballs (default: off)
                   </span>
                 </div>
@@ -137,16 +137,16 @@ export default function SettingsMenu() {
 
               {/* Default folder name format setting */}
               <div className="p-3 sm:p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 transition-all">
-                <label className="block font-semibold text-xs sm:text-sm select-none mb-1 sm:mb-2 text-gray-700">Default Folder Name Format</label>
+                <label className="block font-semibold text-xs sm:text-sm xl:text-base select-none mb-1 sm:mb-2 text-gray-700">Default Folder Name Format</label>
                 <input
                   type="text"
                   value={defaultFolderNameFormat}
                   onChange={(e) => setDefaultFolderNameFormat(e.target.value)}
                   onBlur={save_default_folder_name_format}
                   placeholder="#-files-via-wyrmhole"
-                  className="w-full px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-all bg-white"
+                  className="w-full px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm xl:text-base border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-all bg-white"
                 />
-                <p className="text-[10px] sm:text-xs text-gray-500 select-none mt-1 sm:mt-2">
+                <p className="text-[10px] sm:text-xs xl:text-sm text-gray-500 select-none mt-1 sm:mt-2">
                   Use # as a placeholder for the number of files (e.g., "#-files-via-wyrmhole")
                 </p>
               </div>

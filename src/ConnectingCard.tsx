@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { LoadingDots } from "./LoadingDots";
 
 type Props = {
     code: string;
@@ -21,7 +22,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                         </svg>
                     </div>
-                    <span className="text-[11px] truncate font-medium">Connecting: <span className="font-semibold">{code}</span></span>
+                    <span className="text-[11px] xl:text-xs truncate font-medium">Connecting: <span className="font-semibold">{code}</span></span>
                 </div>
                 <div className="flex items-center gap-1">
                     <button
@@ -49,8 +50,8 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                                         </svg>
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 whitespace-nowrap">Connecting to Sender</h3>
-                                    <span className="text-gray-600 font-medium truncate text-xs sm:text-sm">{code}</span>
+                                    <h3 className="text-base sm:text-lg xl:text-xl font-semibold text-gray-800 whitespace-nowrap">Connecting to Sender</h3>
+                                    <span className="text-gray-600 font-medium truncate text-xs sm:text-sm xl:text-base">{code}</span>
                                 </div>
                                 <button
                                     onClick={() => setIsOpen(false)}
@@ -64,7 +65,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                             </div>
                         </div>
                         <div className="px-3 sm:px-6 py-3 sm:py-4">
-                            <p className="text-xs sm:text-sm font-semibold text-gray-700 bg-blue-50 rounded-md mb-2 sm:mb-3 px-2 sm:px-3 py-1.5 sm:py-2">Connection Status</p>
+                            <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 bg-blue-50 rounded-md mb-2 sm:mb-3 px-2 sm:px-3 py-1.5 sm:py-2">Connection Status</p>
                             <div className="p-3 sm:p-4 bg-blue-50 rounded-lg">
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="animate-spin">
@@ -72,10 +73,13 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                                         </svg>
                                     </div>
-                                    <p className="text-sm sm:text-base font-medium text-blue-900">Waiting for file offer...</p>
+                                    <p className="text-sm sm:text-base xl:text-lg font-medium text-blue-900">
+                                        Waiting for file offer
+                                        <LoadingDots />
+                                    </p>
                                 </div>
-                                <p className="text-xs sm:text-sm text-blue-700 mt-2">Connection code: <span className="font-semibold">{code}</span></p>
-                                <p className="text-xs sm:text-sm text-blue-600 mt-1">Please wait while we establish a connection with the sender.</p>
+                                <p className="text-xs sm:text-sm xl:text-base text-blue-700 mt-2">Connection code: <span className="font-semibold">{code}</span></p>
+                                <p className="text-xs sm:text-sm xl:text-base text-blue-600 mt-1">Please wait while we establish a connection with the sender.</p>
                             </div>
                         </div>
                         <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex gap-2 sm:gap-3">
@@ -84,7 +88,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                                     onCancel(code);
                                     setIsOpen(false);
                                 }}
-                                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm xl:text-base transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

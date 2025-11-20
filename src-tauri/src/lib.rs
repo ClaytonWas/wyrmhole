@@ -37,6 +37,12 @@ struct ActiveDownload {
 static ACTIVE_DOWNLOADS: Lazy<Mutex<HashMap<String, ActiveDownload>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
+struct ActiveConnection {
+    cancel_tx: oneshot::Sender<()>,
+}
+static ACTIVE_CONNECTIONS: Lazy<Mutex<HashMap<String, ActiveConnection>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String) -> Result<String, String> {
@@ -682,7 +688,7 @@ async fn cancel_send(send_id: String, app_handle: AppHandle) -> Result<String, S
 
 
 #[tauri::command]
-async fn request_file_call(receive_code: &str) -> Result<String, String> {
+async fn request_file_call(receive_code: &str, connection_id: String) -> Result<String, String> {
     // Parsing input
     let mut code_string = receive_code.trim();
     let prefix = "wormhole receive ";
@@ -701,6 +707,17 @@ async fn request_file_call(receive_code: &str) -> Result<String, String> {
     })?;
     println!("Successfully parsed code: {:?}", code);
 
+    // Create cancel channel for this connection
+    let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
+    
+    // Store the connection with cancel channel
+    {
+        let mut active_connections = ACTIVE_CONNECTIONS.lock().await;
+        active_connections.insert(connection_id.clone(), ActiveConnection {
+            cancel_tx,
+        });
+    }
+
     // Connecting to the mailbox
     //TODO: Allow customizable configs
     let config = transfer::APP_CONFIG.clone();
@@ -710,12 +727,20 @@ async fn request_file_call(receive_code: &str) -> Result<String, String> {
             conn
         }
         Err(e) => {
+            // Remove from active connections on error
+            ACTIVE_CONNECTIONS.lock().await.remove(&connection_id);
             let msg = format!("Failed to create mailbox: {}", e);
             println!("{}", msg);
             return Err(msg);
         }
     };
+    let connection_id_clone = connection_id.clone();
     let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e: WormholeError| {
+        // Remove from active connections on error
+        let connection_id_clone = connection_id_clone.clone();
+        tokio::spawn(async move {
+            ACTIVE_CONNECTIONS.lock().await.remove(&connection_id_clone);
+        });
         let msg = format!("Failed to connect to Wormhole: {}", e);
         println!("{}", msg);
         msg
@@ -730,11 +755,24 @@ async fn request_file_call(receive_code: &str) -> Result<String, String> {
     .unwrap();
     let relay_hints = vec![relay_hint];
     let abilities = transit::Abilities::ALL;
-    let cancel_call = futures::future::pending::<()>();
+    
+    // Use the cancel receiver as the cancel future
+    let cancel_call = cancel_rx.map(|_| ());
 
+    let connection_id_clone2 = connection_id.clone();
     let maybe_request = transfer::request_file(wormhole, relay_hints, abilities, cancel_call)
         .await
-        .map_err(|e| format!("Failed to request file: {}", e))?;
+        .map_err(|e| {
+            // Remove from active connections on error
+            let connection_id_clone = connection_id_clone2.clone();
+            tokio::spawn(async move {
+                ACTIVE_CONNECTIONS.lock().await.remove(&connection_id_clone);
+            });
+            format!("Failed to request file: {}", e)
+        })?;
+    
+    // Remove from active connections on success
+    ACTIVE_CONNECTIONS.lock().await.remove(&connection_id);
     if let Some(receive_request) = maybe_request {
         let file_name = receive_request.file_name().to_string().to_owned();
         let file_size = receive_request.file_size();
@@ -758,6 +796,25 @@ async fn request_file_call(receive_code: &str) -> Result<String, String> {
         println!("No file was offered by the sender (canceled or empty).");
         Err("No file was offered by the sender (canceled or empty).".to_string())
     }
+}
+
+#[tauri::command]
+async fn cancel_connection(connection_id: String) -> Result<String, String> {
+    // Get the cancel sender and remove from active connections
+    let cancel_tx = {
+        let mut active_connections = ACTIVE_CONNECTIONS.lock().await;
+        if let Some(active_connection) = active_connections.remove(&connection_id) {
+            active_connection.cancel_tx
+        } else {
+            return Err("No active connection found for this ID".to_string());
+        }
+    };
+    
+    // Send the cancel signal
+    let _ = cancel_tx.send(());
+    println!("Cancelled connection with id: {}", connection_id);
+    
+    Ok("Connection cancelled".to_string())
 }
 
 #[tauri::command]
@@ -1264,6 +1321,7 @@ pub fn run() {
             cancel_send,
             cancel_download,
             request_file_call,
+            cancel_connection,
             receiving_file_accept,
             receiving_file_deny,
             set_download_directory,

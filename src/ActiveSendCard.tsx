@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import toast from "react-hot-toast";
 import { FileIcon } from "./FileIcon";
+import { LoadingDots } from "./LoadingDots";
 
 type Props = {
     id: string;
@@ -29,22 +30,34 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
     const hasError = !!error;
     
     // Determine status text based on statusProp
-    let statusText = "Preparing..."; // Default to "Preparing..." instead of "Sending..."
+    let statusText = "Preparing"; // Default to "Preparing" instead of "Sending..."
+    let showDots = false;
     if (hasError) {
         statusText = "Failed";
+        showDots = false;
     } else if (percentage >= 100) {
         statusText = "Completed";
+        showDots = false;
     } else if (statusProp === "preparing") {
-        statusText = "Preparing...";
+        statusText = "Preparing";
+        showDots = true;
     } else if (statusProp === "waiting") {
-        statusText = "Waiting...";
+        statusText = "Waiting";
+        showDots = true;
     } else if (statusProp === "packaging") {
-        statusText = "Packaging...";
+        statusText = "Packaging";
+        showDots = true;
     } else if (statusProp === "sending") {
-        statusText = "Sending...";
+        statusText = "Sending";
+        showDots = true;
     }
     
-    const status = statusText;
+    const status = showDots ? (
+        <>
+            {statusText}
+            <LoadingDots />
+        </>
+    ) : statusText;
     const progressBarColor = hasError ? "bg-red-600" : "bg-blue-600";
     const isComplete = percentage >= 100;
     
@@ -70,7 +83,7 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
             >
                 <div className={`flex items-center gap-1.5 sm:gap-2 ${hasError ? "text-red-700" : "text-gray-700"}`}>
                     <FileIcon fileName={file_name} className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm truncate">{file_name}</span>
+                    <span className="text-xs sm:text-sm xl:text-base truncate">{file_name}</span>
                 </div>
                 <div className="flex-1 hidden sm:block">
                     <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 shadow-inner">
@@ -80,17 +93,17 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
                         ></div>
                     </div>
                     {hasError && (
-                        <div className="text-[10px] sm:text-xs text-red-600 mt-1 truncate" title={error}>
+                        <div className="text-[10px] sm:text-xs xl:text-sm text-red-600 mt-1 truncate" title={error}>
                             {error}
                         </div>
                     )}
                 </div>
-                <div className={`text-[10px] sm:text-sm text-center ${hasError ? "text-red-600" : "text-gray-600"}`}>
+                <div className={`text-[10px] sm:text-sm xl:text-base text-center ${hasError ? "text-red-600" : "text-gray-600"}`}>
                     {percentage}%
                 </div>
-                <div className={`text-[10px] sm:text-sm text-right flex items-center justify-end gap-1 sm:gap-2 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
-                    <span className="hidden sm:inline">{status}</span>
-                    <span className="sm:hidden truncate">{status.substring(0, 4)}</span>
+                <div className={`text-[10px] sm:text-sm xl:text-base text-right flex items-center justify-end gap-1 sm:gap-2 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
+                    <span className="hidden sm:inline flex items-center">{status}</span>
+                    <span className="sm:hidden truncate">{typeof status === 'string' ? status.substring(0, 4) : '...'}</span>
                     {hasError && onDismiss && (
                         <button
                             onClick={(e) => {
@@ -114,8 +127,8 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex gap-1 sm:gap-2 items-center min-w-0 flex-1">
                                     <FileIcon fileName={file_name} className="w-5 h-5 flex-shrink-0" />
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 whitespace-nowrap">Sending File</h3>
-                                    <span className="text-gray-600 font-medium truncate text-xs sm:text-sm">{file_name}</span>
+                                    <h3 className="text-base sm:text-lg xl:text-xl font-semibold text-gray-800 whitespace-nowrap">Sending File</h3>
+                                    <span className="text-gray-600 font-medium truncate text-xs sm:text-sm xl:text-base">{file_name}</span>
                                 </div>
                                 <button
                                     onClick={() => setIsOpen(false)}
@@ -129,40 +142,40 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
                             </div>
                         </div>
                         <div className="px-3 sm:px-6 py-3 sm:py-4">
-                            <p className="text-xs sm:text-sm font-semibold text-gray-700 bg-gray-100 rounded-md mb-2 sm:mb-3 px-2 sm:px-3 py-1.5 sm:py-2">File Information</p>
+                            <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 bg-gray-100 rounded-md mb-2 sm:mb-3 px-2 sm:px-3 py-1.5 sm:py-2">File Information</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
                                 <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Filename:</p>
-                                    <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate ml-2">{file_name || 'No provided filename.'}</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Filename:</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900 truncate ml-2">{file_name || 'No provided filename.'}</p>
                                 </div>
                                 <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Size:</p>
-                                    <p className="text-xs sm:text-sm font-semibold text-gray-900">{formatBytes(total)}</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Size:</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900">{formatBytes(total)}</p>
                                 </div>
                                 <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Progress:</p>
-                                    <p className="text-xs sm:text-sm font-semibold text-gray-900">{percentage}% ({formatBytes(sent)} / {formatBytes(total)})</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Progress:</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900">{percentage}% ({formatBytes(sent)} / {formatBytes(total)})</p>
                                 </div>
                                 <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm font-medium text-gray-600">Status:</p>
-                                    <p className="text-xs sm:text-sm font-semibold text-gray-900">{status}</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Status:</p>
+                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900">{status}</p>
                                 </div>
                             </div>
                             {error && (
                                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <p className="text-sm text-red-800 font-medium">Error: {error}</p>
+                                    <p className="text-sm xl:text-base text-red-800 font-medium">Error: {error}</p>
                                 </div>
                             )}
                         </div>
                         {code && (
                             <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
-                                <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Connection Code</p>
+                                <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 mb-2 sm:mb-3">Connection Code</p>
                                 <div>
                                     <input 
                                         type="text" 
                                         readOnly 
                                         value={code} 
-                                        className="w-full text-xs sm:text-base font-mono text-gray-900 bg-white border-2 border-gray-300 rounded-lg px-2 sm:px-4 py-2 sm:py-3 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                        className="w-full text-xs sm:text-base xl:text-lg font-mono text-gray-900 bg-white border-2 border-gray-300 rounded-lg px-2 sm:px-4 py-2 sm:py-3 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         onClick={async (e) => {
                                             const input = e.target as HTMLInputElement;
                                             input.select();
@@ -182,7 +195,7 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
                             <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200">
                                 <button
                                     onClick={handleCancel}
-                                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-semibold px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-semibold px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm xl:text-base transition-all duration-200 shadow-sm hover:shadow-md"
                                 >
                                     Cancel Send
                                 </button>
