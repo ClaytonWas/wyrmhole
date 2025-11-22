@@ -125,10 +125,11 @@ npm run tauri build
 ### Version 0.3.0
 
 - [ ] Refactor console logging to use react-hot-toast consistently
-- [ ] Modularize code structure with secure passthroughs in lib.rs
+- [x] Modularize code structure with secure passthroughs in lib.rs
 - [ ] Implement sent files history tracking
 - [ ] Custom relay server configuration
-- [ ] Optimize tarball naming schema
+- [x] Optimize tarball naming schema
+- [x] Application window size persistance
 
 ### Future Considerations
 
