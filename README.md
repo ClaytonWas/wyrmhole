@@ -21,7 +21,10 @@ Wyrmhole is a cross-platform desktop application that provides a beautiful, user
 - 📊 **Real-time Progress** - Live progress tracking for both sending and receiving operations
 - 📜 **Transfer History** - Complete history of received files with metadata
 - 🚀 **Cross-platform** - Works on Windows, macOS, and Linux
-- 📦 **Compact Package** - Builds to < 15mB 
+- 📦 **Compact Package** - Builds to < 15mB
+
+## 🌀 Demo 
+[Multi_File_Send_and_Receive.webm](https://github.com/user-attachments/assets/16d9d46d-a24b-402e-be05-bc5009b7b30d)
 
 ## 🚀 Getting Started
 
@@ -137,7 +140,7 @@ npm run tauri build
 - [ ] Transfer queue management
 - [ ] File preview capabilities
 - [ ] Transfer statistics and analytics
-- [ ] Messaging with the wormhole protocol
+- [ ] Messaging with the wormhole protocols (this will require modifications or updates to the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) cargo to work like a messager)
 
 ## 🤝 Contributing
 
@@ -153,16 +156,16 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) - The secure file transfer protocol
-- [Magic-Wormhole](https://magic-wormhole.readthedocs.io/) - The original Python implementation and documentation
-- [Tauri](https://tauri.app/) - The framework for building desktop applications
-
 ## 📚 Resources
 
+- [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) - The secure file transfer protocol used in this application
 - [magic-wormhole.rs on crates.io](https://crates.io/crates/magic-wormhole)
+- [Tauri](https://tauri.app/) - The framework used for this applciation
 - [Tauri Documentation](https://tauri.app/)
+
+## 🙏 Acknowledgments
+
+- [Magic-Wormhole](https://magic-wormhole.readthedocs.io/) - The original Python implementation and documentation
 
 ---
 
