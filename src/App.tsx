@@ -660,19 +660,19 @@ function App() {
 
       <div className="flex-1 overflow-y-auto min-h-0" style={{ scrollbarWidth: "thin" }}>
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 sm:py-4 select-none">
-        {/* Active Transfers Section - Always Visible */}
-        <div className="mb-3 sm:mb-4">
+        {/* Active Transfers Section - Always visible on desktop, conditional on mobile */}
+        <div className={`mb-3 sm:mb-4 ${(sendProgress.size === 0 && downloadProgress.size === 0) ? 'hidden md:block' : ''}`}>
           <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">Active Transfers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {/* Active Sends */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[140px] flex flex-col">
+            <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden md:h-[140px] flex flex-col ${sendProgress.size === 0 ? 'hidden md:flex' : ''}`}>
               <div className="px-2 sm:px-3 py-1.5 bg-blue-50 border-b border-gray-200 flex-shrink-0">
                 <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-blue-700 uppercase tracking-wide">
                   Sending {sendProgress.size > 0 && `(${sendProgress.size})`}
                 </p>
               </div>
               <div 
-                className={`flex-1 overflow-y-auto ${sendProgress.size === 0 ? 'flex items-center justify-center' : ''}`}
+                className={`overflow-y-auto md:flex-1 ${sendProgress.size === 0 ? 'flex items-center justify-center' : ''}`}
                 style={{ scrollbarWidth: "thin" }}
                 onWheel={(e) => {
                   const target = e.currentTarget;
@@ -704,14 +704,14 @@ function App() {
             </div>
             
             {/* Active Downloads */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden h-[140px] flex flex-col">
+            <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden md:h-[140px] flex flex-col ${downloadProgress.size === 0 ? 'hidden md:flex' : ''}`}>
               <div className="px-2 sm:px-3 py-1.5 bg-green-50 border-b border-gray-200 flex-shrink-0">
                 <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-green-700 uppercase tracking-wide">
                   Receiving {downloadProgress.size > 0 && `(${downloadProgress.size})`}
                 </p>
               </div>
               <div 
-                className={`flex-1 overflow-y-auto ${downloadProgress.size === 0 ? 'flex items-center justify-center' : ''}`}
+                className={`overflow-y-auto md:flex-1 ${downloadProgress.size === 0 ? 'flex items-center justify-center' : ''}`}
                 style={{ scrollbarWidth: "thin" }}
                 onWheel={(e) => {
                   const target = e.currentTarget;
@@ -746,7 +746,7 @@ function App() {
 
         {/* Actions Section - Fixed Height */}
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-sm sm:text-base xl:text-lg font-semibold text-gray-800 mb-2 select-none cursor-default">Actions</h2>
+          <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {/* Send Files Section - Fixed Height */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col">
@@ -870,8 +870,8 @@ function App() {
               </div>
             </div>
 
-            {/* Receive Files Section - Compact */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col">
+            {/* Receive Files Section - Compact - Grows with content */}
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
               <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
                 <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex items-center gap-2">
                   <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">Receive Files</h3>
@@ -893,10 +893,10 @@ function App() {
                   </button>
                 </form>
               </div>
-              <div className="flex-1 flex flex-col p-3 min-h-0">
+              <div className="flex flex-col p-3">
                 {/* Connecting Cards and Pending File Offers */}
                 {connectingCodes.size > 0 || pendingFileOffers.size > 0 ? (
-                  <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex flex-col">
                     {(connectingCodes.size > 0 || pendingFileOffers.size > 0) && (
                       <div className="text-[10px] sm:text-xs xl:text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 flex-shrink-0">
                         {connectingCodes.size > 0 && pendingFileOffers.size > 0 
@@ -907,7 +907,7 @@ function App() {
                       </div>
                     )}
                     <div 
-                      className="flex-1 overflow-y-auto min-h-0 space-y-1" 
+                      className="overflow-y-auto space-y-1 max-h-[200px] md:max-h-[240px]" 
                       style={{ scrollbarWidth: "thin" }}
                       onWheel={(e) => {
                         const target = e.currentTarget;
@@ -945,7 +945,7 @@ function App() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-xs xl:text-sm text-gray-400">
+                  <div className="flex items-center justify-center text-xs xl:text-sm text-gray-400 py-2">
                     No pending offers
                   </div>
                 )}

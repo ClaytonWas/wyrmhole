@@ -79,31 +79,30 @@ const ActiveSendCard = ({ id, file_name, sent, total, percentage, error, code, s
         <>
             <div 
                 onClick={() => setIsOpen(true)} 
-                className={`grid grid-cols-4 items-center gap-1.5 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${hasError ? "bg-red-50/50 hover:bg-red-50" : ""}`}
+                className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${hasError ? "bg-red-50/50 hover:bg-red-50" : ""}`}
             >
-                <div className={`flex items-center gap-1.5 sm:gap-2 ${hasError ? "text-red-700" : "text-gray-700"}`}>
-                    <FileIcon fileName={file_name} className="w-4 h-4 flex-shrink-0" />
+                <div className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 min-w-0 ${hasError ? "text-red-700" : "text-gray-700"}`}>
+                    <FileIcon fileName={file_name} className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs xl:text-sm truncate">{file_name}</span>
                 </div>
-                <div className="flex-1 hidden sm:block">
-                    <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 shadow-inner">
+                <div className="flex-1 min-w-0">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 md:h-2.5 shadow-inner">
                         <div 
-                            className={`${progressBarColor} h-2 sm:h-2.5 rounded-full transition-all duration-300 shadow-sm`}
+                            className={`${progressBarColor} h-1.5 sm:h-2 md:h-2.5 rounded-full transition-all duration-300 shadow-sm`}
                             style={{ width: `${Math.min(percentage, 100)}%` }}
                         ></div>
                     </div>
                     {hasError && (
-                        <div className="text-[9px] sm:text-[10px] xl:text-xs text-red-600 mt-1 truncate" title={error}>
+                        <div className="text-[8px] sm:text-[9px] md:text-[10px] xl:text-xs text-red-600 mt-0.5 sm:mt-1 truncate" title={error}>
                             {error}
                         </div>
                     )}
                 </div>
-                <div className={`text-[9px] sm:text-[10px] xl:text-xs text-center ${hasError ? "text-red-600" : "text-gray-600"}`}>
+                <div className={`text-[8px] sm:text-[9px] md:text-[10px] xl:text-xs text-center whitespace-nowrap ${hasError ? "text-red-600" : "text-gray-600"}`}>
                     {percentage}%
                 </div>
-                <div className={`text-[9px] sm:text-[10px] xl:text-xs text-right flex items-center justify-end gap-1 sm:gap-2 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
-                    <span className="hidden sm:inline flex items-center">{status}</span>
-                    <span className="sm:hidden truncate">{typeof status === 'string' ? status.substring(0, 4) : '...'}</span>
+                <div className={`text-[8px] sm:text-[9px] md:text-[10px] xl:text-xs text-right flex items-center justify-end gap-0.5 sm:gap-1 md:gap-2 min-w-0 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}>
+                    <span className="flex items-center truncate">{status}</span>
                     {hasError && onDismiss && (
                         <button
                             onClick={(e) => {

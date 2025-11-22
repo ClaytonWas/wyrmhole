@@ -1,9 +1,11 @@
-// This file contains the settings for the Tauri application.
-// Creates and modifies the settings file.
+// This file contains all settings logic for the Tauri application.
+// Creates and modifies the settings file, and provides public API functions for settings operations.
+
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Emitter};
+use tokio::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
@@ -156,5 +158,100 @@ pub fn save_settings(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(settings)?;
     fs::write(path, json)?;
+    Ok(())
+}
+
+// Public API functions - these are called from lib.rs as secure bindings
+
+pub async fn set_download_directory(app_handle: AppHandle, new_path: String) -> Result<(), String> {
+    let new_path_buf = PathBuf::from(&new_path);
+
+    // Check if path exists and is a directory
+    if !new_path_buf.exists() {
+        return Err("Provided path does not exist.".to_string());
+    }
+    if !new_path_buf.is_dir() {
+        return Err("Provided path is not a directory.".to_string());
+    }
+
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_download_directory(new_path_buf);
+
+    // Save settings
+    let settings_path = get_settings_path(&app_handle);
+    if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+
+    Ok(())
+}
+
+pub async fn get_download_path(app_handle: AppHandle) -> Result<String, String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    let dir = app_settings_lock
+        .get_download_directory()
+        .to_string_lossy()
+        .to_string();
+    Ok(dir)
+}
+
+pub async fn get_auto_extract_tarballs(app_handle: AppHandle) -> Result<bool, String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_auto_extract_tarballs())
+}
+
+pub async fn set_auto_extract_tarballs(app_handle: AppHandle, value: bool) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_auto_extract_tarballs(value);
+
+    // Save settings
+    let settings_path = get_settings_path(&app_handle);
+    if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+
+    Ok(())
+}
+
+pub async fn get_default_folder_name_format(app_handle: AppHandle) -> Result<String, String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_default_folder_name_format().clone())
+}
+
+pub async fn set_default_folder_name_format(app_handle: AppHandle, value: String) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_default_folder_name_format(value.clone());
+
+    // Save settings
+    let settings_path = get_settings_path(&app_handle);
+    if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+
+    // Emit event to notify frontend that the setting has been updated
+    let _ = app_handle.emit("default-folder-name-format-updated", serde_json::json!({
+        "value": value
+    }));
+
+    Ok(())
+}
+
+pub async fn export_received_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+    let received_files_path = get_received_files_path(&app_handle);
+    
+    // Read the JSON file content
+    let json_content = fs::read_to_string(&received_files_path)
+        .map_err(|e| format!("Failed to read received files JSON: {}", e))?;
+    
+    // Write to the user-selected location
+    fs::write(&file_path, json_content)
+        .map_err(|e| format!("Failed to write exported file: {}", e))?;
+    
     Ok(())
 }
