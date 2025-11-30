@@ -92,6 +92,17 @@ async fn export_received_files_json(app_handle: AppHandle, file_path: String) ->
     settings::export_received_files_json(app_handle, file_path).await
 }
 
+#[tauri::command]
+async fn sent_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>, String> {
+    let files = files_json::get_sent_files_json_data(app_handle).await?;
+    Ok(files)
+}
+
+#[tauri::command]
+async fn export_sent_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+    settings::export_sent_files_json(app_handle, file_path).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -102,6 +113,7 @@ pub fn run() {
             app.manage(Mutex::new(app_settings));
 
             files_json::init_received_files(app.handle());
+            files_json::init_sent_files(app.handle());
 
             // Make window visible after state is restored (prevents flashing)
             if let Some(window) = app.get_webview_window("main") {
@@ -122,12 +134,14 @@ pub fn run() {
             receiving_file_deny,
             set_download_directory,
             received_files_data,
+            sent_files_data,
             get_download_path,
             get_auto_extract_tarballs,
             set_auto_extract_tarballs,
             get_default_folder_name_format,
             set_default_folder_name_format,
-            export_received_files_json
+            export_received_files_json,
+            export_sent_files_json
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

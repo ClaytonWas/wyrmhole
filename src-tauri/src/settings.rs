@@ -95,6 +95,24 @@ pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
     path
 }
 
+// Get the app data path of the applications operating system and appends a sent_files.json.
+pub fn get_sent_files_path(app_handle: &AppHandle) -> PathBuf {
+    let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
+        eprintln!("Could not get app config directory: {}", e);
+        PathBuf::from(".")
+    });
+
+    // Ensure the config directory exists before writing to it.
+    if !path.exists() {
+        if let Err(e) = fs::create_dir_all(&path) {
+            eprintln!("Failed to create config directory: {}", e);
+        }
+    }
+
+    path.push("sent_files.json");
+    path
+}
+
 // Creates an instance of AppSettings with default values.
 fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
     let download_dir = app_handle.path().download_dir().unwrap_or_else(|e| {
@@ -248,6 +266,20 @@ pub async fn export_received_files_json(app_handle: AppHandle, file_path: String
     // Read the JSON file content
     let json_content = fs::read_to_string(&received_files_path)
         .map_err(|e| format!("Failed to read received files JSON: {}", e))?;
+    
+    // Write to the user-selected location
+    fs::write(&file_path, json_content)
+        .map_err(|e| format!("Failed to write exported file: {}", e))?;
+    
+    Ok(())
+}
+
+pub async fn export_sent_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+    let sent_files_path = get_sent_files_path(&app_handle);
+    
+    // Read the JSON file content
+    let json_content = fs::read_to_string(&sent_files_path)
+        .map_err(|e| format!("Failed to read sent files JSON: {}", e))?;
     
     // Write to the user-selected location
     fs::write(&file_path, json_content)

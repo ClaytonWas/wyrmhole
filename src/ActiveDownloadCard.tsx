@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { FileIcon } from "./FileIcon";
 import { LoadingDots } from "./LoadingDots";
 
@@ -48,12 +48,26 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
             toast.error("Failed to cancel download");
         }
     }
+
+    // Handle Escape key to close modal
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [isOpen]);
     
     return (
         <>
             <div 
                 onClick={() => setIsOpen(true)} 
-                className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${hasError ? "bg-red-50/50 hover:bg-red-50" : ""}`}
+                className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors m-0 ${hasError ? "bg-red-50/50 hover:bg-red-50" : ""}`}
             >
                 <div className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 min-w-0 ${hasError ? "text-red-700" : "text-gray-700"}`}>
                     <FileIcon fileName={file_name} className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -94,19 +108,24 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                 </div>
             </div>
             {isOpen && createPortal(
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setIsOpen(false)}>
-                    <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 z-10">
-                            <div className="flex justify-between items-center gap-2">
-                                <div className="flex gap-1 sm:gap-2 items-center min-w-0 flex-1">
-                                    <FileIcon fileName={file_name} className="w-5 h-5 flex-shrink-0" />
-                                    <h3 className="text-base sm:text-lg xl:text-xl font-semibold text-gray-800 whitespace-nowrap">Downloading File</h3>
-                                    <span className="text-gray-600 font-medium truncate text-xs sm:text-sm xl:text-base">{file_name}</span>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsOpen(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="flex-shrink-0 p-2 bg-green-50 rounded-xl">
+                                        <FileIcon fileName={file_name} className="w-5 h-5 text-green-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="text-base font-semibold text-gray-900 truncate">{file_name}</h3>
+                                        <p className="text-xs text-gray-500 mt-0.5">Downloading file</p>
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                                    title="Close"
+                                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                                    title="Close (Esc)"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" className="fill-gray-500 hover:fill-gray-700">
                                         <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
@@ -114,37 +133,50 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
                                 </button>
                             </div>
                         </div>
-                        <div className="px-3 sm:px-6 py-3 sm:py-4">
-                            <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 bg-gray-100 rounded-md mb-2 sm:mb-3 px-2 sm:px-3 py-1.5 sm:py-2">File Information</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
-                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Filename:</p>
-                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900 truncate ml-2">{file_name || 'No provided filename.'}</p>
+
+                        {/* Content */}
+                        <div className="px-6 py-5 space-y-4">
+                            {/* Progress */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2.5">
+                                    <span className="text-sm font-medium text-gray-700">Progress</span>
+                                    <span className="text-sm font-bold text-gray-900">{percentage}%</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Size:</p>
-                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900">{formatBytes(total)}</p>
+                                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                    <div 
+                                        className={`${progressBarColor} h-full rounded-full transition-all duration-500`}
+                                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                                    />
                                 </div>
-                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Progress:</p>
-                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900">{percentage}% ({formatBytes(transferred)} / {formatBytes(total)})</p>
+                                <p className="text-xs text-gray-500 mt-2">{formatBytes(transferred)} / {formatBytes(total)}</p>
+                            </div>
+
+                            {/* Info Grid */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Size</p>
+                                    <p className="text-sm font-semibold text-gray-900">{formatBytes(total)}</p>
                                 </div>
-                                <div className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs sm:text-sm xl:text-base font-medium text-gray-600">Status:</p>
-                                    <p className="text-xs sm:text-sm xl:text-base font-semibold text-gray-900">{status}</p>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Status</p>
+                                    <p className="text-sm font-semibold text-gray-900">{status}</p>
                                 </div>
                             </div>
+
+                            {/* Error */}
                             {error && (
-                                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <p className="text-xs sm:text-sm xl:text-base text-red-800 font-medium">Error: {error}</p>
+                                <div className="p-3 bg-red-50 rounded-xl border border-red-100">
+                                    <p className="text-sm text-red-800">{error}</p>
                                 </div>
                             )}
                         </div>
+
+                        {/* Cancel Button - Refined */}
                         {!isComplete && !hasError && (
-                            <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200">
+                            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                                 <button
                                     onClick={handleCancel}
-                                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-semibold px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm xl:text-base transition-all duration-200 shadow-sm hover:shadow-md"
+                                    className="w-full px-4 py-2.5 bg-white border-2 border-red-200 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 active:bg-red-100 transition-all duration-200 shadow-sm hover:shadow"
                                 >
                                     Cancel Download
                                 </button>

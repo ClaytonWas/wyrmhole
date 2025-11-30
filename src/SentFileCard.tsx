@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { FileIcon } from "./FileIcon";
 
+
 type Props = {
-    connection_type: any;
-    download_time: any;
-    download_url: any;
-    file_extension: any;
-    file_name: any;
-    file_size: any;
-    peer_address: any;
+    file_name: string;
+    file_size: number;
+    file_extension: string;
+    file_paths: string[];
+    send_time: string;
+    connection_code: string;
 };
 
 function format_file_size(bytes: number): string {
@@ -20,18 +20,13 @@ function format_file_size(bytes: number): string {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
-const ReceiveFileCard = ({ connection_type, download_time, download_url, file_extension, file_name, file_size, peer_address }: Props) => {
+const SentFileCard = ({ file_name, file_size, file_extension, file_paths, send_time, connection_code }: Props) => {
     const [isOpen, setIsOpen] = useState(false);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    useEffect(() => {
-        if (textareaRef.current && isOpen) {
-            const textarea = textareaRef.current;
-            textarea.style.height = 'auto';
-            const scrollHeight = textarea.scrollHeight;
-            textarea.style.height = `${Math.max(scrollHeight, 40)}px`;
-        }
-    }, [isOpen, download_url]);
+    
+    // Remove extension from file_name for display
+    const displayName = file_name.endsWith(`.${file_extension}`) 
+        ? file_name.slice(0, -(file_extension.length + 1))
+        : file_name;
 
     // Handle Escape key to close modal
     useEffect(() => {
@@ -51,8 +46,8 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
         <>
             <div onClick={() => setIsOpen(true)} className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 hover:bg-blue-50 hover:text-blue-900 hover:shadow-sm active:bg-blue-100 transition-all duration-200 border-b border-gray-100 last:border-b-0 group m-0">
                 <div className="flex items-center gap-1.5 sm:gap-2 font-medium truncate text-[10px] sm:text-xs xl:text-sm">
-                    <FileIcon fileName={`${file_name}.${file_extension}`} className="w-4 h-4 flex-shrink-0" />
-                    <span>{file_name}</span>
+                    <FileIcon fileName={`${displayName}.${file_extension}`} className="w-4 h-4 flex-shrink-0" />
+                    <span>{displayName}</span>
                 </div>
                 <div className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500">.{file_extension}</div>
                 <div className="text-[9px] sm:text-[10px] xl:text-xs font-medium text-gray-600">{format_file_size(file_size)}</div>
@@ -64,12 +59,12 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
                         <div className="px-6 py-4 border-b border-gray-100">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div className="flex-shrink-0 p-2 bg-purple-50 rounded-xl">
-                                        <FileIcon fileName={`${file_name}.${file_extension}`} className="w-5 h-5 text-purple-600" />
+                                    <div className="flex-shrink-0 p-2 bg-blue-50 rounded-xl">
+                                        <FileIcon fileName={`${file_name}.${file_extension}`} className="w-5 h-5 text-blue-600" />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <h3 className="text-base font-semibold text-gray-900 truncate">{file_name}.{file_extension}</h3>
-                                        <p className="text-xs text-gray-500 mt-0.5">Received file</p>
+                                        <h3 className="text-base font-semibold text-gray-900 truncate">{displayName}.{file_extension}</h3>
+                                        <p className="text-xs text-gray-500 mt-0.5">Sent file</p>
                                     </div>
                                 </div>
                                 <button
@@ -98,36 +93,57 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
                                 </div>
                             </div>
 
-                            {/* Download Path - Refined */}
+                            {/* Files Sent List */}
                             <div>
-                                <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">Downloaded To</p>
-                                <div className="relative group">
-                                    <textarea 
-                                        ref={textareaRef}
-                                        readOnly 
-                                        rows={1}
-                                        value={download_url} 
-                                        className="w-full resize-none text-sm font-mono text-gray-900 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all overflow-hidden"
-                                    />
-                                </div>
+                                <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">
+                                    {file_paths.length === 1 ? "File Sent" : `Files Sent (${file_paths.length})`}
+                                </p>
+                                {file_paths.length > 0 ? (
+                                    <div className="space-y-1.5 max-h-48 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                                        {file_paths.map((path, idx) => {
+                                            // Extract just the filename from the path
+                                            const fileName = path.split(/[/\\]/).pop() || path;
+                                            return (
+                                                <div 
+                                                    key={idx} 
+                                                    className="px-3 py-2 text-sm font-mono text-gray-900 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg"
+                                                >
+                                                    {fileName}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">No file names available</p>
+                                )}
                             </div>
 
                             {/* Connection Info */}
                             <div className="pt-2 border-t border-gray-100">
                                 <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">Connection</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <p className="text-xs text-gray-500 mb-1">IP Address</p>
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{peer_address}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500 mb-1">Type</p>
-                                        <p className="text-sm font-semibold text-gray-900">{connection_type}</p>
-                                    </div>
+                                <div className="mb-3">
+                                    <p className="text-xs text-gray-500 mb-1">Connection Code</p>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={connection_code}
+                                        className="w-full text-sm font-mono text-gray-900 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:border-blue-300 hover:from-blue-50 hover:to-blue-100/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                        onClick={async (e) => {
+                                            const input = e.target as HTMLInputElement;
+                                            input.select();
+                                            try {
+                                                await navigator.clipboard.writeText(connection_code);
+                                                // You can add a toast here if needed
+                                            } catch (err) {
+                                                console.error("Failed to copy:", err);
+                                            }
+                                        }}
+                                        title="Click to copy"
+                                    />
                                 </div>
-                                <div className="mt-3">
-                                    <p className="text-xs text-gray-500 mb-1">Downloaded</p>
-                                    <p className="text-sm font-semibold text-gray-900">{new Date(download_time).toLocaleString()}</p>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Sent</p>
+                                    <p className="text-sm font-semibold text-gray-900">{new Date(send_time).toLocaleString()}</p>
                                 </div>
                             </div>
                         </div>
@@ -139,4 +155,5 @@ const ReceiveFileCard = ({ connection_type, download_time, download_url, file_ex
     );
 };
 
-export default ReceiveFileCard;
+export default SentFileCard;
+

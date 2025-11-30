@@ -2,9 +2,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from '@tauri-apps/plugin-dialog';
 import { listen } from "@tauri-apps/api/event";
 import { useEffect, useState, useRef } from "react";
-import { Toaster } from "react-hot-toast";
-import toast from "react-hot-toast";
+import { Toaster, toast } from "sonner";
 import ReceiveFileCard from "./RecieveFileCardComponent";
+import SentFileCard from "./SentFileCard";
 import ActiveDownloadCard from "./ActiveDownloadCard";
 import ActiveSendCard from "./ActiveSendCard";
 import PendingFileOfferCard from "./PendingFileOfferCard";
@@ -21,6 +21,16 @@ interface ReceivedFile {
   file_name: string;
   file_size: number;
   peer_address: string;
+}
+
+interface SentFile {
+  file_name: string;
+  file_size: number;
+  file_extension: string;
+  file_paths?: string[];
+  file_path?: string; // For backward compatibility with old data
+  send_time: string;
+  connection_code: string;
 }
 
 interface DownloadProgress {
@@ -54,12 +64,15 @@ function App() {
   const [selectedFiles, setSelectedFiles] = useState<string[] | null>(null);
   const [folderName, setFolderName] = useState<string>("");
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
+  const [sentFiles, setSentFiles] = useState<SentFile[]>([]);
+  const [historyTab, setHistoryTab] = useState<"received" | "sent">("received");
   const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(new Map());
   const [sendProgress, setSendProgress] = useState<Map<string, SendProgress>>(new Map());
   const [pendingFileOffers, setPendingFileOffers] = useState<Map<string, PendingFileOffer>>(new Map());
   const [defaultFolderNameFormat, setDefaultFolderNameFormat] = useState<string>("#-files-via-wyrmhole");
   const [connectingCodes, setConnectingCodes] = useState<Map<string, string>>(new Map()); // Map<id, code>
   const cancelledConnections = useRef<Set<string>>(new Set()); // Track cancelled connection IDs
+  const connectionCodeToasts = useRef<Map<string | number, string>>(new Map()); // Map<toastId, code>
 
   async function deny_file_receive(id: string) {
     try {
@@ -380,6 +393,16 @@ function App() {
     }
   }
 
+  async function sent_files_data() {
+    try {
+      const response = await invoke("sent_files_data");
+      if (Array.isArray(response)) setSentFiles(response as SentFile[]);
+      else setSentFiles([]);
+    } catch (error) {
+      console.error("Error getting sent files data:", error);
+    }
+  }
+
   function remove_file_at_index(idx: number) {
     setSelectedFiles(prev => {
       if (!prev) return null;
@@ -399,7 +422,34 @@ function App() {
 
   useEffect(() => {
     recieved_files_data();
+    sent_files_data();
     get_default_folder_name_format();
+  }, []);
+
+  // Listen for received file added event - updates table automatically
+  useEffect(() => {
+    console.log("Listening for received-file-added event");
+    const unlistenPromise = listen("received-file-added", () => {
+      console.log("Received file added event, refreshing received files");
+      recieved_files_data();
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
+
+  // Listen for sent file added event - updates table automatically
+  useEffect(() => {
+    console.log("Listening for sent-file-added event");
+    const unlistenPromise = listen("sent-file-added", () => {
+      console.log("Sent file added event, refreshing sent files");
+      sent_files_data();
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
   }, []);
 
   useEffect(() => {
@@ -436,53 +486,34 @@ function App() {
         });
         
         // Show toast with connection code (click to copy)
-        toast(
-          (t) => (
-            <div
-              className="flex items-center justify-between gap-2"
-              onClick={() => {
-                navigator.clipboard.writeText(payload.code ?? "");
-                toast.success("Code copied to clipboard", { id: t.id });
-              }}
-            >
-              <span>📨 Connection code: {payload.code}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toast.dismiss(t.id);
-                }}
-                className="cursor-pointer px-4 py-2 font-bold text-gray-900 hover:text-red-500 active:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ),
-          { duration: 5000 }
+        const codeToCopy = payload.code ?? "";
+        const toastId = toast(
+          `📨 Connection code: ${codeToCopy}`,
+          {
+            duration: 10000,
+            className: "connection-code-toast",
+            description: "Click anywhere to copy",
+            style: {
+              gap: '2px',
+            },
+          }
         );
+        connectionCodeToasts.current.set(toastId, codeToCopy);
       } else if (payload.status === "success") {
-        // Legacy toast for non-send connections
-        toast(
-          (t) => (
-            <div
-              className="flex items-center justify-between gap-2"
-              onClick={() => {
-                navigator.clipboard.writeText(payload.code ?? "");
-              }}
-            >
-              <span>📨 Connection code: {payload.code}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toast.dismiss(t.id);
-                }}
-                className="cursor-pointer px-4 py-2 font-bold text-gray-900 hover:text-red-500 active:text-red-700"
-              >
-                ✕
-              </button>
-            </div>
-          ),
-          { duration: Infinity }
+        // Legacy toast for non-send connections - stays until dismissed
+        const codeToCopy = payload.code ?? "";
+        const toastId = toast(
+          `📨 Connection code: ${codeToCopy}`,
+          {
+            duration: 999999999, // Very long duration, effectively infinite
+            className: "connection-code-toast",
+            description: "Click anywhere to copy",
+            style: {
+              gap: '2px',
+            },
+          }
         );
+        connectionCodeToasts.current.set(toastId, codeToCopy);
       } else {
         toast.error(payload.message ?? "Unknown error in mailbox creation");
       }
@@ -510,12 +541,12 @@ function App() {
       if (payload.percentage >= 100) {
         setTimeout(() => {
           toast.success(`Downloaded ${payload.file_name}`, { duration: 5000 });
-          recieved_files_data();
           setDownloadProgress(prev => {
             const next = new Map(prev);
             next.delete(payload.id);
             return next;
           });
+          // File will be added to history and event will trigger refresh
         }, 500);
       }
     });
@@ -595,6 +626,7 @@ function App() {
             next.delete(payload.id);
             return next;
           });
+          // File will be added to history and event will trigger refresh
         }, 500);
       }
     });
@@ -644,9 +676,43 @@ function App() {
     };
   }, []);
 
+  // Set up event delegation for connection code toasts
+  useEffect(() => {
+    const handleToastClick = async (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const toastElement = target.closest('[data-sonner-toast].connection-code-toast') as HTMLElement;
+      if (toastElement) {
+        // Extract code from toast title text (not description)
+        const titleElement = toastElement.querySelector('[data-title]');
+        const toastTitleText = titleElement?.textContent || '';
+        // Extract just the code part from "Connection code: CODE"
+        const codeMatch = toastTitleText.match(/Connection code: (.+)/);
+        if (codeMatch && codeMatch[1]) {
+          const codeToCopy = codeMatch[1].trim();
+          await navigator.clipboard.writeText(codeToCopy);
+          toast.success("Code copied to clipboard");
+          
+          // Find and dismiss the toast by matching the code
+          for (const [toastId, storedCode] of connectionCodeToasts.current.entries()) {
+            if (storedCode === codeToCopy) {
+              toast.dismiss(toastId);
+              connectionCodeToasts.current.delete(toastId);
+              break;
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('click', handleToastClick);
+    return () => {
+      document.removeEventListener('click', handleToastClick);
+    };
+  }, []);
+
   return (
     <div className="app-container h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col overflow-hidden">
-      <Toaster position="bottom-right" reverseOrder={false} />
+      <Toaster position="bottom-right" />
 
       <nav className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0 z-10">
         <div className="px-3 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center">
@@ -956,7 +1022,42 @@ function App() {
 
         {/* File History Section */}
         <div>
-          <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">File History</h2>
+          <div className="flex items-center gap-2 mb-2">
+            <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 select-none cursor-default">File History</h2>
+            <div className="flex items-center gap-1.5 text-xs">
+              <button
+                onClick={() => {
+                  if (historyTab !== "received") {
+                    setHistoryTab("received");
+                    recieved_files_data();
+                  }
+                }}
+                className={`px-2 py-1 rounded transition-all duration-200 ${
+                  historyTab === "received" 
+                    ? "text-blue-700 font-semibold bg-blue-50" 
+                    : "text-gray-500 hover:text-blue-600 hover:bg-blue-50/50"
+                }`}
+              >
+                Received
+              </button>
+              <span className="text-gray-400">/</span>
+              <button
+                onClick={() => {
+                  if (historyTab !== "sent") {
+                    setHistoryTab("sent");
+                    sent_files_data();
+                  }
+                }}
+                className={`px-2 py-1 rounded transition-all duration-200 ${
+                  historyTab === "sent" 
+                    ? "text-blue-700 font-semibold bg-blue-50" 
+                    : "text-gray-500 hover:text-blue-600 hover:bg-blue-50/50"
+                }`}
+              >
+                Sent
+              </button>
+            </div>
+          </div>
           <div className="border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden">
             <div className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0">
               <div className="truncate">Filename</div>
@@ -975,11 +1076,36 @@ function App() {
                 }
               }}
             >
-              <div className="divide-y divide-gray-100">
-                {(receivedFiles.slice().reverse()).map((file, idx) => (
-                  <ReceiveFileCard key={idx} {...file} />
-                ))}
-              </div>
+              {historyTab === "received" ? (
+                receivedFiles.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {(receivedFiles.slice().reverse()).map((file, idx) => (
+                      <ReceiveFileCard key={idx} {...file} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                    No Received File History
+                  </div>
+                )
+              ) : (
+                sentFiles.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {(sentFiles.slice().reverse()).map((file, idx) => {
+                      // Handle backward compatibility: convert file_path to file_paths if needed
+                      const fileWithPaths: { file_paths: string[] } & Omit<SentFile, 'file_path' | 'file_paths'> = {
+                        ...file,
+                        file_paths: file.file_paths || (file.file_path ? [file.file_path] : [])
+                      };
+                      return <SentFileCard key={idx} {...fileWithPaths} />;
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                    No Sent File History
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>

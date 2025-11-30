@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function SettingsMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -80,6 +80,26 @@ export default function SettingsMenu() {
     } catch (error) {
       console.error("Error exporting received files JSON:", error);
       toast.error("Failed to export received files history");
+    }
+  }
+
+  async function export_sent_files_json() {
+    try {
+      const filePath = await save({
+        filters: [{
+          name: 'JSON',
+          extensions: ['json']
+        }],
+        defaultPath: 'sent_files_export.json'
+      });
+      
+      if (filePath) {
+        await invoke("export_sent_files_json", { filePath });
+        toast.success("Sent files history exported successfully");
+      }
+    } catch (error) {
+      console.error("Error exporting sent files JSON:", error);
+      toast.error("Failed to export sent files history");
     }
   }
 
@@ -187,6 +207,24 @@ export default function SettingsMenu() {
                 </button>
                 <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
                   Export received files history as a JSON file
+                </p>
+              </div>
+
+              {/* Export sent files JSON button */}
+              <div className="p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 transition-all">
+                <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">Sent Files History</label>
+                <button
+                  onClick={export_sent_files_json}
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-[10px] sm:text-xs xl:text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                  </svg>
+                  <span>Export JSON History</span>
+                </button>
+                <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
+                  Export sent files history as a JSON file
                 </p>
               </div>
             </div>

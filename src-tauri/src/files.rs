@@ -302,8 +302,31 @@ pub async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: Str
         // Clean up temporary tarball
         let _ = tokio::fs::remove_file(&tarball_path).await;
         
-        // Remove from active sends when complete
+        // Remove from active sends when complete and get the code
+        let connection_code = {
+            let active_sends = ACTIVE_SENDS.lock().await;
+            active_sends.get(&send_id)
+                .map(|s| s.code.clone())
+                .unwrap_or_default()
+        };
         ACTIVE_SENDS.lock().await.remove(&send_id);
+        
+        // Add to sent files history (for folder, use the tarball name without extension)
+        let tarball_name_without_ext = tarball_name.strip_suffix(".gz")
+            .unwrap_or(&tarball_name)
+            .to_string();
+        
+        let _ = files_json::add_sent_file(
+            app_handle.clone(),
+            files_json::SentFile {
+                file_name: tarball_name_without_ext,
+                file_size: actual_tarball_size,
+                file_extension: "gz".to_string(),
+                file_paths: vec![absolute_path.clone()],
+                send_time: Local::now(),
+                connection_code: connection_code,
+            },
+        );
         
         return Ok(format!(
             "Successfully sent folder '{}' ({} bytes)",
@@ -373,8 +396,42 @@ pub async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: Str
         error_message
     })?;
 
-    // Remove from active sends when complete
+    // Remove from active sends when complete and get the code
+    let connection_code = {
+        let active_sends = ACTIVE_SENDS.lock().await;
+        active_sends.get(&send_id)
+            .map(|s| s.code.clone())
+            .unwrap_or_default()
+    };
     ACTIVE_SENDS.lock().await.remove(&send_id);
+    
+    // Add to sent files history
+    let file_extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("")
+        .to_string();
+    
+    // Remove extension from file_name if it exists
+    let file_name_without_ext = if !file_extension.is_empty() && file_name.ends_with(&format!(".{}", file_extension)) {
+        file_name.strip_suffix(&format!(".{}", file_extension))
+            .unwrap_or(&file_name)
+            .to_string()
+    } else {
+        file_name.clone()
+    };
+    
+    let _ = files_json::add_sent_file(
+        app_handle.clone(),
+        files_json::SentFile {
+            file_name: file_name_without_ext,
+            file_size: file_size,
+            file_extension: file_extension,
+            file_paths: vec![absolute_path.clone()],
+            send_time: Local::now(),
+            connection_code: connection_code,
+        },
+    );
     
     Ok(format!(
         "Successfully sent file '{}' ({} bytes)",
@@ -727,8 +784,37 @@ pub async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<Str
     let _ = tokio::fs::remove_dir_all(&temp_folder_path).await;
     let _ = tokio::fs::remove_file(&tarball_path).await;
     
-    // Remove from active sends when complete
+    // Remove from active sends when complete and get the code
+    let connection_code = {
+        let active_sends = ACTIVE_SENDS.lock().await;
+        active_sends.get(&send_id)
+            .map(|s| s.code.clone())
+            .unwrap_or_default()
+    };
     ACTIVE_SENDS.lock().await.remove(&send_id);
+    
+    // Add to sent files history (for multiple files, use the tarball name without extension)
+    // Store all file paths
+    let all_file_paths: Vec<PathBuf> = file_paths.iter()
+        .map(|p| PathBuf::from(p))
+        .collect();
+    
+    // Remove .gz extension from tarball name
+    let tarball_name_without_ext = tarball_name.strip_suffix(".gz")
+        .unwrap_or(&tarball_name)
+        .to_string();
+    
+    let _ = files_json::add_sent_file(
+        app_handle.clone(),
+        files_json::SentFile {
+            file_name: tarball_name_without_ext,
+            file_size: file_size_to_send,
+            file_extension: "gz".to_string(),
+            file_paths: all_file_paths,
+            send_time: Local::now(),
+            connection_code: connection_code,
+        },
+    );
     
     Ok(format!(
         "Successfully sent {} file(s)",
