@@ -10,6 +10,7 @@ export default function SettingsMenu() {
   const [autoExtractTarballs, setAutoExtractTarballs] = useState<boolean>(false);
   const [defaultFolderNameFormat, setDefaultFolderNameFormat] =
     useState<string>("#-files-via-wyrmhole");
+  const [relayServerUrl, setRelayServerUrl] = useState<string>("");
 
   async function choose_download_directory() {
     const selected = await open({ directory: true, multiple: false });
@@ -65,6 +66,38 @@ export default function SettingsMenu() {
     }
   }
 
+  async function get_relay_server_url() {
+    try {
+      const value = await invoke<string | null>("get_relay_server_url");
+      setRelayServerUrl(value ?? "");
+    } catch (error) {
+      console.error("Error getting relay server URL:", error);
+    }
+  }
+
+  async function save_relay_server_url() {
+    try {
+      const trimmed = relayServerUrl.trim();
+      await invoke("set_relay_server_url", {
+        value: trimmed.length > 0 ? trimmed : null,
+      });
+    } catch (error) {
+      console.error("Error setting relay server URL:", error);
+    }
+  }
+
+  async function test_relay() {
+    try {
+      const message = await invoke<string>("test_relay_server");
+      toast.success(message);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "Failed to test relay");
+      console.error("Error testing relay server:", error);
+      toast.error(message);
+    }
+  }
+
   async function export_received_files_json() {
     try {
       const filePath = await save({
@@ -115,6 +148,7 @@ export default function SettingsMenu() {
       if (downloadPath) setDownloadDirectory(downloadPath);
       await get_auto_extract_tarballs();
       await get_default_folder_name_format();
+      await get_relay_server_url();
     })();
   }, []);
 
@@ -142,29 +176,21 @@ export default function SettingsMenu() {
       {isOpen &&
         createPortal(
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-4"
             onClick={() => setIsOpen(false)}
           >
             <div
-              className="rounded-3xl w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
-              style={{
-                background: "rgba(255, 255, 255, 0.85)",
-                backdropFilter: "blur(40px)",
-                WebkitBackdropFilter: "blur(40px)",
-                border: "1px solid rgba(255, 255, 255, 0.5)",
-                boxShadow:
-                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)",
-              }}
+              className="rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 border border-gray-200 shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 border-b border-white/20 px-2 sm:px-4 py-2 sm:py-3 rounded-t-3xl">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-sm sm:text-base xl:text-lg font-bold text-gray-800 select-none">
+              <div className="sticky top-0 border-b border-gray-100 px-3 sm:px-4 py-2.5 sm:py-3 bg-white/95 rounded-t-2xl">
+                <div className="flex justify-between items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 select-none">
                     Settings
                   </h2>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
                     title="Close"
                   >
                     <svg
@@ -180,7 +206,53 @@ export default function SettingsMenu() {
                 </div>
               </div>
 
-              <div className="px-2 sm:px-4 py-2 sm:py-3 space-y-2 sm:space-y-3">
+              {/* Relay server URL setting */}
+              <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1">
+                <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1 text-gray-700">
+                  Custom Relay Server URL
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={relayServerUrl}
+                    onChange={(e) => setRelayServerUrl(e.target.value)}
+                    placeholder="Leave blank to use default relay"
+                    className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs xl:text-sm rounded-xl focus:outline-none transition-all"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.8)",
+                      backdropFilter: "blur(16px)",
+                      WebkitBackdropFilter: "blur(16px)",
+                      border: "2px solid rgba(255, 255, 255, 0.5)",
+                      boxShadow:
+                        "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)";
+                      e.currentTarget.style.boxShadow =
+                        "0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                      e.currentTarget.style.boxShadow =
+                        "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
+                      save_relay_server_url();
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={test_relay}
+                    className="px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs rounded-xl border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors whitespace-nowrap"
+                  >
+                    Test relay
+                  </button>
+                </div>
+                <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
+                  Optional. Set a custom magic-wormhole relay URL (e.g. tcp:host:port). Leave blank to
+                  use the default relay.
+                </p>
+              </div>
+
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3.5">
                 {/* Download directory field */}
                 <div
                   className="cursor-pointer group"

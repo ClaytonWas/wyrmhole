@@ -147,14 +147,8 @@ pub async fn send_file_call(
         }
     };
 
-    // Constructing default send_file_or_folder(...) variables
-    // TODO: (Temporary, should allow the user to change these themselves in a later build.)
-    let relay_hint = transit::RelayHint::from_urls(
-        None, // no friendly name
-        [transit::DEFAULT_RELAY_SERVER.parse().unwrap()],
-    )
-    .unwrap();
-    let relay_hints = vec![relay_hint];
+    // Construct relay hints, preferring a user-configured relay server if available.
+    let relay_hints = build_relay_hints(&app_handle).await;
     let abilities = transit::Abilities::ALL;
 
     // Use the cancel receiver as the cancel future
@@ -722,11 +716,8 @@ pub async fn send_multiple_files_call(
         }
     };
 
-    // Constructing default send_file_or_folder(...) variables
-    let relay_hint =
-        transit::RelayHint::from_urls(None, [transit::DEFAULT_RELAY_SERVER.parse().unwrap()])
-            .unwrap();
-    let relay_hints = vec![relay_hint];
+    // Construct relay hints, preferring a user-configured relay server if available.
+    let relay_hints = build_relay_hints(&app_handle).await;
     let abilities = transit::Abilities::ALL;
 
     // Use the cancel receiver as the cancel future
@@ -1433,6 +1424,74 @@ pub async fn cancel_download(
 }
 
 // Helper functions
+
+/// Build relay hints based on user configuration, falling back to DEFAULT_RELAY_SERVER.
+async fn build_relay_hints(app_handle: &AppHandle) -> Vec<transit::RelayHint> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    let user_relay = app_settings_lock
+        .get_relay_server_url()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    drop(app_settings_lock);
+
+    let mut urls = Vec::new();
+
+    if let Some(custom) = user_relay {
+        if let Ok(url) = custom.parse() {
+            urls.push(url);
+        } else {
+            eprintln!("Invalid relay_server_url in settings, falling back to default: {}", custom);
+        }
+    }
+
+    if urls.is_empty() {
+        urls.push(transit::DEFAULT_RELAY_SERVER.parse().unwrap());
+    }
+
+    let relay_hint = transit::RelayHint::from_urls(None, urls).unwrap();
+    vec![relay_hint]
+}
+
+/// Validate the currently configured relay URL or the default relay configuration.
+/// This is used by the Settings UI "Test relay" button.
+pub async fn test_relay_server(app_handle: AppHandle) -> Result<String, String> {
+    let app_settings_state = app_handle.state::<tokio::sync::Mutex<settings::AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    let user_relay = app_settings_lock
+        .get_relay_server_url()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    drop(app_settings_lock);
+
+    if let Some(custom) = user_relay {
+        // Validate custom relay URL
+        let url = custom
+            .parse()
+            .map_err(|e| format!("Invalid relay URL: {}", e))?;
+
+        transit::RelayHint::from_urls(None, [url])
+            .map_err(|e| format!("Invalid relay configuration: {}", e))?;
+
+        Ok(format!(
+            "Custom relay URL looks valid and will be used: {}",
+            custom
+        ))
+    } else {
+        // No custom URL: validate the default relay configuration and report it
+        let default_url = transit::DEFAULT_RELAY_SERVER
+            .parse()
+            .map_err(|e| format!("Internal error parsing default relay URL: {}", e))?;
+
+        transit::RelayHint::from_urls(None, [default_url])
+            .map_err(|e| format!("Default relay configuration appears invalid: {}", e))?;
+
+        Ok(format!(
+            "No custom relay configured. Default relay will be used: {}",
+            transit::DEFAULT_RELAY_SERVER
+        ))
+    }
+}
 
 /// Helper function to create a tarball from a folder
 /// Wraps files in a folder with a friendly name (e.g., "4_files_wyrmhole_send")

@@ -15,6 +15,8 @@ pub struct AppSettings {
     pub auto_extract_tarballs: bool,
     #[serde(default = "default_folder_name_format")]
     pub default_folder_name_format: String,
+    #[serde(default = "default_relay_server_url")]
+    pub relay_server_url: Option<String>,
 }
 
 fn default_auto_extract() -> bool {
@@ -23,6 +25,10 @@ fn default_auto_extract() -> bool {
 
 fn default_folder_name_format() -> String {
     "#-files-via-wyrmhole".to_string()
+}
+
+fn default_relay_server_url() -> Option<String> {
+    None
 }
 
 impl AppSettings {
@@ -56,6 +62,14 @@ impl AppSettings {
 
     pub fn set_default_folder_name_format(&mut self, value: String) {
         self.default_folder_name_format = value;
+    }
+
+    pub fn get_relay_server_url(&self) -> Option<&str> {
+        self.relay_server_url.as_deref()
+    }
+
+    pub fn set_relay_server_url(&mut self, value: Option<String>) {
+        self.relay_server_url = value;
     }
 }
 
@@ -126,6 +140,7 @@ fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
         received_files_directory: received_dir,
         auto_extract_tarballs: false,
         default_folder_name_format: default_folder_name_format(),
+        relay_server_url: default_relay_server_url(),
     }
 }
 
@@ -262,6 +277,31 @@ pub async fn set_default_folder_name_format(
             "value": value
         }),
     );
+
+    Ok(())
+}
+
+pub async fn get_relay_server_url(
+    app_handle: AppHandle,
+) -> Result<Option<String>, String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_relay_server_url().map(|s| s.to_string()))
+}
+
+pub async fn set_relay_server_url(
+    app_handle: AppHandle,
+    value: Option<String>,
+) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_relay_server_url(value);
+
+    // Save settings
+    let settings_path = get_settings_path(&app_handle);
+    if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
 
     Ok(())
 }

@@ -94,6 +94,21 @@ async fn set_default_folder_name_format(
 }
 
 #[tauri::command]
+async fn get_relay_server_url(
+    app_handle: AppHandle,
+) -> Result<Option<String>, String> {
+    settings::get_relay_server_url(app_handle).await
+}
+
+#[tauri::command]
+async fn set_relay_server_url(
+    app_handle: AppHandle,
+    value: Option<String>,
+) -> Result<(), String> {
+    settings::set_relay_server_url(app_handle, value).await
+}
+
+#[tauri::command]
 async fn received_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>, String> {
     let files = files_json::get_received_files_json_data(app_handle).await?;
     Ok(files)
@@ -116,6 +131,11 @@ async fn sent_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>
 #[tauri::command]
 async fn export_sent_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
     settings::export_sent_files_json(app_handle, file_path).await
+}
+
+#[tauri::command]
+async fn test_relay_server(app_handle: AppHandle) -> Result<String, String> {
+    files::test_relay_server(app_handle).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -157,8 +177,11 @@ pub fn run() {
             set_auto_extract_tarballs,
             get_default_folder_name_format,
             set_default_folder_name_format,
+            get_relay_server_url,
+            set_relay_server_url,
             export_received_files_json,
-            export_sent_files_json
+            export_sent_files_json,
+            test_relay_server
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
