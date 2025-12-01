@@ -72,14 +72,20 @@ pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
 }
 
 // Saves the current list of `ReceivedFile` structs to the `received_files.json` file.
-pub fn save_received_files(files: &Vec<ReceivedFile>, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_received_files(
+    files: &Vec<ReceivedFile>,
+    path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(files)?;
     fs::write(path, json)?;
     Ok(())
 }
 
 // Adds a new received file to the list and saves the updated list.
-pub fn add_received_file(app_handle: AppHandle, new_file: ReceivedFile) -> Result<Vec<ReceivedFile>, String> {
+pub fn add_received_file(
+    app_handle: AppHandle,
+    new_file: ReceivedFile,
+) -> Result<Vec<ReceivedFile>, String> {
     let path = settings::get_received_files_path(&app_handle);
     let mut files = init_received_files(&app_handle); // Load current files
 
@@ -88,35 +94,43 @@ pub fn add_received_file(app_handle: AppHandle, new_file: ReceivedFile) -> Resul
     match save_received_files(&files, &path) {
         Ok(_) => {
             // Emit event to notify frontend
-            let _ = app_handle.emit("received-file-added", serde_json::json!({
-                "file": {
-                    "file_name": new_file.file_name,
-                    "file_size": new_file.file_size,
-                    "file_extension": new_file.file_extension,
-                    "download_url": new_file.download_url.to_string_lossy().to_string(),
-                    "download_time": new_file.download_time.to_rfc3339(),
-                    "connection_type": new_file.connection_type,
-                    "peer_address": new_file.peer_address.to_string(),
-                }
-            }));
+            let _ = app_handle.emit(
+                "received-file-added",
+                serde_json::json!({
+                    "file": {
+                        "file_name": new_file.file_name,
+                        "file_size": new_file.file_size,
+                        "file_extension": new_file.file_extension,
+                        "download_url": new_file.download_url.to_string_lossy().to_string(),
+                        "download_time": new_file.download_time.to_rfc3339(),
+                        "connection_type": new_file.connection_type,
+                        "peer_address": new_file.peer_address.to_string(),
+                    }
+                }),
+            );
             Ok(files) // Return updated list on success
-        },
+        }
         Err(e) => Err(format!("Failed to save received files: {}", e)),
     }
 }
 
-pub async fn get_received_files_json_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>, String> {
+pub async fn get_received_files_json_data(
+    app_handle: AppHandle,
+) -> Result<Vec<serde_json::Value>, String> {
     let received_files_path = settings::get_received_files_path(&app_handle);
-    println!("Reading received files history from: {}", received_files_path.display());
-    
+    println!(
+        "Reading received files history from: {}",
+        received_files_path.display()
+    );
+
     // Read the file contents into a string
     let contents = fs::read_to_string(&received_files_path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
-    
+
     // Parse it as a JSON array
-    let files: Vec<serde_json::Value> = serde_json::from_str(&contents)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-    
+    let files: Vec<serde_json::Value> =
+        serde_json::from_str(&contents).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
     Ok(files)
 }
 
@@ -162,7 +176,10 @@ pub fn init_sent_files(app_handle: &AppHandle) -> Vec<SentFile> {
 }
 
 // Saves the current list of `SentFile` structs to the `sent_files.json` file.
-pub fn save_sent_files(files: &Vec<SentFile>, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_sent_files(
+    files: &Vec<SentFile>,
+    path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     let json = serde_json::to_string_pretty(files)?;
     fs::write(path, json)?;
     Ok(())
@@ -178,36 +195,46 @@ pub fn add_sent_file(app_handle: AppHandle, new_file: SentFile) -> Result<Vec<Se
     match save_sent_files(&files, &path) {
         Ok(_) => {
             // Emit event to notify frontend
-            let file_paths_str: Vec<String> = new_file.file_paths.iter()
+            let file_paths_str: Vec<String> = new_file
+                .file_paths
+                .iter()
                 .map(|p| p.to_string_lossy().to_string())
                 .collect();
-            let _ = app_handle.emit("sent-file-added", serde_json::json!({
-                "file": {
-                    "file_name": new_file.file_name,
-                    "file_size": new_file.file_size,
-                    "file_extension": new_file.file_extension,
-                    "file_paths": file_paths_str,
-                    "send_time": new_file.send_time.to_rfc3339(),
-                    "connection_code": new_file.connection_code,
-                }
-            }));
+            let _ = app_handle.emit(
+                "sent-file-added",
+                serde_json::json!({
+                    "file": {
+                        "file_name": new_file.file_name,
+                        "file_size": new_file.file_size,
+                        "file_extension": new_file.file_extension,
+                        "file_paths": file_paths_str,
+                        "send_time": new_file.send_time.to_rfc3339(),
+                        "connection_code": new_file.connection_code,
+                    }
+                }),
+            );
             Ok(files) // Return updated list on success
-        },
+        }
         Err(e) => Err(format!("Failed to save sent files: {}", e)),
     }
 }
 
-pub async fn get_sent_files_json_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>, String> {
+pub async fn get_sent_files_json_data(
+    app_handle: AppHandle,
+) -> Result<Vec<serde_json::Value>, String> {
     let sent_files_path = settings::get_sent_files_path(&app_handle);
-    println!("Reading sent files history from: {}", sent_files_path.display());
-    
+    println!(
+        "Reading sent files history from: {}",
+        sent_files_path.display()
+    );
+
     // Read the file contents into a string
-    let contents = fs::read_to_string(&sent_files_path)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
-    
+    let contents =
+        fs::read_to_string(&sent_files_path).map_err(|e| format!("Failed to read file: {}", e))?;
+
     // Parse it as a JSON array
-    let files: Vec<serde_json::Value> = serde_json::from_str(&contents)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-    
+    let files: Vec<serde_json::Value> =
+        serde_json::from_str(&contents).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
     Ok(files)
 }

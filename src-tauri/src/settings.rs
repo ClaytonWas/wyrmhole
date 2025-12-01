@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tokio::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -241,7 +241,10 @@ pub async fn get_default_folder_name_format(app_handle: AppHandle) -> Result<Str
     Ok(app_settings_lock.get_default_folder_name_format().clone())
 }
 
-pub async fn set_default_folder_name_format(app_handle: AppHandle, value: String) -> Result<(), String> {
+pub async fn set_default_folder_name_format(
+    app_handle: AppHandle,
+    value: String,
+) -> Result<(), String> {
     let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
     let mut app_settings_lock = app_settings_state.lock().await;
     app_settings_lock.set_default_folder_name_format(value.clone());
@@ -253,37 +256,46 @@ pub async fn set_default_folder_name_format(app_handle: AppHandle, value: String
     }
 
     // Emit event to notify frontend that the setting has been updated
-    let _ = app_handle.emit("default-folder-name-format-updated", serde_json::json!({
-        "value": value
-    }));
+    let _ = app_handle.emit(
+        "default-folder-name-format-updated",
+        serde_json::json!({
+            "value": value
+        }),
+    );
 
     Ok(())
 }
 
-pub async fn export_received_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+pub async fn export_received_files_json(
+    app_handle: AppHandle,
+    file_path: String,
+) -> Result<(), String> {
     let received_files_path = get_received_files_path(&app_handle);
-    
+
     // Read the JSON file content
     let json_content = fs::read_to_string(&received_files_path)
         .map_err(|e| format!("Failed to read received files JSON: {}", e))?;
-    
+
     // Write to the user-selected location
     fs::write(&file_path, json_content)
         .map_err(|e| format!("Failed to write exported file: {}", e))?;
-    
+
     Ok(())
 }
 
-pub async fn export_sent_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+pub async fn export_sent_files_json(
+    app_handle: AppHandle,
+    file_path: String,
+) -> Result<(), String> {
     let sent_files_path = get_sent_files_path(&app_handle);
-    
+
     // Read the JSON file content
     let json_content = fs::read_to_string(&sent_files_path)
         .map_err(|e| format!("Failed to read sent files JSON: {}", e))?;
-    
+
     // Write to the user-selected location
     fs::write(&file_path, json_content)
         .map_err(|e| format!("Failed to write exported file: {}", e))?;
-    
+
     Ok(())
 }

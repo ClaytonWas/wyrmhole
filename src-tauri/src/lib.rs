@@ -12,12 +12,21 @@ pub mod settings;
 // All actual logic is delegated to the appropriate modules
 
 #[tauri::command]
-async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String) -> Result<String, String> {
+async fn send_file_call(
+    app_handle: AppHandle,
+    file_path: &str,
+    send_id: String,
+) -> Result<String, String> {
     files::send_file_call(app_handle, file_path, send_id).await
 }
 
 #[tauri::command]
-async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>, send_id: String, folder_name: Option<String>) -> Result<String, String> {
+async fn send_multiple_files_call(
+    app_handle: AppHandle,
+    file_paths: Vec<String>,
+    send_id: String,
+    folder_name: Option<String>,
+) -> Result<String, String> {
     files::send_multiple_files_call(app_handle, file_paths, send_id, folder_name).await
 }
 
@@ -77,7 +86,10 @@ async fn get_default_folder_name_format(app_handle: AppHandle) -> Result<String,
 }
 
 #[tauri::command]
-async fn set_default_folder_name_format(app_handle: AppHandle, value: String) -> Result<(), String> {
+async fn set_default_folder_name_format(
+    app_handle: AppHandle,
+    value: String,
+) -> Result<(), String> {
     settings::set_default_folder_name_format(app_handle, value).await
 }
 
@@ -88,7 +100,10 @@ async fn received_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Va
 }
 
 #[tauri::command]
-async fn export_received_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+async fn export_received_files_json(
+    app_handle: AppHandle,
+    file_path: String,
+) -> Result<(), String> {
     settings::export_received_files_json(app_handle, file_path).await
 }
 
@@ -117,7 +132,9 @@ pub fn run() {
 
             // Make window visible after state is restored (prevents flashing)
             if let Some(window) = app.get_webview_window("main") {
-                window.show().unwrap_or_else(|e| eprintln!("Failed to show window: {}", e));
+                window
+                    .show()
+                    .unwrap_or_else(|e| eprintln!("Failed to show window: {}", e));
             }
 
             Ok(())

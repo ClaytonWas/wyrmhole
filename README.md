@@ -113,6 +113,20 @@ wyrmhole/
 - **Backend**: Tauri 2, magic-wormhole-rs
 - **Build Tool**: Vite
 
+### Formatting, Linting, and Analysis
+
+Use the following commands during development:
+
+- `npm run fmt` – Format the React/TypeScript code with Prettier
+- `npm run fmt:rs` – Format the Rust/Tauri backend with `rustfmt`
+- `npm run lint` – Lint the frontend TypeScript/React code with ESLint
+- `npm run lint:rs` – Run `clippy` on the Rust backend
+- `npm run analyze` – Generate a CLI report including:
+  - Code style tooling summary
+  - Dependency overview and likely-unused packages
+  - Bundle size summary from `dist/assets` (run `npm run build` first)
+  - Rust binary sizes from `src-tauri/target`
+
 ### Building
 
 ```bash
@@ -127,9 +141,9 @@ npm run tauri build
 
 ### Version 0.3.0
 
-- [ ] Refactor console logging to use react-hot-toast consistently
+- [x] Refactor console logging to use react-hot-toast consistently
 - [x] Modularize code structure with secure passthroughs in lib.rs
-- [ ] Implement sent files history tracking
+- [x] Implement sent files history tracking
 - [ ] Custom relay server configuration
 - [x] Optimize tarball naming schema
 - [x] Application window size persistance
