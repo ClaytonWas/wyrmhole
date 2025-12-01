@@ -76,14 +76,20 @@ impl AppSettings {
 // Gets the config path of the applications operating system and appends a settings.json.
 pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_config_dir().unwrap_or_else(|e| {
-        eprintln!("Could not get app config directory: {}", e);
+        eprintln!(
+            "[wyrmhole][settings][error] Could not get app config directory: {}",
+            e
+        );
         PathBuf::from(".")
     });
 
     // Ensure the config directory exists before writing to it.
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
-            eprintln!("Failed to create config directory: {}", e);
+            eprintln!(
+                "[wyrmhole][settings][error] Failed to create config directory: {}",
+                e
+            );
         }
     }
 
@@ -94,14 +100,20 @@ pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
 // Get the app data path of the applications operating system and appends a receivedFiles.json.
 pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
-        eprintln!("Could not get app config directory: {}", e);
+        eprintln!(
+            "[wyrmhole][settings][error] Could not get app data directory: {}",
+            e
+        );
         PathBuf::from(".")
     });
 
     // Ensure the config directory exists before writing to it.
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
-            eprintln!("Failed to create config directory: {}", e);
+            eprintln!(
+                "[wyrmhole][settings][error] Failed to create data directory: {}",
+                e
+            );
         }
     }
 
@@ -112,14 +124,20 @@ pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
 // Get the app data path of the applications operating system and appends a sent_files.json.
 pub fn get_sent_files_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
-        eprintln!("Could not get app config directory: {}", e);
+        eprintln!(
+            "[wyrmhole][settings][error] Could not get app data directory: {}",
+            e
+        );
         PathBuf::from(".")
     });
 
     // Ensure the config directory exists before writing to it.
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
-            eprintln!("Failed to create config directory: {}", e);
+            eprintln!(
+                "[wyrmhole][settings][error] Failed to create data directory: {}",
+                e
+            );
         }
     }
 
@@ -130,7 +148,10 @@ pub fn get_sent_files_path(app_handle: &AppHandle) -> PathBuf {
 // Creates an instance of AppSettings with default values.
 fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
     let download_dir = app_handle.path().download_dir().unwrap_or_else(|e| {
-        eprintln!("Could not get app data directory: {}", e);
+        eprintln!(
+            "[wyrmhole][settings][error] Could not get default download directory: {}",
+            e
+        );
         PathBuf::from(".")
     });
     let received_dir = get_received_files_path(app_handle);
@@ -153,25 +174,25 @@ pub fn init_settings(app_handle: &AppHandle) -> AppSettings {
         if let Ok(content) = fs::read_to_string(&settings_path) {
             if let Ok(settings) = serde_json::from_str::<AppSettings>(&content) {
                 println!(
-                    "Settings loaded successfully from {}.",
+                    "[wyrmhole][settings][info] Settings loaded from {}",
                     settings_path.display()
                 );
                 return settings;
             } else {
                 eprintln!(
-                    "Failed to parse settings.json, creating a new file with defaults at {}",
+                    "[wyrmhole][settings][error] Failed to parse settings.json; creating defaults at {}",
                     settings_path.display()
                 );
             }
         } else {
             eprintln!(
-                "Failed to read settings.json, creating a new file with defaults at {}",
+                "[wyrmhole][settings][error] Failed to read settings.json; creating defaults at {}",
                 settings_path.display()
             );
         }
     } else {
         println!(
-            "settings.json not found, creating a new file with defaults at {}",
+            "[wyrmhole][settings][info] settings.json not found; creating defaults at {}",
             settings_path.display()
         );
     }
@@ -179,7 +200,10 @@ pub fn init_settings(app_handle: &AppHandle) -> AppSettings {
     // If loading failed or file didn't exist, create and save default settings.
     let default_settings = create_default_settings(app_handle);
     if let Err(e) = save_settings(&default_settings, &settings_path) {
-        eprintln!("Failed to save default settings: {}", e);
+        eprintln!(
+            "[wyrmhole][settings][error] Failed to save default settings: {}",
+            e
+        );
     }
     default_settings
 }

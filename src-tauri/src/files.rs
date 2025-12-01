@@ -8,7 +8,13 @@ use flate2::Compression;
 use futures::FutureExt;
 use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, WormholeError};
 use once_cell::sync::Lazy;
-use std::{collections::HashMap, net::SocketAddr, path::Path, path::PathBuf};
+use std::{
+    collections::HashMap,
+    net::SocketAddr,
+    path::Path,
+    path::PathBuf,
+    time::Instant,
+};
 use tar::{Archive, Builder};
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::fs::File;
@@ -59,6 +65,7 @@ pub async fn send_file_call(
     file_path: &str,
     send_id: String,
 ) -> Result<String, String> {
+    let overall_start = Instant::now();
     let config = transfer::APP_CONFIG.clone();
 
     // Get file name early for status updates
@@ -157,7 +164,7 @@ pub async fn send_file_call(
     // Connect the wormhole - this will wait until the receiver connects
     let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
         let msg = format!("Failed to connect to Wormhole: {}", e);
-        println!("{}", msg);
+        println!("[wyrmhole][files][error] {}", msg);
         let _ = app_handle.emit(
             "send-error",
             serde_json::json!({
@@ -227,6 +234,7 @@ pub async fn send_file_call(
     let is_folder = absolute_path.is_dir();
 
     if is_folder {
+        let tar_start = Instant::now();
         // For folders, create a tarball first to ensure proper transfer
         // Emit "Packaging..." status
         let _ = app_handle.emit(
@@ -262,10 +270,11 @@ pub async fn send_file_call(
         .map_err(|e| format!("Failed to create tarball: {}", e))??;
 
         println!(
-            "Created tarball: {} ({} bytes) from folder: {}",
+            "[wyrmhole][perf][files] Created tarball: {} ({} bytes) from folder: {} in {:?}",
             tarball_path.display(),
             tarball_size,
-            absolute_path.display()
+            absolute_path.display(),
+            tar_start.elapsed()
         );
 
         // Open the tarball file for sending
@@ -297,6 +306,7 @@ pub async fn send_file_call(
         let progress_file_name = tarball_name.clone();
 
         // Send the tarball using send_file
+        let transfer_start = Instant::now();
         transfer::send_file(
             wormhole,
             relay_hints,
@@ -304,10 +314,11 @@ pub async fn send_file_call(
             tarball_name.clone(),
             actual_tarball_size,
             abilities,
-            |_info| println!("Transit established!"),
-            // Progress handler
+            |_info| {
+                println!("[wyrmhole][files][info] Transit established for folder send");
+            },
+            // Progress handler (no per-chunk logging for performance)
             move |sent, total| {
-                println!("Progress: {}/{}", sent, total);
                 let percentage = if total > 0 {
                     (sent as f64 / total as f64 * 100.0) as u64
                 } else {
@@ -336,7 +347,10 @@ pub async fn send_file_call(
                 e,
                 tarball_path.display()
             );
-            println!("Send error details: {}", error_message);
+            println!(
+                "[wyrmhole][files][error] Send folder failed: {}",
+                error_message
+            );
             let _ = error_app_handle.emit(
                 "send-error",
                 serde_json::json!({
@@ -351,6 +365,16 @@ pub async fn send_file_call(
             });
             error_message
         })?;
+
+        let elapsed = transfer_start.elapsed();
+        if elapsed.as_secs_f64() > 0.0 {
+            let mb = actual_tarball_size as f64 / (1024.0 * 1024.0);
+            let mbps = mb / elapsed.as_secs_f64();
+            println!(
+            "[wyrmhole][perf][files] Folder transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
+                mb, elapsed, mbps
+            );
+        }
 
         // Clean up temporary tarball
         let _ = tokio::fs::remove_file(&tarball_path).await;
@@ -395,7 +419,7 @@ pub async fn send_file_call(
         .len();
 
     println!(
-        "Sending file: {} (absolute path: {})",
+        "[wyrmhole][files][info] Sending file: {} (absolute path: {})",
         file_path,
         absolute_path.display()
     );
@@ -417,6 +441,7 @@ pub async fn send_file_call(
     let mut compat_file = file.compat();
 
     // Send the file using send_file
+    let transfer_start = Instant::now();
     transfer::send_file(
         wormhole,
         relay_hints,
@@ -424,10 +449,11 @@ pub async fn send_file_call(
         file_name.clone(),
         file_size,
         abilities,
-        |_info| println!("Transit established!"),
-        // Progress handler
+        |_info| {
+            println!("[wyrmhole][files][info] Transit established for single-file send");
+        },
+        // Progress handler (no per-chunk logging for performance)
         move |sent, total| {
-            println!("Progress: {}/{}", sent, total);
             let percentage = if total > 0 {
                 (sent as f64 / total as f64 * 100.0) as u64
             } else {
@@ -456,7 +482,10 @@ pub async fn send_file_call(
             e,
             absolute_path.display()
         );
-        println!("Send error details: {}", error_message);
+        println!(
+            "[wyrmhole][files][error] Send file failed: {}",
+            error_message
+        );
         let _ = error_app_handle.emit(
             "send-error",
             serde_json::json!({
@@ -467,6 +496,16 @@ pub async fn send_file_call(
         );
         error_message
     })?;
+
+    let elapsed = transfer_start.elapsed();
+    if elapsed.as_secs_f64() > 0.0 {
+        let mb = file_size as f64 / (1024.0 * 1024.0);
+        let mbps = mb / elapsed.as_secs_f64();
+        println!(
+            "[wyrmhole][perf][files] File transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
+            mb, elapsed, mbps
+        );
+    }
 
     // Remove from active sends when complete and get the code
     let connection_code = {
@@ -508,6 +547,12 @@ pub async fn send_file_call(
         },
     );
 
+    println!(
+        "[wyrmhole][perf][files] send_file_call finished for '{}' in {:?}",
+        file_path,
+        overall_start.elapsed()
+    );
+
     Ok(format!(
         "Successfully sent file '{}' ({} bytes)",
         file_path, file_size
@@ -524,10 +569,7 @@ pub async fn send_multiple_files_call(
         return Err("No files provided".to_string());
     }
 
-    // Create a temporary folder to hold all files
-    let temp_dir = std::env::temp_dir();
-    let temp_folder_name = format!("wyrmhole_send_{}", Uuid::new_v4());
-    let temp_folder_path = temp_dir.join(&temp_folder_name);
+    let overall_start = Instant::now();
 
     // Generate a display name for the folder and tarball
     let display_name = if let Some(custom_name) = folder_name {
@@ -591,44 +633,6 @@ pub async fn send_multiple_files_call(
     );
     println!("Initial progress event emitted for send_id: {}", send_id);
 
-    // Copy all files into the temp folder (run in blocking task for file operations)
-    tokio::task::spawn_blocking({
-        let file_paths = file_paths.clone();
-        let temp_folder_path = temp_folder_path.clone();
-        move || {
-            // Use std::fs for synchronous operations in blocking task
-            std::fs::create_dir_all(&temp_folder_path)
-                .map_err(|e| format!("Failed to create temp folder: {}", e))?;
-
-            for file_path in &file_paths {
-                let source_path = Path::new(file_path);
-                if !source_path.exists() {
-                    return Err(format!("File does not exist: {}", file_path));
-                }
-
-                let file_name = source_path
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("unknown");
-                let dest_path = temp_folder_path.join(file_name);
-
-                if source_path.is_file() {
-                    // Copy file
-                    std::fs::copy(source_path, &dest_path)
-                        .map_err(|e| format!("Failed to copy file {}: {}", file_path, e))?;
-                } else if source_path.is_dir() {
-                    // Copy directory recursively using a helper
-                    copy_dir_all_sync(source_path, &dest_path)
-                        .map_err(|e| format!("Failed to copy directory {}: {}", file_path, e))?;
-                }
-            }
-
-            Ok::<(), String>(())
-        }
-    })
-    .await
-    .map_err(|e| format!("Failed to copy files: {}", e))??;
-
     // Emit "Waiting..." status after files are copied, before mailbox connection
     let _ = app_handle.emit(
         "send-progress",
@@ -650,6 +654,7 @@ pub async fn send_multiple_files_call(
     let config = transfer::APP_CONFIG.clone();
 
     // Create the mailbox connection
+    let mailbox_start = Instant::now();
     let mailbox_connection = match MailboxConnection::create(config, 2).await {
         Ok(conn) => {
             let code = conn.code();
@@ -707,11 +712,6 @@ pub async fn send_multiple_files_call(
                     "error": error_msg.clone()
                 }),
             );
-            // Clean up temp folder
-            let temp_folder_path_clone = temp_folder_path.clone();
-            tokio::spawn(async move {
-                let _ = tokio::fs::remove_dir_all(&temp_folder_path_clone).await;
-            });
             return Err(error_msg);
         }
     };
@@ -734,12 +734,13 @@ pub async fn send_multiple_files_call(
                 "error": msg.clone()
             }),
         );
-        let temp_folder_path_clone = temp_folder_path.clone();
-        tokio::spawn(async move {
-            let _ = tokio::fs::remove_dir_all(&temp_folder_path_clone).await;
-        });
         msg
     })?;
+
+    println!(
+        "[wyrmhole][perf][files] Mailbox + wormhole established for multi-file send in {:?}",
+        mailbox_start.elapsed()
+    );
 
     // Receiver has connected! Now create the tarball and show "Packaging..." status
     // Get the connection code first
@@ -772,26 +773,14 @@ pub async fn send_multiple_files_call(
     let error_id = send_id.clone();
     let error_file_name = display_name.clone();
 
-    // Verify the temp folder exists and has files
-    if !temp_folder_path.exists() {
-        let error_msg = format!("Temp folder does not exist: {}", temp_folder_path.display());
-        let _ = app_handle.emit(
-            "send-error",
-            serde_json::json!({
-                "id": send_id.clone(),
-                "file_name": display_name.clone(),
-                "error": error_msg.clone()
-            }),
-        );
-        let temp_folder_path_clone = temp_folder_path.clone();
-        tokio::spawn(async move {
-            let _ = tokio::fs::remove_dir_all(&temp_folder_path_clone).await;
-        });
-        return Err(error_msg);
-    }
-
-    // Create a tarball from the temp folder
-    let tarball_path = temp_dir.join(&tarball_name);
+    // Create a tarball from the original file paths (no extra temp folder copy).
+    // Use a unique temp filename per send to avoid races when multiple sends share the same display_name.
+    let temp_dir = std::env::temp_dir();
+    let tarball_path = temp_dir.join(format!(
+        "wyrmhole_send_{}_{}",
+        Uuid::new_v4(),
+        &tarball_name
+    ));
 
     // Use the tarball name (with .gz) for progress events since that's what's actually being sent
     let progress_file_name = tarball_name.clone();
@@ -799,21 +788,25 @@ pub async fn send_multiple_files_call(
     // Use the same display_name for the folder inside the tarball
     let tarball_folder_name = display_name.clone();
 
-    // Create the tarball (synchronous operation, run in blocking task)
+    // Create the tarball (synchronous operation, run in blocking task) directly from the provided paths.
+    let tar_start = Instant::now();
     let tarball_size = tokio::task::spawn_blocking({
-        let temp_folder_path = temp_folder_path.clone();
         let tarball_path = tarball_path.clone();
         let tarball_folder_name = tarball_folder_name.clone();
-        move || create_tarball_from_folder(&temp_folder_path, &tarball_path, &tarball_folder_name)
+        let file_paths = file_paths.clone();
+        move || {
+            create_tarball_from_paths(&file_paths, &tarball_path, &tarball_folder_name)
+        }
     })
     .await
     .map_err(|e| format!("Failed to create tarball: {}", e))??;
 
     println!(
-        "Created tarball: {} ({} bytes) from {} files",
+        "[wyrmhole][perf][files] Created tarball: {} ({} bytes) from {} files in {:?}",
         tarball_path.display(),
         tarball_size,
-        file_paths.len()
+        file_paths.len(),
+        tar_start.elapsed()
     );
 
     // Open the tarball file for sending
@@ -827,10 +820,8 @@ pub async fn send_multiple_files_call(
                 "error": error_msg.clone()
             }),
         );
-        let temp_folder_path_clone = temp_folder_path.clone();
         let tarball_path_clone = tarball_path.clone();
         tokio::spawn(async move {
-            let _ = tokio::fs::remove_dir_all(&temp_folder_path_clone).await;
             let _ = tokio::fs::remove_file(&tarball_path_clone).await;
         });
         error_msg
@@ -854,6 +845,7 @@ pub async fn send_multiple_files_call(
     let mut compat_file = file.compat();
 
     // Send the tarball using send_file
+    let transfer_start = Instant::now();
     transfer::send_file(
         wormhole,
         relay_hints,
@@ -861,10 +853,11 @@ pub async fn send_multiple_files_call(
         tarball_name.clone(),
         file_size_to_send,
         abilities,
-        |_info| println!("Transit established!"),
-        // Progress handler
+        |_info| {
+            println!("[wyrmhole][files][info] Transit established for multi-file send");
+        },
+        // Progress handler (no per-chunk logging for performance)
         move |sent, total| {
-            println!("Progress: {}/{}", sent, total);
             let percentage = if total > 0 {
                 (sent as f64 / total as f64 * 100.0) as u64
             } else {
@@ -893,7 +886,10 @@ pub async fn send_multiple_files_call(
             e,
             tarball_path.display()
         );
-        println!("Send error details: {}", error_message);
+        println!(
+            "[wyrmhole][files][error] Multi-file send failed: {}",
+            error_message
+        );
         let _ = error_app_handle.emit(
             "send-error",
             serde_json::json!({
@@ -902,17 +898,24 @@ pub async fn send_multiple_files_call(
                 "error": error_message.clone()
             }),
         );
-        let temp_folder_path_clone = temp_folder_path.clone();
         let tarball_path_clone = tarball_path.clone();
         tokio::spawn(async move {
-            let _ = tokio::fs::remove_dir_all(&temp_folder_path_clone).await;
             let _ = tokio::fs::remove_file(&tarball_path_clone).await;
         });
         error_message
     })?;
 
-    // Clean up temporary folder and tarball
-    let _ = tokio::fs::remove_dir_all(&temp_folder_path).await;
+    let elapsed = transfer_start.elapsed();
+    if elapsed.as_secs_f64() > 0.0 {
+        let mb = file_size_to_send as f64 / (1024.0 * 1024.0);
+        let mbps = mb / elapsed.as_secs_f64();
+        println!(
+            "[wyrmhole][perf][files] Multi-file transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
+            mb, elapsed, mbps
+        );
+    }
+
+    // Clean up temporary tarball
     let _ = tokio::fs::remove_file(&tarball_path).await;
 
     // Remove from active sends when complete and get the code
@@ -945,6 +948,12 @@ pub async fn send_multiple_files_call(
             send_time: Local::now(),
             connection_code,
         },
+    );
+
+    println!(
+        "[wyrmhole][perf][files] send_multiple_files_call finished for {} file(s) in {:?}",
+        file_paths.len(),
+        overall_start.elapsed()
     );
 
     Ok(format!("Successfully sent {} file(s)", file_paths.len()))
@@ -994,15 +1003,15 @@ pub async fn request_file_call(
         code_string = code_string.trim_start();
     }
     if code_string.is_empty() {
-        println!("No code provided for receiving file.");
+        println!("[wyrmhole][files][error] No code provided for receiving file");
         return Err("No code provided for receiving file.".to_string());
     }
     let code = code_string.parse::<Code>().map_err(|err| {
         let error_message = format!("Error parsing code: {}", err);
-        println!("{}", error_message);
+        println!("[wyrmhole][files][error] {}", error_message);
         error_message
     })?;
-    println!("Successfully parsed code: {:?}", code);
+    println!("[wyrmhole][files][info] Parsed receive code: {:?}", code);
 
     // Create cancel channel for this connection
     let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
@@ -1018,14 +1027,16 @@ pub async fn request_file_call(
     let config = transfer::APP_CONFIG.clone();
     let mailbox_connection = match MailboxConnection::connect(config, code, false).await {
         Ok(conn) => {
-            println!("Successfully connected to the mailbox. Attempting to establish Wormhole...");
+            println!(
+                "[wyrmhole][files][info] Connected to mailbox, establishing Wormhole..."
+            );
             conn
         }
         Err(e) => {
             // Remove from active connections on error
             ACTIVE_CONNECTIONS.lock().await.remove(&connection_id);
             let msg = format!("Failed to create mailbox: {}", e);
-            println!("{}", msg);
+            println!("[wyrmhole][files][error] {}", msg);
             return Err(msg);
         }
     };
@@ -1038,9 +1049,9 @@ pub async fn request_file_call(
             tokio::spawn(async move {
                 ACTIVE_CONNECTIONS.lock().await.remove(&connection_id_clone);
             });
-            let msg = format!("Failed to connect to Wormhole: {}", e);
-            println!("{}", msg);
-            msg
+        let msg = format!("Failed to connect to Wormhole: {}", e);
+        println!("[wyrmhole][files][error] {}", msg);
+        msg
         })?;
 
     // Constructing default request_file(...) variables
@@ -1081,7 +1092,10 @@ pub async fn request_file_call(
         };
         REQUESTS_HASHMAP.lock().await.insert(id.clone(), entry);
 
-        println!("Incoming file: {} ({} bytes)", file_name, file_size);
+        println!(
+            "[wyrmhole][files][info] Incoming file offer: {} ({} bytes)",
+            file_name, file_size
+        );
 
         let response = serde_json::json!({
             "id": id,
@@ -1090,7 +1104,7 @@ pub async fn request_file_call(
         });
         Ok(response.to_string())
     } else {
-        println!("No file was offered by the sender (canceled or empty).");
+        println!("[wyrmhole][files][info] No file offered by sender (canceled or empty)");
         Err("No file was offered by the sender (canceled or empty).".to_string())
     }
 }
@@ -1108,7 +1122,10 @@ pub async fn cancel_connection(connection_id: String) -> Result<String, String> 
 
     // Send the cancel signal
     let _ = cancel_tx.send(());
-    println!("Cancelled connection with id: {}", connection_id);
+    println!(
+        "[wyrmhole][files][info] Cancelled connection with id: {}",
+        connection_id
+    );
 
     Ok("Connection cancelled".to_string())
 }
@@ -1119,10 +1136,13 @@ pub async fn receiving_file_deny(id: String) -> Result<String, String> {
     let mut requests = REQUESTS_HASHMAP.lock().await;
     if let Some(entry) = requests.remove(&id) {
         if let Err(e) = entry.request.reject().await {
-            println!("Error closing request: {}", e);
+            println!("[wyrmhole][files][error] Failed to close request: {}", e);
             return Err(format!("Failed to close request: {}", e));
         }
-        println!("receiving_file_deny closing request with id: {}", id);
+        println!(
+            "[wyrmhole][files][info] receiving_file_deny closed request with id: {}",
+            id
+        );
         Ok("File offer denied and request closed".to_string())
     } else {
         Err("No request found for this ID".to_string())
@@ -1133,15 +1153,18 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
     let mut requests: tokio::sync::MutexGuard<'_, HashMap<String, OpenRequests>> =
         REQUESTS_HASHMAP.lock().await;
     if let Some(entry) = requests.remove(&id) {
-        println!("receiving_file_accept closing request with id: {}", id);
-        println!("File name: {}", entry.request.file_name());
+        println!(
+            "[wyrmhole][files][info] receiving_file_accept for id: {}, file: {}",
+            id,
+            entry.request.file_name()
+        );
 
         // Build the transit handler and get variables available for JSON metadata file.
         // connection_type is mapped to String because I don't know if ConnectionType struct will be needed and serde doesn't have a default serializer for it.
         let mut connection_type: String = String::new();
         let mut peer_address: SocketAddr = "0.0.0.0:0".parse().unwrap();
         let transit_handler = |info: transit::TransitInfo| {
-            println!("Transit info: {:?}", info);
+            println!("[wyrmhole][files][info] Transit info: {:?}", info);
             let connection_type_str = match info.conn_type {
                 transit::ConnectionType::Direct => "direct".to_string(),
                 transit::ConnectionType::Relay { ref name } => {
@@ -1174,7 +1197,6 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
         let error_file_name = file_name_with_extension.clone();
 
         let progress_handler = move |transferred: u64, total: u64| {
-            println!("Progress: {}/{}", transferred, total);
             let percentage = if total > 0 {
                 (transferred as f64 / total as f64 * 100.0) as u64
             } else {
@@ -1269,7 +1291,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
             .await
             .map_err(|e| {
                 let error_message = format!("Error accepting file: {}", e);
-                println!("{}", error_message);
+                println!("[wyrmhole][files][error] {}", error_message);
                 // Remove from active downloads on error
                 let id_clone = id.clone();
                 tokio::spawn(async move {
@@ -1361,7 +1383,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
                     },
                 )
                 .map_err(|e| {
-                    println!("Failed to add received file: {}", e);
+                    println!("[wyrmhole][files][error] Failed to add received file: {}", e);
                     e
                 })?;
 
@@ -1385,7 +1407,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
                 },
             )
             .map_err(|e| {
-                println!("Failed to add received file: {}", e);
+                println!("[wyrmhole][files][error] Failed to add received file: {}", e);
                 e
             })?;
 
@@ -1415,7 +1437,10 @@ pub async fn cancel_download(
 
     // Send the cancel signal
     let _ = cancel_tx.send(());
-    println!("Cancelled download with id: {}", download_id);
+    println!(
+        "[wyrmhole][files][info] Cancelled download with id: {}",
+        download_id
+    );
 
     // Don't emit error event for user cancellations - frontend handles dismissal directly
     // The frontend's onDismiss callback will remove it from the UI immediately
@@ -1441,7 +1466,10 @@ async fn build_relay_hints(app_handle: &AppHandle) -> Vec<transit::RelayHint> {
         if let Ok(url) = custom.parse() {
             urls.push(url);
         } else {
-            eprintln!("Invalid relay_server_url in settings, falling back to default: {}", custom);
+            eprintln!(
+                "[wyrmhole][files][warn] Invalid relay_server_url in settings, falling back to default: {}",
+                custom
+            );
         }
     }
 
@@ -1503,7 +1531,8 @@ fn create_tarball_from_folder(
     let tar_gz = std::fs::File::create(output_path)
         .map_err(|e| format!("Failed to create tarball file: {}", e))?;
 
-    let enc = GzEncoder::new(tar_gz, Compression::default());
+    // Use a faster compression level to reduce CPU time; transfer is usually bottlenecked by network, not disk.
+    let enc = GzEncoder::new(tar_gz, Compression::fast());
     let mut tar = Builder::new(enc);
 
     // Add the entire folder to the tarball with the friendly folder name
@@ -1521,31 +1550,66 @@ fn create_tarball_from_folder(
 
     let size = metadata.len();
     println!(
-        "Tarball created: {} bytes (folder name: {})",
+        "[wyrmhole][perf][files] Tarball created: {} bytes (folder: {})",
         size, folder_name
     );
 
     Ok(size)
 }
 
-/// Helper function to recursively copy a directory (synchronous version for blocking tasks)
-fn copy_dir_all_sync(src: &Path, dst: &Path) -> Result<(), String> {
-    std::fs::create_dir_all(dst).map_err(|e| format!("Failed to create directory: {}", e))?;
+/// Helper function to create a tarball directly from a list of file and directory paths.
+/// All entries are wrapped under a single top-level folder in the archive (`folder_name`).
+fn create_tarball_from_paths(
+    paths: &[String],
+    output_path: &Path,
+    folder_name: &str,
+) -> Result<u64, String> {
+    let tar_gz = std::fs::File::create(output_path)
+        .map_err(|e| format!("Failed to create tarball file: {}", e))?;
 
-    for entry in std::fs::read_dir(src).map_err(|e| format!("Failed to read directory: {}", e))? {
-        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
-        let path = entry.path();
-        let file_name = path.file_name().unwrap();
-        let dst_path = dst.join(file_name);
+    let enc = GzEncoder::new(tar_gz, Compression::fast());
+    let mut tar = Builder::new(enc);
 
-        if path.is_dir() {
-            copy_dir_all_sync(&path, &dst_path)?;
+    for file_path in paths {
+        let src_path = Path::new(file_path);
+        if !src_path.exists() {
+            return Err(format!("File or folder does not exist: {}", file_path));
+        }
+
+        if src_path.is_dir() {
+            // Add the directory and its contents under folder_name/<dir_name>
+            let name = src_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("folder");
+            let dest_prefix = Path::new(folder_name).join(name);
+            tar.append_dir_all(&dest_prefix, src_path)
+                .map_err(|e| format!("Failed to add directory to tarball: {}", e))?;
         } else {
-            std::fs::copy(&path, &dst_path).map_err(|e| format!("Failed to copy file: {}", e))?;
+            // Add a single file under folder_name/<file_name>
+            let name = src_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("file");
+            let dest = Path::new(folder_name).join(name);
+            tar.append_path_with_name(src_path, &dest)
+                .map_err(|e| format!("Failed to add file to tarball: {}", e))?;
         }
     }
 
-    Ok(())
+    tar.finish()
+        .map_err(|e| format!("Failed to finish tarball: {}", e))?;
+
+    let metadata = std::fs::metadata(output_path)
+        .map_err(|e| format!("Failed to get tarball metadata: {}", e))?;
+
+    let size = metadata.len();
+    println!(
+        "[wyrmhole][perf][files] Tarball created from paths: {} bytes (folder: {})",
+        size, folder_name
+    );
+
+    Ok(size)
 }
 
 /// Helper function to extract a tarball and return list of extracted files

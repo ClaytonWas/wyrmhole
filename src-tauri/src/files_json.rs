@@ -40,25 +40,25 @@ pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
         if let Ok(content) = fs::read_to_string(&received_files_path) {
             if let Ok(files) = serde_json::from_str::<Vec<ReceivedFile>>(&content) {
                 println!(
-                    "Received files loaded successfully from {}.",
+                    "[wyrmhole][history][info] Received files loaded from {}",
                     received_files_path.display()
                 );
                 return files;
             } else {
                 eprintln!(
-                    "Failed to parse received_files.json, creating a new empty file at {}",
+                    "[wyrmhole][history][error] Failed to parse received_files.json; creating empty file at {}",
                     received_files_path.display()
                 );
             }
         } else {
             eprintln!(
-                "Failed to read received_files.json, creating a new empty file with defaults at {}",
+                "[wyrmhole][history][error] Failed to read received_files.json; creating empty file at {}",
                 received_files_path.display()
             );
         }
     } else {
         println!(
-            "received_files.json not found, creating a new empty file at {}",
+            "[wyrmhole][history][info] received_files.json not found; creating empty file at {}",
             received_files_path.display()
         );
     }
@@ -66,7 +66,10 @@ pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
     // If loading failed or file didn't exist, create and save an empty list.
     let default_files = Vec::new(); // Initialize as an empty vector (functions as an empty JSON array)
     if let Err(e) = save_received_files(&default_files, &received_files_path) {
-        eprintln!("Failed to save initial empty received files: {}", e);
+        eprintln!(
+            "[wyrmhole][history][error] Failed to save initial empty received files: {}",
+            e
+        );
     }
     default_files
 }
@@ -118,11 +121,6 @@ pub async fn get_received_files_json_data(
     app_handle: AppHandle,
 ) -> Result<Vec<serde_json::Value>, String> {
     let received_files_path = settings::get_received_files_path(&app_handle);
-    println!(
-        "Reading received files history from: {}",
-        received_files_path.display()
-    );
-
     // Read the file contents into a string
     let contents = fs::read_to_string(&received_files_path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
@@ -144,25 +142,25 @@ pub fn init_sent_files(app_handle: &AppHandle) -> Vec<SentFile> {
         if let Ok(content) = fs::read_to_string(&sent_files_path) {
             if let Ok(files) = serde_json::from_str::<Vec<SentFile>>(&content) {
                 println!(
-                    "Sent files loaded successfully from {}.",
+                    "[wyrmhole][history][info] Sent files loaded from {}",
                     sent_files_path.display()
                 );
                 return files;
             } else {
                 eprintln!(
-                    "Failed to parse sent_files.json, creating a new empty file at {}",
+                    "[wyrmhole][history][error] Failed to parse sent_files.json; creating empty file at {}",
                     sent_files_path.display()
                 );
             }
         } else {
             eprintln!(
-                "Failed to read sent_files.json, creating a new empty file with defaults at {}",
+                "[wyrmhole][history][error] Failed to read sent_files.json; creating empty file at {}",
                 sent_files_path.display()
             );
         }
     } else {
         println!(
-            "sent_files.json not found, creating a new empty file at {}",
+            "[wyrmhole][history][info] sent_files.json not found; creating empty file at {}",
             sent_files_path.display()
         );
     }
@@ -170,7 +168,10 @@ pub fn init_sent_files(app_handle: &AppHandle) -> Vec<SentFile> {
     // If loading failed or file didn't exist, create and save an empty list.
     let default_files = Vec::new();
     if let Err(e) = save_sent_files(&default_files, &sent_files_path) {
-        eprintln!("Failed to save initial empty sent files: {}", e);
+        eprintln!(
+            "[wyrmhole][history][error] Failed to save initial empty sent files: {}",
+            e
+        );
     }
     default_files
 }
@@ -223,11 +224,6 @@ pub async fn get_sent_files_json_data(
     app_handle: AppHandle,
 ) -> Result<Vec<serde_json::Value>, String> {
     let sent_files_path = settings::get_sent_files_path(&app_handle);
-    println!(
-        "Reading sent files history from: {}",
-        sent_files_path.display()
-    );
-
     // Read the file contents into a string
     let contents =
         fs::read_to_string(&sent_files_path).map_err(|e| format!("Failed to read file: {}", e))?;
