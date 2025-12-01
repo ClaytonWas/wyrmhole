@@ -39,7 +39,19 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
         <>
             <div 
                 onClick={() => setIsOpen(true)} 
-                className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-yellow-50/50 transition-colors bg-yellow-50/30 rounded"
+                className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-white/20 last:border-b-0 cursor-pointer transition-all rounded-xl"
+                style={{
+                  background: 'rgba(254, 252, 232, 0.4)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(254, 252, 232, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(254, 252, 232, 0.4)';
+                }}
             >
                 <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
                     <FileIcon fileName={file_name} className="w-3.5 h-3.5 flex-shrink-0" />
@@ -74,9 +86,15 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
             </div>
             {isOpen && createPortal(
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsOpen(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <div className="rounded-3xl w-full max-w-md overflow-hidden" style={{
+                      background: 'rgba(255, 255, 255, 0.85)',
+                      backdropFilter: 'blur(40px)',
+                      WebkitBackdropFilter: 'blur(40px)',
+                      border: '1px solid rgba(255, 255, 255, 0.5)',
+                      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+                    }} onClick={(e) => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="px-6 py-4 border-b border-gray-100">
+                        <div className="px-6 py-4 border-b border-white/20">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="flex-shrink-0 p-2 bg-yellow-50 rounded-xl">
@@ -115,13 +133,30 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
                         </div>
 
                         {/* Actions - Refined */}
-                        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3">
+                        <div className="px-6 py-4 border-t border-white/20 flex gap-3">
                             <button
                                 onClick={() => {
                                     onAccept(id);
                                     setIsOpen(false);
                                 }}
-                                className="flex-1 px-4 py-2.5 bg-white border-2 border-green-200 text-green-600 text-sm font-semibold rounded-xl hover:bg-green-50 hover:border-green-300 active:bg-green-100 transition-all duration-200 shadow-sm hover:shadow flex items-center justify-center gap-2"
+                                className="flex-1 px-4 py-2.5 text-green-600 text-sm font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.8)',
+                                  backdropFilter: 'blur(24px)',
+                                  WebkitBackdropFilter: 'blur(24px)',
+                                  border: '2px solid rgba(187, 247, 208, 0.7)',
+                                  boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(240, 253, 244, 0.6)';
+                                  e.currentTarget.style.borderColor = 'rgba(134, 239, 172, 0.8)';
+                                  e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
+                                  e.currentTarget.style.borderColor = 'rgba(187, 247, 208, 0.6)';
+                                  e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                }}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -133,7 +168,24 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
                                     onDeny(id);
                                     setIsOpen(false);
                                 }}
-                                className="flex-1 px-4 py-2.5 bg-white border-2 border-red-200 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 active:bg-red-100 transition-all duration-200 shadow-sm hover:shadow flex items-center justify-center gap-2"
+                                className="flex-1 px-4 py-2.5 text-red-600 text-sm font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.8)',
+                                  backdropFilter: 'blur(24px)',
+                                  WebkitBackdropFilter: 'blur(24px)',
+                                  border: '2px solid rgba(254, 202, 202, 0.7)',
+                                  boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(254, 242, 242, 0.6)';
+                                  e.currentTarget.style.borderColor = 'rgba(252, 165, 165, 0.8)';
+                                  e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
+                                  e.currentTarget.style.borderColor = 'rgba(254, 202, 202, 0.6)';
+                                  e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                }}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

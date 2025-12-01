@@ -29,7 +29,19 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
         <>
             <div 
                 onClick={() => setIsOpen(true)} 
-                className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-blue-50/50 transition-colors bg-blue-50/30 rounded"
+                className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-white/20 last:border-b-0 cursor-pointer transition-all rounded-xl"
+                style={{
+                  background: 'rgba(239, 246, 255, 0.4)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 246, 255, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 246, 255, 0.4)';
+                }}
             >
                 <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
                     <div className="animate-spin flex-shrink-0">
@@ -56,9 +68,15 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
             </div>
             {isOpen && createPortal(
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsOpen(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <div className="rounded-3xl w-full max-w-md overflow-hidden" style={{
+                      background: 'rgba(255, 255, 255, 0.85)',
+                      backdropFilter: 'blur(40px)',
+                      WebkitBackdropFilter: 'blur(40px)',
+                      border: '1px solid rgba(255, 255, 255, 0.5)',
+                      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+                    }} onClick={(e) => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="px-6 py-4 border-b border-gray-100">
+                        <div className="px-6 py-4 border-b border-white/20">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="flex-shrink-0 p-2 bg-blue-50 rounded-xl">
@@ -111,7 +129,31 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                                         type="text" 
                                         readOnly 
                                         value={code} 
-                                        className="w-full text-sm font-mono text-gray-900 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl px-4 py-3 pr-10 cursor-pointer hover:border-blue-300 hover:from-blue-50 hover:to-blue-100/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                        className="w-full text-sm font-mono text-gray-900 rounded-xl px-4 py-3 pr-10 cursor-pointer transition-all"
+                                        style={{
+                                          background: 'rgba(255, 255, 255, 0.7)',
+                                          backdropFilter: 'blur(16px)',
+                                          WebkitBackdropFilter: 'blur(16px)',
+                                          border: '1px solid rgba(255, 255, 255, 0.5)',
+                                          boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                                          e.currentTarget.style.background = 'rgba(239, 246, 255, 0.4)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                                        }}
+                                        onFocus={(e) => {
+                                          e.currentTarget.style.outline = 'none';
+                                          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+                                          e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                        }}
+                                        onBlur={(e) => {
+                                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                          e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                        }}
                                         onClick={async (e) => {
                                             const input = e.target as HTMLInputElement;
                                             input.select();
@@ -135,13 +177,30 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                         </div>
 
                         {/* Cancel Button - Refined */}
-                        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                        <div className="px-6 py-4 border-t border-white/20">
                             <button
                                 onClick={() => {
                                     onCancel(code);
                                     setIsOpen(false);
                                 }}
-                                className="w-full px-4 py-2.5 bg-white border-2 border-red-200 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 active:bg-red-100 transition-all duration-200 shadow-sm hover:shadow flex items-center justify-center gap-2"
+                                className="w-full px-4 py-2.5 text-red-600 text-sm font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.8)',
+                                  backdropFilter: 'blur(24px)',
+                                  WebkitBackdropFilter: 'blur(24px)',
+                                  border: '2px solid rgba(254, 202, 202, 0.7)',
+                                  boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(254, 242, 242, 0.6)';
+                                  e.currentTarget.style.borderColor = 'rgba(252, 165, 165, 0.8)';
+                                  e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
+                                  e.currentTarget.style.borderColor = 'rgba(254, 202, 202, 0.6)';
+                                  e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                }}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

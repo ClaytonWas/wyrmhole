@@ -711,10 +711,10 @@ function App() {
   }, []);
 
   return (
-    <div className="app-container h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col overflow-hidden">
+    <div className="app-container h-screen glass-background flex flex-col overflow-hidden">
       <Toaster position="bottom-right" />
 
-      <nav className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0 z-10">
+      <nav className="glass-navbar flex-shrink-0 z-10">
         <div className="px-3 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center">
           <h1 className="text-lg sm:text-2xl xl:text-3xl font-bold flex items-center select-none gap-1 sm:gap-2 text-gray-800">
             <span className="spin-on-hover cursor-pointer text-lg sm:text-2xl xl:text-3xl flex items-center">🌀</span> 
@@ -731,8 +731,18 @@ function App() {
           <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">Active Transfers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {/* Active Sends */}
-            <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden md:h-[140px] flex flex-col ${sendProgress.size === 0 ? 'hidden md:flex' : ''}`}>
-              <div className="px-2 sm:px-3 py-1.5 bg-blue-50 border-b border-gray-200 flex-shrink-0">
+            <div className={`rounded-2xl overflow-hidden md:h-[140px] flex flex-col ${sendProgress.size === 0 ? 'hidden md:flex' : ''}`} style={{
+              background: 'rgba(255, 255, 255, 0.5)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+            }}>
+              <div className="px-2 sm:px-3 py-1.5 border-b border-white/20 flex-shrink-0" style={{
+                background: 'rgba(59, 130, 246, 0.15)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)'
+              }}>
                 <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-blue-700 uppercase tracking-wide">
                   Sending {sendProgress.size > 0 && `(${sendProgress.size})`}
                 </p>
@@ -770,8 +780,18 @@ function App() {
             </div>
             
             {/* Active Downloads */}
-            <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden md:h-[140px] flex flex-col ${downloadProgress.size === 0 ? 'hidden md:flex' : ''}`}>
-              <div className="px-2 sm:px-3 py-1.5 bg-green-50 border-b border-gray-200 flex-shrink-0">
+            <div className={`rounded-2xl overflow-hidden md:h-[140px] flex flex-col ${downloadProgress.size === 0 ? 'hidden md:flex' : ''}`} style={{
+              background: 'rgba(255, 255, 255, 0.5)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+            }}>
+              <div className="px-2 sm:px-3 py-1.5 border-b border-white/20 flex-shrink-0" style={{
+                background: 'rgba(34, 197, 94, 0.15)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)'
+              }}>
                 <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-green-700 uppercase tracking-wide">
                   Receiving {downloadProgress.size > 0 && `(${downloadProgress.size})`}
                 </p>
@@ -815,8 +835,14 @@ function App() {
           <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {/* Send Files Section - Fixed Height */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col">
-              <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
+            <div className="rounded-2xl overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col" style={{
+              background: 'rgba(255, 255, 255, 0.5)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+            }}>
+              <div className="px-3 py-2 border-b border-white/20 flex-shrink-0">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">Send Files</h3>
                   <div className="flex items-center gap-2 flex-1 justify-end">
@@ -826,14 +852,36 @@ function App() {
                         value={folderName}
                         onChange={(e) => setFolderName(e.target.value)}
                         placeholder={`Folder Name: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
-                        className="flex-1 px-2 py-1 text-xs xl:text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.7)',
+                          backdropFilter: 'blur(16px)',
+                          WebkitBackdropFilter: 'blur(16px)',
+                          border: '1px solid rgba(255, 255, 255, 0.5)',
+                          boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                        }}
                         title="Custom name for the folder when sending multiple files. Leave empty to use the default format."
                       />
                     )}
                     {selectedFiles && (
                       <button 
                         onClick={send_files} 
-                        className="font-medium flex items-center justify-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs xl:text-sm rounded transition-colors cursor-pointer flex-shrink-0"
+                        className="font-medium flex items-center justify-center gap-1 px-2 py-1 text-white text-xs xl:text-sm rounded-2xl transition-all cursor-pointer flex-shrink-0"
+                        style={{
+                          background: 'rgba(59, 130, 246, 0.9)',
+                          backdropFilter: 'blur(4px)',
+                          WebkitBackdropFilter: 'blur(4px)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          boxShadow: '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(59, 130, 246, 1)';
+                          e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.9)';
+                          e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                        }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-3.5 h-3.5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
@@ -848,7 +896,21 @@ function App() {
                 {!selectedFiles ? (
                   <label 
                     htmlFor="File" 
-                    className="flex-1 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-200 rounded-lg"
+                    className="flex-1 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed transition-all duration-200 rounded-2xl"
+                    style={{
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                      e.currentTarget.style.background = 'rgba(239, 246, 255, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                    }}
                     onClick={select_files}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5 text-gray-400 mb-1">
@@ -887,7 +949,13 @@ function App() {
                       }}
                     >
                       {selectedFiles.length === 1 ? (
-                        <div className="group flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
+                        <div className="group flex items-center gap-2 p-2 rounded-xl" style={{
+                          background: 'rgba(255, 255, 255, 0.3)',
+                          backdropFilter: 'blur(16px)',
+                          WebkitBackdropFilter: 'blur(16px)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                        }}>
                           <FileIcon fileName={selectedFiles[0].split(/[/\\]/).pop() || "Unknown"} className="w-4 h-4 flex-shrink-0" />
                           <p className="text-xs xl:text-sm font-medium text-gray-900 truncate flex-1">
                             {selectedFiles[0].split(/[/\\]/).pop() || "Unknown"}
@@ -910,7 +978,13 @@ function App() {
                           {selectedFiles.map((file, idx) => {
                             const name = typeof file === "string" ? file.split(/[/\\]/).pop() || "Unknown" : "Unknown";
                             return (
-                              <div key={idx} className="group flex items-center gap-2 p-1.5 bg-gray-50 rounded border border-gray-200">
+                              <div key={idx} className="group flex items-center gap-2 p-1.5 rounded-xl" style={{
+                                background: 'rgba(255, 255, 255, 0.3)',
+                                backdropFilter: 'blur(16px)',
+                                WebkitBackdropFilter: 'blur(16px)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                              }}>
                                 <FileIcon fileName={name} className="w-3.5 h-3.5 flex-shrink-0" />
                                 <p className="text-[11px] xl:text-xs font-medium text-gray-900 truncate flex-1">{name}</p>
                                 <button
@@ -937,20 +1011,48 @@ function App() {
             </div>
 
             {/* Receive Files Section - Compact - Grows with content */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
-              <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
+            <div className="rounded-2xl overflow-hidden flex flex-col" style={{
+              background: 'rgba(255, 255, 255, 0.5)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+            }}>
+              <div className="px-3 py-2 border-b border-white/20 flex-shrink-0">
                 <form onSubmit={(e) => { e.preventDefault(); request_file(); }} className="flex items-center gap-2">
                   <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">Receive Files</h3>
                   <input 
                     value={receiveCode} 
                     onChange={(e) => setReceiveCode(e.target.value)} 
                     placeholder="Enter code: ex. 7-helpful-tiger" 
-                    className="flex-1 px-2 py-1 text-xs xl:text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.3)',
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                    }}
                     title="Enter the connection code provided by the sender. The code format is typically numbers and words separated by hyphens, like '7-helpful-tiger'."
                   />
                   <button 
                     type="submit" 
-                    className="font-medium flex items-center justify-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs xl:text-sm rounded transition-colors cursor-pointer flex-shrink-0"
+                    className="font-medium flex items-center justify-center gap-1 px-2 py-1 text-white text-xs xl:text-sm rounded-2xl transition-all cursor-pointer flex-shrink-0"
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.9)',
+                      backdropFilter: 'blur(4px)',
+                      WebkitBackdropFilter: 'blur(4px)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 1)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.9)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                    }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1032,11 +1134,33 @@ function App() {
                     recieved_files_data();
                   }
                 }}
-                className={`px-2 py-1 rounded transition-all duration-200 ${
+                className={`px-2 py-1 rounded-xl transition-all duration-200 ${
                   historyTab === "received" 
-                    ? "text-blue-700 font-semibold bg-blue-50" 
-                    : "text-gray-500 hover:text-blue-600 hover:bg-blue-50/50"
+                    ? "text-blue-700 font-semibold" 
+                    : "text-gray-500 hover:text-blue-600"
                 }`}
+                style={historyTab === "received" ? {
+                  background: 'rgba(239, 246, 255, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                } : {
+                  background: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  if (historyTab !== "received") {
+                    e.currentTarget.style.background = 'rgba(239, 246, 255, 0.3)';
+                    e.currentTarget.style.backdropFilter = 'blur(8px)';
+                    e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'blur(8px)');
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (historyTab !== "received") {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.backdropFilter = 'none';
+                    e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'none');
+                  }
+                }}
               >
                 Received
               </button>
@@ -1048,18 +1172,50 @@ function App() {
                     sent_files_data();
                   }
                 }}
-                className={`px-2 py-1 rounded transition-all duration-200 ${
+                className={`px-2 py-1 rounded-xl transition-all duration-200 ${
                   historyTab === "sent" 
-                    ? "text-blue-700 font-semibold bg-blue-50" 
-                    : "text-gray-500 hover:text-blue-600 hover:bg-blue-50/50"
+                    ? "text-blue-700 font-semibold" 
+                    : "text-gray-500 hover:text-blue-600"
                 }`}
+                style={historyTab === "sent" ? {
+                  background: 'rgba(239, 246, 255, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                } : {
+                  background: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  if (historyTab !== "sent") {
+                    e.currentTarget.style.background = 'rgba(239, 246, 255, 0.3)';
+                    e.currentTarget.style.backdropFilter = 'blur(8px)';
+                    e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'blur(8px)');
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (historyTab !== "sent") {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.backdropFilter = 'none';
+                    e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'none');
+                  }
+                }}
               >
                 Sent
               </button>
             </div>
           </div>
-          <div className="border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden">
-            <div className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0">
+          <div className="rounded-2xl overflow-hidden" style={{
+            background: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(255, 255, 255, 0.4)',
+            boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+          }}>
+            <div className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-white/20 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0" style={{
+              background: 'rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)'
+            }}>
               <div className="truncate">Filename</div>
               <div className="truncate">Extension</div>
               <div className="truncate">Size</div>

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 export default function SettingsMenu() {
@@ -127,10 +128,20 @@ export default function SettingsMenu() {
       </button>
 
       {/* Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setIsOpen(false)}>
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-2 sm:px-4 py-2 sm:py-3 rounded-t-lg sm:rounded-t-xl">
+      {isOpen && createPortal(
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4" onClick={() => setIsOpen(false)}>
+          <div className="rounded-3xl w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" style={{
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 border-b border-white/20 px-2 sm:px-4 py-2 sm:py-3 rounded-t-3xl" style={{
+              background: 'rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(40px)',
+              WebkitBackdropFilter: 'blur(40px)'
+            }}>
               <div className="flex justify-between items-center">
                 <h2 className="text-sm sm:text-base xl:text-lg font-bold text-gray-800 select-none">Settings</h2>
                 <button
@@ -154,14 +165,45 @@ export default function SettingsMenu() {
                   }
                 }}>
                 <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none cursor-pointer mb-1 text-gray-700 group-hover:text-gray-900">Download Directory</label>
-                <div className="flex-1 border-2 border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-50 text-[10px] sm:text-xs xl:text-sm select-none hover:border-blue-400 hover:bg-blue-50/30 transition-all group-hover:shadow-sm">
+                <div className="flex-1 rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs xl:text-sm select-none transition-all group-hover:shadow-sm"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '2px solid rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                  e.currentTarget.style.background = 'rgba(239, 246, 255, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                }}
+                >
                   <p className="text-gray-700 truncate">{downloadDirectory || "No directory set"}</p>
                 </div>
                 <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 mt-0.5">Click to change download location</p>
               </div>
 
               {/* Auto-extract tarballs setting */}
-              <div className="p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 transition-all">
+              <div className="p-2 sm:p-3 rounded-2xl transition-all" style={{
+                background: 'rgba(255, 255, 255, 0.6)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.4)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+              }}
+              >
                 <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">Auto-Extract Tarballs</label>
                 <div className="flex items-center gap-2">
                   <input
@@ -177,59 +219,129 @@ export default function SettingsMenu() {
               </div>
 
               {/* Default folder name format setting */}
-              <div className="p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 transition-all">
+              <div className="p-2 sm:p-3 rounded-2xl transition-all" style={{
+                background: 'rgba(255, 255, 255, 0.6)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.4)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+              }}
+              >
                 <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1 text-gray-700">Default Folder Name Format</label>
                 <input
                   type="text"
                   value={defaultFolderNameFormat}
                   onChange={(e) => setDefaultFolderNameFormat(e.target.value)}
-                  onBlur={save_default_folder_name_format}
                   placeholder="#-files-via-wyrmhole"
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs xl:text-sm border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-all bg-white"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs xl:text-sm rounded-xl focus:outline-none transition-all"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border: '2px solid rgba(255, 255, 255, 0.5)',
+                    boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                    save_default_folder_name_format();
+                  }}
                 />
                 <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
                   Use # as a placeholder for the number of files (e.g., "#-files-via-wyrmhole")
                 </p>
               </div>
 
-              {/* Export received files JSON button */}
-              <div className="p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 transition-all">
-                <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">Received Files History</label>
-                <button
-                  onClick={export_received_files_json}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-[10px] sm:text-xs xl:text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
-                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                  </svg>
-                  <span>Export JSON History</span>
-                </button>
+              {/* Export JSON History buttons */}
+              <div className="p-2 sm:p-3 rounded-2xl transition-all" style={{
+                background: 'rgba(255, 255, 255, 0.6)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.4)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+              }}
+              >
+                <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">Export File History</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={export_received_files_json}
+                    className="px-2 sm:px-3 py-1.5 sm:py-2 text-white text-[10px] sm:text-xs xl:text-sm font-medium rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.9)',
+                      backdropFilter: 'blur(4px)',
+                      WebkitBackdropFilter: 'blur(4px)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 1)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.9)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
+                      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                    </svg>
+                    <span className="truncate">Received</span>
+                  </button>
+                  <button
+                    onClick={export_sent_files_json}
+                    className="px-2 sm:px-3 py-1.5 sm:py-2 text-white text-[10px] sm:text-xs xl:text-sm font-medium rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.9)',
+                      backdropFilter: 'blur(4px)',
+                      WebkitBackdropFilter: 'blur(4px)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 1)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.9)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
+                      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                    </svg>
+                    <span className="truncate">Sent</span>
+                  </button>
+                </div>
                 <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
-                  Export received files history as a JSON file
-                </p>
-              </div>
-
-              {/* Export sent files JSON button */}
-              <div className="p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 transition-all">
-                <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">Sent Files History</label>
-                <button
-                  onClick={export_sent_files_json}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-[10px] sm:text-xs xl:text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
-                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                  </svg>
-                  <span>Export JSON History</span>
-                </button>
-                <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
-                  Export sent files history as a JSON file
+                  Export file history as JSON files
                 </p>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

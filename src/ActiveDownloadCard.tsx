@@ -67,7 +67,26 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
         <>
             <div 
                 onClick={() => setIsOpen(true)} 
-                className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors m-0 ${hasError ? "bg-red-50/50 hover:bg-red-50" : ""}`}
+                className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-white/20 cursor-pointer transition-all m-0`}
+                style={{
+                  background: hasError ? 'rgba(254, 242, 242, 0.5)' : 'transparent',
+                  backdropFilter: hasError ? 'blur(8px)' : 'none',
+                  WebkitBackdropFilter: hasError ? 'blur(8px)' : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (!hasError) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                    e.currentTarget.style.backdropFilter = 'blur(8px)';
+                    e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'blur(8px)');
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!hasError) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.backdropFilter = 'none';
+                    e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'none');
+                  }
+                }}
             >
                 <div className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 min-w-0 ${hasError ? "text-red-700" : "text-gray-700"}`}>
                     <FileIcon fileName={file_name} className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -109,9 +128,15 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
             </div>
             {isOpen && createPortal(
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsOpen(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <div className="rounded-3xl w-full max-w-md overflow-hidden" style={{
+                      background: 'rgba(255, 255, 255, 0.85)',
+                      backdropFilter: 'blur(40px)',
+                      WebkitBackdropFilter: 'blur(40px)',
+                      border: '1px solid rgba(255, 255, 255, 0.5)',
+                      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+                    }} onClick={(e) => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="px-6 py-4 border-b border-gray-100">
+                        <div className="px-6 py-4 border-b border-white/20">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="flex-shrink-0 p-2 bg-green-50 rounded-xl">
@@ -173,10 +198,27 @@ const ActiveDownloadCard = ({ id, file_name, transferred, total, percentage, err
 
                         {/* Cancel Button - Refined */}
                         {!isComplete && !hasError && (
-                            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                            <div className="px-6 py-4 border-t border-white/20">
                                 <button
                                     onClick={handleCancel}
-                                    className="w-full px-4 py-2.5 bg-white border-2 border-red-200 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 active:bg-red-100 transition-all duration-200 shadow-sm hover:shadow"
+                                    className="w-full px-4 py-2.5 text-red-600 text-sm font-semibold rounded-2xl transition-all duration-200"
+                                    style={{
+                                      background: 'rgba(255, 255, 255, 0.8)',
+                                      backdropFilter: 'blur(24px)',
+                                      WebkitBackdropFilter: 'blur(24px)',
+                                      border: '2px solid rgba(254, 202, 202, 0.7)',
+                                      boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = 'rgba(254, 242, 242, 0.6)';
+                                      e.currentTarget.style.borderColor = 'rgba(252, 165, 165, 0.8)';
+                                      e.currentTarget.style.boxShadow = '0 4px 16px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
+                                      e.currentTarget.style.borderColor = 'rgba(254, 202, 202, 0.6)';
+                                      e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                    }}
                                 >
                                     Cancel Download
                                 </button>

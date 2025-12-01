@@ -44,7 +44,21 @@ const SentFileCard = ({ file_name, file_size, file_extension, file_paths, send_t
 
     return (
         <>
-            <div onClick={() => setIsOpen(true)} className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 hover:bg-blue-50 hover:text-blue-900 hover:shadow-sm active:bg-blue-100 transition-all duration-200 border-b border-gray-100 last:border-b-0 group m-0">
+            <div 
+                onClick={() => setIsOpen(true)} 
+                className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0"
+                style={{ background: 'transparent' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 246, 255, 0.4)';
+                  e.currentTarget.style.backdropFilter = 'blur(8px)';
+                  e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'blur(8px)');
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.backdropFilter = 'none';
+                  e.currentTarget.style.setProperty('-webkit-backdrop-filter', 'none');
+                }}
+            >
                 <div className="flex items-center gap-1.5 sm:gap-2 font-medium truncate text-[10px] sm:text-xs xl:text-sm">
                     <FileIcon fileName={`${displayName}.${file_extension}`} className="w-4 h-4 flex-shrink-0" />
                     <span>{displayName}</span>
@@ -54,9 +68,15 @@ const SentFileCard = ({ file_name, file_size, file_extension, file_paths, send_t
             </div>
             {isOpen && createPortal(
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsOpen(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <div className="rounded-3xl w-full max-w-md overflow-hidden" style={{
+                      background: 'rgba(255, 255, 255, 0.85)',
+                      backdropFilter: 'blur(40px)',
+                      WebkitBackdropFilter: 'blur(40px)',
+                      border: '1px solid rgba(255, 255, 255, 0.5)',
+                      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+                    }} onClick={(e) => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="px-6 py-4 border-b border-gray-100">
+                        <div className="px-6 py-4 border-b border-white/20">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="flex-shrink-0 p-2 bg-blue-50 rounded-xl">
@@ -106,7 +126,14 @@ const SentFileCard = ({ file_name, file_size, file_extension, file_paths, send_t
                                             return (
                                                 <div 
                                                     key={idx} 
-                                                    className="px-3 py-2 text-sm font-mono text-gray-900 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg"
+                                                    className="px-3 py-2 text-sm font-mono text-gray-900 rounded-xl"
+                                                    style={{
+                                                      background: 'rgba(255, 255, 255, 0.7)',
+                                                      backdropFilter: 'blur(16px)',
+                                                      WebkitBackdropFilter: 'blur(16px)',
+                                                      border: '1px solid rgba(255, 255, 255, 0.5)',
+                                                      boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                                                    }}
                                                 >
                                                     {fileName}
                                                 </div>
@@ -119,7 +146,7 @@ const SentFileCard = ({ file_name, file_size, file_extension, file_paths, send_t
                             </div>
 
                             {/* Connection Info */}
-                            <div className="pt-2 border-t border-gray-100">
+                            <div className="pt-2 border-t border-white/20">
                                 <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">Connection</p>
                                 <div className="mb-3">
                                     <p className="text-xs text-gray-500 mb-1">Connection Code</p>
@@ -127,7 +154,31 @@ const SentFileCard = ({ file_name, file_size, file_extension, file_paths, send_t
                                         type="text"
                                         readOnly
                                         value={connection_code}
-                                        className="w-full text-sm font-mono text-gray-900 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:border-blue-300 hover:from-blue-50 hover:to-blue-100/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                        className="w-full text-sm font-mono text-gray-900 rounded-xl px-4 py-3 cursor-pointer transition-all"
+                                        style={{
+                                          background: 'rgba(255, 255, 255, 0.7)',
+                                          backdropFilter: 'blur(16px)',
+                                          WebkitBackdropFilter: 'blur(16px)',
+                                          border: '1px solid rgba(255, 255, 255, 0.5)',
+                                          boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                                          e.currentTarget.style.background = 'rgba(239, 246, 255, 0.4)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                                        }}
+                                        onFocus={(e) => {
+                                          e.currentTarget.style.outline = 'none';
+                                          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+                                          e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                        }}
+                                        onBlur={(e) => {
+                                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                          e.currentTarget.style.boxShadow = '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)';
+                                        }}
                                         onClick={async (e) => {
                                             const input = e.target as HTMLInputElement;
                                             input.select();
