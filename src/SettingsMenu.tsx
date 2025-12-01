@@ -137,11 +137,7 @@ export default function SettingsMenu() {
             border: '1px solid rgba(255, 255, 255, 0.5)',
             boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
           }} onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 border-b border-white/20 px-2 sm:px-4 py-2 sm:py-3 rounded-t-3xl" style={{
-              background: 'rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(40px)',
-              WebkitBackdropFilter: 'blur(40px)'
-            }}>
+            <div className="sticky top-0 border-b border-white/20 px-2 sm:px-4 py-2 sm:py-3 rounded-t-3xl">
               <div className="flex justify-between items-center">
                 <h2 className="text-sm sm:text-base xl:text-lg font-bold text-gray-800 select-none">Settings</h2>
                 <button
@@ -188,22 +184,7 @@ export default function SettingsMenu() {
               </div>
 
               {/* Auto-extract tarballs setting */}
-              <div className="p-2 sm:p-3 rounded-2xl transition-all" style={{
-                background: 'rgba(255, 255, 255, 0.6)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
-                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.4)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-              }}
-              >
+              <div className="p-2 sm:p-3 rounded-2xl transition-all">
                 <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">Auto-Extract Tarballs</label>
                 <div className="flex items-center gap-2">
                   <input
@@ -219,22 +200,7 @@ export default function SettingsMenu() {
               </div>
 
               {/* Default folder name format setting */}
-              <div className="p-2 sm:p-3 rounded-2xl transition-all" style={{
-                background: 'rgba(255, 255, 255, 0.6)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
-                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.4)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-              }}
-              >
+              <div className="p-2 sm:p-3 rounded-2xl transition-all">
                 <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1 text-gray-700">Default Folder Name Format</label>
                 <input
                   type="text"
@@ -265,22 +231,7 @@ export default function SettingsMenu() {
               </div>
 
               {/* Export JSON History buttons */}
-              <div className="p-2 sm:p-3 rounded-2xl transition-all" style={{
-                background: 'rgba(255, 255, 255, 0.6)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
-                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.4)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-              }}
-              >
+              <div className="p-2 sm:p-3 rounded-2xl transition-all">
                 <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">Export File History</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
