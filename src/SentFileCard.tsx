@@ -9,6 +9,7 @@ type Props = {
   file_paths: string[];
   send_time: string;
   connection_code: string;
+  onResend?: (paths: string[]) => void;
 };
 
 function format_file_size(bytes: number): string {
@@ -26,6 +27,7 @@ const SentFileCard = ({
   file_paths,
   send_time,
   connection_code,
+  onResend,
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -183,11 +185,29 @@ const SentFileCard = ({
                 </div>
 
                 {/* Connection Info */}
-                <div className="pt-2 border-t border-white/20">
-                  <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">
-                    Connection
-                  </p>
-                  <div className="mb-3">
+                <div className="pt-2 border-t border-white/20 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Connection
+                    </p>
+                    {onResend && file_paths.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onResend(file_paths);
+                          setIsOpen(false);
+                        }}
+                        className="text-[11px] font-medium text-blue-600 hover:text-blue-700 px-2 py-1 rounded-xl transition-colors cursor-pointer"
+                        style={{
+                          background: "rgba(239, 246, 255, 0.7)",
+                          border: "1px solid rgba(191, 219, 254, 0.9)",
+                        }}
+                      >
+                        Re-send
+                      </button>
+                    )}
+                  </div>
+                  <div>
                     <p className="text-xs text-gray-500 mb-1">Connection Code</p>
                     <input
                       type="text"
@@ -235,7 +255,7 @@ const SentFileCard = ({
                     />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Sent</p>
+                    <p className="text-xs text-gray-500 mb-1">Connection Code</p>
                     <p className="text-sm font-semibold text-gray-900">
                       {new Date(send_time).toLocaleString()}
                     </p>

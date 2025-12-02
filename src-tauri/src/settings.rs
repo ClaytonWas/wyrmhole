@@ -77,7 +77,7 @@ impl AppSettings {
 pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_config_dir().unwrap_or_else(|e| {
         eprintln!(
-            "[wyrmhole][settings][error] Could not get app config directory: {}",
+            "[magic-wormhole][settings][error] Could not get app config directory: {}",
             e
         );
         PathBuf::from(".")
@@ -87,7 +87,7 @@ pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
             eprintln!(
-                "[wyrmhole][settings][error] Failed to create config directory: {}",
+                "[magic-wormhole][settings][error] Failed to create config directory: {}",
                 e
             );
         }
@@ -101,7 +101,7 @@ pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
 pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
         eprintln!(
-            "[wyrmhole][settings][error] Could not get app data directory: {}",
+            "[magic-wormhole][settings][error] Could not get app data directory: {}",
             e
         );
         PathBuf::from(".")
@@ -111,7 +111,7 @@ pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
             eprintln!(
-                "[wyrmhole][settings][error] Failed to create data directory: {}",
+                "[magic-wormhole][settings][error] Failed to create data directory: {}",
                 e
             );
         }
@@ -125,7 +125,7 @@ pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
 pub fn get_sent_files_path(app_handle: &AppHandle) -> PathBuf {
     let mut path = app_handle.path().app_data_dir().unwrap_or_else(|e| {
         eprintln!(
-            "[wyrmhole][settings][error] Could not get app data directory: {}",
+            "[magic-wormhole][settings][error] Could not get app data directory: {}",
             e
         );
         PathBuf::from(".")
@@ -135,7 +135,7 @@ pub fn get_sent_files_path(app_handle: &AppHandle) -> PathBuf {
     if !path.exists() {
         if let Err(e) = fs::create_dir_all(&path) {
             eprintln!(
-                "[wyrmhole][settings][error] Failed to create data directory: {}",
+                "[magic-wormhole][settings][error] Failed to create data directory: {}",
                 e
             );
         }
@@ -149,7 +149,7 @@ pub fn get_sent_files_path(app_handle: &AppHandle) -> PathBuf {
 fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
     let download_dir = app_handle.path().download_dir().unwrap_or_else(|e| {
         eprintln!(
-            "[wyrmhole][settings][error] Could not get default download directory: {}",
+            "[magic-wormhole][settings][error] Could not get default download directory: {}",
             e
         );
         PathBuf::from(".")
@@ -174,25 +174,25 @@ pub fn init_settings(app_handle: &AppHandle) -> AppSettings {
         if let Ok(content) = fs::read_to_string(&settings_path) {
             if let Ok(settings) = serde_json::from_str::<AppSettings>(&content) {
                 println!(
-                    "[wyrmhole][settings][info] Settings loaded from {}",
+                    "[magic-wormhole][settings][info] Settings loaded from {}",
                     settings_path.display()
                 );
                 return settings;
             } else {
                 eprintln!(
-                    "[wyrmhole][settings][error] Failed to parse settings.json; creating defaults at {}",
+                    "[magic-wormhole][settings][error] Failed to parse settings.json; creating defaults at {}",
                     settings_path.display()
                 );
             }
         } else {
             eprintln!(
-                "[wyrmhole][settings][error] Failed to read settings.json; creating defaults at {}",
+                "[magic-wormhole][settings][error] Failed to read settings.json; creating defaults at {}",
                 settings_path.display()
             );
         }
     } else {
         println!(
-            "[wyrmhole][settings][info] settings.json not found; creating defaults at {}",
+            "[magic-wormhole][settings][info] settings.json not found; creating defaults at {}",
             settings_path.display()
         );
     }
@@ -201,7 +201,7 @@ pub fn init_settings(app_handle: &AppHandle) -> AppSettings {
     let default_settings = create_default_settings(app_handle);
     if let Err(e) = save_settings(&default_settings, &settings_path) {
         eprintln!(
-            "[wyrmhole][settings][error] Failed to save default settings: {}",
+            "[magic-wormhole][settings][error] Failed to save default settings: {}",
             e
         );
     }

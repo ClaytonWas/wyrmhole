@@ -164,7 +164,7 @@ pub async fn send_file_call(
     // Connect the wormhole - this will wait until the receiver connects
     let wormhole = Wormhole::connect(mailbox_connection).await.map_err(|e| {
         let msg = format!("Failed to connect to Wormhole: {}", e);
-        println!("[wyrmhole][files][error] {}", msg);
+        println!("[magic-wormhole][files][error] {}", msg);
         let _ = app_handle.emit(
             "send-error",
             serde_json::json!({
@@ -270,7 +270,7 @@ pub async fn send_file_call(
         .map_err(|e| format!("Failed to create tarball: {}", e))??;
 
         println!(
-            "[wyrmhole][perf][files] Created tarball: {} ({} bytes) from folder: {} in {:?}",
+            "[magic-wormhole][perf][files] Created tarball: {} ({} bytes) from folder: {} in {:?}",
             tarball_path.display(),
             tarball_size,
             absolute_path.display(),
@@ -315,7 +315,7 @@ pub async fn send_file_call(
             actual_tarball_size,
             abilities,
             |_info| {
-                println!("[wyrmhole][files][info] Transit established for folder send");
+                println!("[magic-wormhole][files][info] Transit established for folder send");
             },
             // Progress handler (no per-chunk logging for performance)
             move |sent, total| {
@@ -348,7 +348,7 @@ pub async fn send_file_call(
                 tarball_path.display()
             );
             println!(
-                "[wyrmhole][files][error] Send folder failed: {}",
+                "[magic-wormhole][files][error] Send folder failed: {}",
                 error_message
             );
             let _ = error_app_handle.emit(
@@ -371,7 +371,7 @@ pub async fn send_file_call(
             let mb = actual_tarball_size as f64 / (1024.0 * 1024.0);
             let mbps = mb / elapsed.as_secs_f64();
             println!(
-            "[wyrmhole][perf][files] Folder transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
+            "[magic-wormhole][perf][files] Folder transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
                 mb, elapsed, mbps
             );
         }
@@ -419,7 +419,7 @@ pub async fn send_file_call(
         .len();
 
     println!(
-        "[wyrmhole][files][info] Sending file: {} (absolute path: {})",
+        "[magic-wormhole][files][info] Sending file: {} (absolute path: {})",
         file_path,
         absolute_path.display()
     );
@@ -450,7 +450,7 @@ pub async fn send_file_call(
         file_size,
         abilities,
         |_info| {
-            println!("[wyrmhole][files][info] Transit established for single-file send");
+            println!("[magic-wormhole][files][info] Transit established for single-file send");
         },
         // Progress handler (no per-chunk logging for performance)
         move |sent, total| {
@@ -483,7 +483,7 @@ pub async fn send_file_call(
             absolute_path.display()
         );
         println!(
-            "[wyrmhole][files][error] Send file failed: {}",
+            "[magic-wormhole][files][error] Send file failed: {}",
             error_message
         );
         let _ = error_app_handle.emit(
@@ -502,7 +502,7 @@ pub async fn send_file_call(
         let mb = file_size as f64 / (1024.0 * 1024.0);
         let mbps = mb / elapsed.as_secs_f64();
         println!(
-            "[wyrmhole][perf][files] File transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
+            "[magic-wormhole][perf][files] File transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
             mb, elapsed, mbps
         );
     }
@@ -548,7 +548,7 @@ pub async fn send_file_call(
     );
 
     println!(
-        "[wyrmhole][perf][files] send_file_call finished for '{}' in {:?}",
+        "[magic-wormhole][perf][files] send_file_call finished for '{}' in {:?}",
         file_path,
         overall_start.elapsed()
     );
@@ -738,7 +738,7 @@ pub async fn send_multiple_files_call(
     })?;
 
     println!(
-        "[wyrmhole][perf][files] Mailbox + wormhole established for multi-file send in {:?}",
+        "[magic-wormhole][perf][files] Mailbox + wormhole established for multi-file send in {:?}",
         mailbox_start.elapsed()
     );
 
@@ -802,7 +802,7 @@ pub async fn send_multiple_files_call(
     .map_err(|e| format!("Failed to create tarball: {}", e))??;
 
     println!(
-        "[wyrmhole][perf][files] Created tarball: {} ({} bytes) from {} files in {:?}",
+        "[magic-wormhole][perf][files] Created tarball: {} ({} bytes) from {} files in {:?}",
         tarball_path.display(),
         tarball_size,
         file_paths.len(),
@@ -854,7 +854,7 @@ pub async fn send_multiple_files_call(
         file_size_to_send,
         abilities,
         |_info| {
-            println!("[wyrmhole][files][info] Transit established for multi-file send");
+            println!("[magic-wormhole][files][info] Transit established for multi-file send");
         },
         // Progress handler (no per-chunk logging for performance)
         move |sent, total| {
@@ -887,7 +887,7 @@ pub async fn send_multiple_files_call(
             tarball_path.display()
         );
         println!(
-            "[wyrmhole][files][error] Multi-file send failed: {}",
+            "[magic-wormhole][files][error] Multi-file send failed: {}",
             error_message
         );
         let _ = error_app_handle.emit(
@@ -910,7 +910,7 @@ pub async fn send_multiple_files_call(
         let mb = file_size_to_send as f64 / (1024.0 * 1024.0);
         let mbps = mb / elapsed.as_secs_f64();
         println!(
-            "[wyrmhole][perf][files] Multi-file transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
+            "[magic-wormhole][perf][files] Multi-file transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
             mb, elapsed, mbps
         );
     }
@@ -951,7 +951,7 @@ pub async fn send_multiple_files_call(
     );
 
     println!(
-        "[wyrmhole][perf][files] send_multiple_files_call finished for {} file(s) in {:?}",
+        "[magic-wormhole][perf][files] send_multiple_files_call finished for {} file(s) in {:?}",
         file_paths.len(),
         overall_start.elapsed()
     );
@@ -1003,15 +1003,15 @@ pub async fn request_file_call(
         code_string = code_string.trim_start();
     }
     if code_string.is_empty() {
-        println!("[wyrmhole][files][error] No code provided for receiving file");
+        println!("[magic-wormhole][files][error] No code provided for receiving file");
         return Err("No code provided for receiving file.".to_string());
     }
     let code = code_string.parse::<Code>().map_err(|err| {
         let error_message = format!("Error parsing code: {}", err);
-        println!("[wyrmhole][files][error] {}", error_message);
+        println!("[magic-wormhole][files][error] {}", error_message);
         error_message
     })?;
-    println!("[wyrmhole][files][info] Parsed receive code: {:?}", code);
+    println!("[magic-wormhole][files][info] Parsed receive code: {:?}", code);
 
     // Create cancel channel for this connection
     let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
@@ -1028,7 +1028,7 @@ pub async fn request_file_call(
     let mailbox_connection = match MailboxConnection::connect(config, code, false).await {
         Ok(conn) => {
             println!(
-                "[wyrmhole][files][info] Connected to mailbox, establishing Wormhole..."
+                "[magic-wormhole][files][info] Connected to mailbox, establishing Wormhole..."
             );
             conn
         }
@@ -1036,7 +1036,7 @@ pub async fn request_file_call(
             // Remove from active connections on error
             ACTIVE_CONNECTIONS.lock().await.remove(&connection_id);
             let msg = format!("Failed to create mailbox: {}", e);
-            println!("[wyrmhole][files][error] {}", msg);
+            println!("[magic-wormhole][files][error] {}", msg);
             return Err(msg);
         }
     };
@@ -1050,7 +1050,7 @@ pub async fn request_file_call(
                 ACTIVE_CONNECTIONS.lock().await.remove(&connection_id_clone);
             });
         let msg = format!("Failed to connect to Wormhole: {}", e);
-        println!("[wyrmhole][files][error] {}", msg);
+        println!("[magic-wormhole][files][error] {}", msg);
         msg
         })?;
 
@@ -1093,7 +1093,7 @@ pub async fn request_file_call(
         REQUESTS_HASHMAP.lock().await.insert(id.clone(), entry);
 
         println!(
-            "[wyrmhole][files][info] Incoming file offer: {} ({} bytes)",
+            "[magic-wormhole][files][info] Incoming file offer: {} ({} bytes)",
             file_name, file_size
         );
 
@@ -1104,7 +1104,7 @@ pub async fn request_file_call(
         });
         Ok(response.to_string())
     } else {
-        println!("[wyrmhole][files][info] No file offered by sender (canceled or empty)");
+        println!("[magic-wormhole][files][info] No file offered by sender (canceled or empty)");
         Err("No file was offered by the sender (canceled or empty).".to_string())
     }
 }
@@ -1123,7 +1123,7 @@ pub async fn cancel_connection(connection_id: String) -> Result<String, String> 
     // Send the cancel signal
     let _ = cancel_tx.send(());
     println!(
-        "[wyrmhole][files][info] Cancelled connection with id: {}",
+        "[magic-wormhole][files][info] Cancelled connection with id: {}",
         connection_id
     );
 
@@ -1136,11 +1136,11 @@ pub async fn receiving_file_deny(id: String) -> Result<String, String> {
     let mut requests = REQUESTS_HASHMAP.lock().await;
     if let Some(entry) = requests.remove(&id) {
         if let Err(e) = entry.request.reject().await {
-            println!("[wyrmhole][files][error] Failed to close request: {}", e);
+            println!("[magic-wormhole][files][error] Failed to close request: {}", e);
             return Err(format!("Failed to close request: {}", e));
         }
         println!(
-            "[wyrmhole][files][info] receiving_file_deny closed request with id: {}",
+            "[magic-wormhole][files][info] receiving_file_deny closed request with id: {}",
             id
         );
         Ok("File offer denied and request closed".to_string())
@@ -1154,7 +1154,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
         REQUESTS_HASHMAP.lock().await;
     if let Some(entry) = requests.remove(&id) {
         println!(
-            "[wyrmhole][files][info] receiving_file_accept for id: {}, file: {}",
+            "[magic-wormhole][files][info] receiving_file_accept for id: {}, file: {}",
             id,
             entry.request.file_name()
         );
@@ -1164,7 +1164,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
         let mut connection_type: String = String::new();
         let mut peer_address: SocketAddr = "0.0.0.0:0".parse().unwrap();
         let transit_handler = |info: transit::TransitInfo| {
-            println!("[wyrmhole][files][info] Transit info: {:?}", info);
+            println!("[magic-wormhole][files][info] Transit info: {:?}", info);
             let connection_type_str = match info.conn_type {
                 transit::ConnectionType::Direct => "direct".to_string(),
                 transit::ConnectionType::Relay { ref name } => {
@@ -1291,7 +1291,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
             .await
             .map_err(|e| {
                 let error_message = format!("Error accepting file: {}", e);
-                println!("[wyrmhole][files][error] {}", error_message);
+                println!("[magic-wormhole][files][error] {}", error_message);
                 // Remove from active downloads on error
                 let id_clone = id.clone();
                 tokio::spawn(async move {
@@ -1383,7 +1383,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
                     },
                 )
                 .map_err(|e| {
-                    println!("[wyrmhole][files][error] Failed to add received file: {}", e);
+                    println!("[magic-wormhole][files][error] Failed to add received file: {}", e);
                     e
                 })?;
 
@@ -1407,7 +1407,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
                 },
             )
             .map_err(|e| {
-                println!("[wyrmhole][files][error] Failed to add received file: {}", e);
+                println!("[magic-wormhole][files][error] Failed to add received file: {}", e);
                 e
             })?;
 
@@ -1438,7 +1438,7 @@ pub async fn cancel_download(
     // Send the cancel signal
     let _ = cancel_tx.send(());
     println!(
-        "[wyrmhole][files][info] Cancelled download with id: {}",
+        "[magic-wormhole][files][info] Cancelled download with id: {}",
         download_id
     );
 
@@ -1446,6 +1446,57 @@ pub async fn cancel_download(
     // The frontend's onDismiss callback will remove it from the UI immediately
 
     Ok("Download cancelled".to_string())
+}
+
+pub async fn cancel_all_transfers(app_handle: AppHandle) -> Result<String, String> {
+    // Cancel all active sends
+    {
+        let mut active_sends = ACTIVE_SENDS.lock().await;
+        for (send_id, active_send) in active_sends.drain() {
+            if let Some(tx) = active_send.cancel_tx {
+                let _ = tx.send(());
+                println!(
+                    "[magic-wormhole][files][info] Cancelled send with id (cancel all): {}",
+                    send_id
+                );
+
+                let _ = app_handle.emit(
+                    "send-error",
+                    serde_json::json!({
+                        "id": send_id.clone(),
+                        "file_name": "Transfer cancelled",
+                        "error": "Transfer cancelled by user"
+                    }),
+                );
+            }
+        }
+    }
+
+    // Cancel all active downloads
+    {
+        let mut active_downloads = ACTIVE_DOWNLOADS.lock().await;
+        for (download_id, active_download) in active_downloads.drain() {
+            let _ = active_download.cancel_tx.send(());
+            println!(
+                "[magic-wormhole][files][info] Cancelled download with id (cancel all): {}",
+                download_id
+            );
+        }
+    }
+
+    // Cancel all active connections
+    {
+        let mut active_connections = ACTIVE_CONNECTIONS.lock().await;
+        for (connection_id, active_connection) in active_connections.drain() {
+            let _ = active_connection.cancel_tx.send(());
+            println!(
+                "[magic-wormhole][files][info] Cancelled connection with id (cancel all): {}",
+                connection_id
+            );
+        }
+    }
+
+    Ok("All active transfers and connections cancelled".to_string())
 }
 
 // Helper functions
@@ -1467,7 +1518,7 @@ async fn build_relay_hints(app_handle: &AppHandle) -> Vec<transit::RelayHint> {
             urls.push(url);
         } else {
             eprintln!(
-                "[wyrmhole][files][warn] Invalid relay_server_url in settings, falling back to default: {}",
+                "[magic-wormhole][files][warn] Invalid relay_server_url in settings, falling back to default: {}",
                 custom
             );
         }
@@ -1550,7 +1601,7 @@ fn create_tarball_from_folder(
 
     let size = metadata.len();
     println!(
-        "[wyrmhole][perf][files] Tarball created: {} bytes (folder: {})",
+        "[magic-wormhole][perf][files] Tarball created: {} bytes (folder: {})",
         size, folder_name
     );
 
@@ -1605,7 +1656,7 @@ fn create_tarball_from_paths(
 
     let size = metadata.len();
     println!(
-        "[wyrmhole][perf][files] Tarball created from paths: {} bytes (folder: {})",
+        "[magic-wormhole][perf][files] Tarball created from paths: {} bytes (folder: {})",
         size, folder_name
     );
 

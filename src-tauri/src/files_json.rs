@@ -40,25 +40,25 @@ pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
         if let Ok(content) = fs::read_to_string(&received_files_path) {
             if let Ok(files) = serde_json::from_str::<Vec<ReceivedFile>>(&content) {
                 println!(
-                    "[wyrmhole][history][info] Received files loaded from {}",
+                    "[magic-wormhole][history][info] Received files loaded from {}",
                     received_files_path.display()
                 );
                 return files;
             } else {
                 eprintln!(
-                    "[wyrmhole][history][error] Failed to parse received_files.json; creating empty file at {}",
+                    "[magic-wormhole][history][error] Failed to parse received_files.json; creating empty file at {}",
                     received_files_path.display()
                 );
             }
         } else {
             eprintln!(
-                "[wyrmhole][history][error] Failed to read received_files.json; creating empty file at {}",
+                "[magic-wormhole][history][error] Failed to read received_files.json; creating empty file at {}",
                 received_files_path.display()
             );
         }
     } else {
         println!(
-            "[wyrmhole][history][info] received_files.json not found; creating empty file at {}",
+            "[magic-wormhole][history][info] received_files.json not found; creating empty file at {}",
             received_files_path.display()
         );
     }
@@ -67,7 +67,7 @@ pub fn init_received_files(app_handle: &AppHandle) -> Vec<ReceivedFile> {
     let default_files = Vec::new(); // Initialize as an empty vector (functions as an empty JSON array)
     if let Err(e) = save_received_files(&default_files, &received_files_path) {
         eprintln!(
-            "[wyrmhole][history][error] Failed to save initial empty received files: {}",
+            "[magic-wormhole][history][error] Failed to save initial empty received files: {}",
             e
         );
     }
@@ -142,25 +142,25 @@ pub fn init_sent_files(app_handle: &AppHandle) -> Vec<SentFile> {
         if let Ok(content) = fs::read_to_string(&sent_files_path) {
             if let Ok(files) = serde_json::from_str::<Vec<SentFile>>(&content) {
                 println!(
-                    "[wyrmhole][history][info] Sent files loaded from {}",
+                    "[magic-wormhole][history][info] Sent files loaded from {}",
                     sent_files_path.display()
                 );
                 return files;
             } else {
                 eprintln!(
-                    "[wyrmhole][history][error] Failed to parse sent_files.json; creating empty file at {}",
+                    "[magic-wormhole][history][error] Failed to parse sent_files.json; creating empty file at {}",
                     sent_files_path.display()
                 );
             }
         } else {
             eprintln!(
-                "[wyrmhole][history][error] Failed to read sent_files.json; creating empty file at {}",
+                "[magic-wormhole][history][error] Failed to read sent_files.json; creating empty file at {}",
                 sent_files_path.display()
             );
         }
     } else {
         println!(
-            "[wyrmhole][history][info] sent_files.json not found; creating empty file at {}",
+            "[magic-wormhole][history][info] sent_files.json not found; creating empty file at {}",
             sent_files_path.display()
         );
     }
@@ -169,7 +169,7 @@ pub fn init_sent_files(app_handle: &AppHandle) -> Vec<SentFile> {
     let default_files = Vec::new();
     if let Err(e) = save_sent_files(&default_files, &sent_files_path) {
         eprintln!(
-            "[wyrmhole][history][error] Failed to save initial empty sent files: {}",
+            "[magic-wormhole][history][error] Failed to save initial empty sent files: {}",
             e
         );
     }

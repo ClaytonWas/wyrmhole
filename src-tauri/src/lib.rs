@@ -41,6 +41,11 @@ async fn cancel_download(download_id: String, app_handle: AppHandle) -> Result<S
 }
 
 #[tauri::command]
+async fn cancel_all_transfers(app_handle: AppHandle) -> Result<String, String> {
+    files::cancel_all_transfers(app_handle).await
+}
+
+#[tauri::command]
 async fn request_file_call(receive_code: &str, connection_id: String) -> Result<String, String> {
     files::request_file_call(receive_code, connection_id).await
 }
@@ -165,6 +170,7 @@ pub fn run() {
             send_multiple_files_call,
             cancel_send,
             cancel_download,
+            cancel_all_transfers,
             request_file_call,
             cancel_connection,
             receiving_file_accept,

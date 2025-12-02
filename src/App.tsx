@@ -66,6 +66,11 @@ function App() {
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const [sentFiles, setSentFiles] = useState<SentFile[]>([]);
   const [historyTab, setHistoryTab] = useState<"received" | "sent">("received");
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyMinSizeMb, setHistoryMinSizeMb] = useState("");
+  const [historySizeMode, setHistorySizeMode] = useState<"atLeast" | "atMost">("atLeast");
+  const [historyDateFrom, setHistoryDateFrom] = useState("");
+  const [historyDateMode, setHistoryDateMode] = useState<"after" | "before">("after");
   const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(
     new Map(),
   );
@@ -78,6 +83,21 @@ function App() {
   const [connectingCodes, setConnectingCodes] = useState<Map<string, string>>(new Map()); // Map<id, code>
   const cancelledConnections = useRef<Set<string>>(new Set()); // Track cancelled connection IDs
   const connectionCodeToasts = useRef<Map<string | number, string>>(new Map()); // Map<toastId, code>
+
+  function prepare_resend_from_history(paths: string[]) {
+    if (!paths || paths.length === 0) {
+      toast.error("No file paths recorded for this history item.");
+      return;
+    }
+
+    setSelectedFiles(paths);
+    setFolderName("");
+
+    toast.success(
+      `Loaded ${paths.length} ${paths.length === 1 ? "file" : "files"} into the Send panel from history.`,
+      { duration: 4000 },
+    );
+  }
 
   async function deny_file_receive(id: string) {
     try {
@@ -162,6 +182,29 @@ function App() {
       setFolderName(""); // Clear folder name when selecting new files
     } catch (err) {
       console.error("Error selecting files:", err);
+    }
+  }
+
+  async function append_files() {
+    try {
+      const selected = await open({ multiple: true });
+      if (!selected) {
+        return;
+      }
+
+      const files = Array.isArray(selected) ? selected : [selected];
+      const stringFiles = files.filter((f) => typeof f === "string") as string[];
+
+      setSelectedFiles((prev) => {
+        const existing = prev ?? [];
+        const merged = [...existing];
+        for (const f of stringFiles) {
+          if (!merged.includes(f)) merged.push(f);
+        }
+        return merged.length > 0 ? merged : null;
+      });
+    } catch (err) {
+      console.error("Error appending files:", err);
     }
   }
 
@@ -420,6 +463,23 @@ function App() {
       setDefaultFolderNameFormat(value);
     } catch (error) {
       console.error("Error getting default folder name format:", error);
+    }
+  }
+
+  async function cancel_all_transfers() {
+    try {
+      await invoke("cancel_all_transfers");
+
+      setSendProgress(new Map());
+      setDownloadProgress(new Map());
+      setPendingFileOffers(new Map());
+      setConnectingCodes(new Map());
+      cancelledConnections.current = new Set();
+
+      toast.success("All active transfers cancelled", { duration: 3000 });
+    } catch (error) {
+      console.error("Error cancelling all transfers:", error);
+      toast.error("Failed to cancel all transfers");
     }
   }
 
@@ -736,9 +796,20 @@ function App() {
           <div
             className={`mb-3 sm:mb-4 ${sendProgress.size === 0 && downloadProgress.size === 0 ? "hidden md:block" : ""}`}
           >
-            <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">
-              Active Transfers
-            </h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 select-none cursor-default">
+                Active Transfers
+              </h2>
+              {(sendProgress.size > 0 || downloadProgress.size > 0) && (
+                <button
+                  type="button"
+                  onClick={cancel_all_transfers}
+                  className="text-[10px] sm:text-xs xl:text-sm text-red-600 hover:text-red-700 px-2 py-1 rounded-xl border border-red-200 hover:border-red-300 bg-red-50/70 cursor-pointer transition-colors"
+                >
+                  Cancel all
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
               {/* Active Sends */}
               <div
@@ -990,17 +1061,29 @@ function App() {
                         <span className="text-xs xl:text-sm font-medium text-gray-700">
                           {selectedFiles.length} {selectedFiles.length === 1 ? "file" : "files"}
                         </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedFiles(null);
-                            setFolderName("");
-                          }}
-                          className="text-[10px] xl:text-xs text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
-                          title="Clear"
-                        >
-                          Clear
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              append_files();
+                            }}
+                            className="text-[10px] xl:text-xs text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+                            title="Add more files"
+                          >
+                            Add files
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedFiles(null);
+                              setFolderName("");
+                            }}
+                            className="text-[10px] xl:text-xs text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
+                            title="Clear"
+                          >
+                            Clear
+                          </button>
+                        </div>
                       </div>
                       <div
                         className="flex-1 overflow-y-auto pr-1 min-h-0"
@@ -1240,96 +1323,92 @@ function App() {
 
           {/* File History Section */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 select-none cursor-default">
-                File History
-              </h2>
-              <div className="flex items-center gap-1.5 text-xs">
-                <button
-                  onClick={() => {
-                    if (historyTab !== "received") {
-                      setHistoryTab("received");
-                      recieved_files_data();
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 select-none cursor-default">
+                  File History
+                </h2>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <button
+                    onClick={() => {
+                      if (historyTab !== "received") {
+                        setHistoryTab("received");
+                        recieved_files_data();
+                      }
+                    }}
+                    className={`px-2 py-1 rounded-xl transition-all duration-200 ${
+                      historyTab === "received"
+                        ? "text-blue-700 font-semibold"
+                        : "text-gray-500 hover:text-blue-600"
+                    }`}
+                  >
+                    Received
+                  </button>
+                  <span className="text-gray-400">/</span>
+                  <button
+                    onClick={() => {
+                      if (historyTab !== "sent") {
+                        setHistoryTab("sent");
+                        sent_files_data();
+                      }
+                    }}
+                    className={`px-2 py-1 rounded-xl transition-all duration-200 ${
+                      historyTab === "sent"
+                        ? "text-blue-700 font-semibold"
+                        : "text-gray-500 hover:text-blue-600"
+                    }`}
+                  >
+                    Sent
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs">
+                <input
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                  placeholder="Search filename"
+                  className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                  style={{ minWidth: "120px" }}
+                />
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setHistoryDateMode((m) => (m === "after" ? "before" : "after"))
                     }
-                  }}
-                  className={`px-2 py-1 rounded-xl transition-all duration-200 ${
-                    historyTab === "received"
-                      ? "text-blue-700 font-semibold"
-                      : "text-gray-500 hover:text-blue-600"
-                  }`}
-                  style={
-                    historyTab === "received"
-                      ? {
-                          background: "rgba(239, 246, 255, 0.5)",
-                          backdropFilter: "blur(8px)",
-                          WebkitBackdropFilter: "blur(8px)",
-                          border: "1px solid rgba(255, 255, 255, 0.3)",
-                        }
-                      : {
-                          background: "transparent",
-                        }
-                  }
-                  onMouseEnter={(e) => {
-                    if (historyTab !== "received") {
-                      e.currentTarget.style.background = "rgba(239, 246, 255, 0.3)";
-                      e.currentTarget.style.backdropFilter = "blur(8px)";
-                      e.currentTarget.style.setProperty("-webkit-backdrop-filter", "blur(8px)");
+                    className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 hover:bg-white/80 transition-colors"
+                  >
+                    {historyDateMode === "after" ? "After" : "Before"}
+                  </button>
+                  <input
+                    type="date"
+                    value={historyDateFrom}
+                    onChange={(e) => setHistoryDateFrom(e.target.value)}
+                    className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setHistorySizeMode((m) => (m === "atLeast" ? "atMost" : "atLeast"))
                     }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (historyTab !== "received") {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.backdropFilter = "none";
-                      e.currentTarget.style.setProperty("-webkit-backdrop-filter", "none");
-                    }
-                  }}
-                >
-                  Received
-                </button>
-                <span className="text-gray-400">/</span>
-                <button
-                  onClick={() => {
-                    if (historyTab !== "sent") {
-                      setHistoryTab("sent");
-                      sent_files_data();
-                    }
-                  }}
-                  className={`px-2 py-1 rounded-xl transition-all duration-200 ${
-                    historyTab === "sent"
-                      ? "text-blue-700 font-semibold"
-                      : "text-gray-500 hover:text-blue-600"
-                  }`}
-                  style={
-                    historyTab === "sent"
-                      ? {
-                          background: "rgba(239, 246, 255, 0.5)",
-                          backdropFilter: "blur(8px)",
-                          WebkitBackdropFilter: "blur(8px)",
-                          border: "1px solid rgba(255, 255, 255, 0.3)",
-                        }
-                      : {
-                          background: "transparent",
-                        }
-                  }
-                  onMouseEnter={(e) => {
-                    if (historyTab !== "sent") {
-                      e.currentTarget.style.background = "rgba(239, 246, 255, 0.3)";
-                      e.currentTarget.style.backdropFilter = "blur(8px)";
-                      e.currentTarget.style.setProperty("-webkit-backdrop-filter", "blur(8px)");
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (historyTab !== "sent") {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.backdropFilter = "none";
-                      e.currentTarget.style.setProperty("-webkit-backdrop-filter", "none");
-                    }
-                  }}
-                >
-                  Sent
-                </button>
+                    className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 hover:bg-white/80 transition-colors"
+                  >
+                    {historySizeMode === "atLeast" ? "≥ MB" : "≤ MB"}
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    value={historyMinSizeMb}
+                    onChange={(e) => setHistoryMinSizeMb(e.target.value)}
+                    placeholder="MB"
+                    className="w-20 px-2 py-1 rounded-xl border border-white/40 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                  />
+                </div>
               </div>
             </div>
+
             <div
               className="rounded-2xl overflow-hidden"
               style={{
@@ -1353,6 +1432,7 @@ function App() {
                 <div className="truncate">Extension</div>
                 <div className="truncate">Size</div>
               </div>
+
               <div
                 className="max-h-48 sm:max-h-64 overflow-y-auto"
                 style={{ scrollbarWidth: "thin" }}
@@ -1366,43 +1446,119 @@ function App() {
                   }
                 }}
               >
-                {historyTab === "received" ? (
-                  receivedFiles.length > 0 ? (
-                    <div className="divide-y divide-gray-100">
-                      {receivedFiles
-                        .slice()
-                        .reverse()
-                        .map((file, idx) => (
-                          <ReceiveFileCard key={idx} {...file} />
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
-                      No Received File History
-                    </div>
-                  )
-                ) : sentFiles.length > 0 ? (
-                  <div className="divide-y divide-gray-100">
-                    {sentFiles
-                      .slice()
-                      .reverse()
-                      .map((file, idx) => {
-                        // Handle backward compatibility: convert file_path to file_paths if needed
-                        const fileWithPaths: { file_paths: string[] } & Omit<
-                          SentFile,
-                          "file_path" | "file_paths"
-                        > = {
-                          ...file,
-                          file_paths: file.file_paths || (file.file_path ? [file.file_path] : []),
-                        };
-                        return <SentFileCard key={idx} {...fileWithPaths} />;
-                      })}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
-                    No Sent File History
-                  </div>
-                )}
+                {historyTab === "received"
+                  ? receivedFiles.length > 0
+                    ? (
+                      <div className="divide-y divide-gray-100">
+                        {receivedFiles
+                          .slice()
+                          .reverse()
+                          .filter((file) => {
+                            const nameMatch = historySearch
+                              ? file.file_name
+                                  .toLowerCase()
+                                  .includes(historySearch.toLowerCase())
+                              : true;
+
+                            let sizeMatch = true;
+                            if (historyMinSizeMb.trim() !== "") {
+                              const mb = Number(historyMinSizeMb);
+                              if (!Number.isNaN(mb) && mb > 0) {
+                                const threshold = mb * 1024 * 1024;
+                                sizeMatch =
+                                  historySizeMode === "atLeast"
+                                    ? file.file_size >= threshold
+                                    : file.file_size <= threshold;
+                              }
+                            }
+
+                            let dateMatch = true;
+                            if (historyDateFrom) {
+                              const boundary = new Date(historyDateFrom);
+                              const when = new Date(file.download_time);
+                              if (!Number.isNaN(boundary.getTime())) {
+                                dateMatch =
+                                  historyDateMode === "after"
+                                    ? when >= boundary
+                                    : when <= boundary;
+                              }
+                            }
+
+                            return nameMatch && sizeMatch && dateMatch;
+                          })
+                          .map((file, idx) => (
+                            <ReceiveFileCard key={idx} {...file} />
+                          ))}
+                      </div>
+                    )
+                    : (
+                      <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                        No Received File History
+                      </div>
+                    )
+                  : sentFiles.length > 0
+                    ? (
+                      <div className="divide-y divide-gray-100">
+                        {sentFiles
+                          .slice()
+                          .reverse()
+                          .filter((file) => {
+                            const nameMatch = historySearch
+                              ? file.file_name
+                                  .toLowerCase()
+                                  .includes(historySearch.toLowerCase())
+                              : true;
+
+                            let sizeMatch = true;
+                            if (historyMinSizeMb.trim() !== "") {
+                              const mb = Number(historyMinSizeMb);
+                              if (!Number.isNaN(mb) && mb > 0) {
+                                const threshold = mb * 1024 * 1024;
+                                sizeMatch =
+                                  historySizeMode === "atLeast"
+                                    ? file.file_size >= threshold
+                                    : file.file_size <= threshold;
+                              }
+                            }
+
+                            let dateMatch = true;
+                            if (historyDateFrom) {
+                              const boundary = new Date(historyDateFrom);
+                              const when = new Date(file.send_time);
+                              if (!Number.isNaN(boundary.getTime())) {
+                                dateMatch =
+                                  historyDateMode === "after"
+                                    ? when >= boundary
+                                    : when <= boundary;
+                              }
+                            }
+
+                            return nameMatch && sizeMatch && dateMatch;
+                          })
+                          .map((file, idx) => {
+                            const fileWithPaths: { file_paths: string[] } & Omit<
+                              SentFile,
+                              "file_path" | "file_paths"
+                            > = {
+                              ...file,
+                              file_paths:
+                                file.file_paths || (file.file_path ? [file.file_path] : []),
+                            };
+                            return (
+                              <SentFileCard
+                                key={idx}
+                                {...fileWithPaths}
+                                onResend={(paths) => prepare_resend_from_history(paths)}
+                              />
+                            );
+                          })}
+                      </div>
+                    )
+                    : (
+                      <div className="flex itemsCenter justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                        No Sent File History
+                      </div>
+                    )}
               </div>
             </div>
           </div>
