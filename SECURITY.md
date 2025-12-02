@@ -73,18 +73,5 @@ We support legitimate researchers following these principles:
 - Avoid accessing data you don’t own
 - Use private reporting channels
 
-We **will not** pursue legal action for good-faith testing.
-
----
-
-## 🔍 Additional Security Automation
-
-Wyrmhole uses:
-- **CodeQL** scanning for Rust + JavaScript
-- GitHub dependency vulnerability alerts
-
-These safeguards run automatically on pushes and PRs.
-
----
 
 If you have ideas to improve Wyrmhole’s security design, architecture, or documentation — we would love to hear from you. Thank you for helping safeguard our users! 🧙‍♂️✨
