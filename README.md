@@ -125,22 +125,90 @@ npm run tauri build
 
 ## 📋 Roadmap
 
-### Version 0.3.0
+### Version 0.4.0 — Foundations of the Warp Engine
 
-- [ ] Refactor console logging to use react-hot-toast consistently
-- [x] Modularize code structure with secure passthroughs in lib.rs
-- [ ] Implement sent files history tracking
-- [ ] Custom relay server configuration
-- [x] Optimize tarball naming schema
-- [x] Application window size persistance
+Wyrmhole is evolving from a *Magic Wormhole UI* into a **modular P2P teleportation platform**.
+This roadmap ensures we grow **safely**, **incrementally**, and **without rewrites**.
+
+#### 🎯 Goal
+
+Prepare the backend for multiple future transports (Warp Mode, LAN mode, QUIC) **without changing current behavior**.
+
+---
+
+### 🧱 Architecture & Maintainability
+
+| Task                                                                                    | Why it matters                                                   |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Split `files.rs` into modules: `send.rs`, `receive.rs`, `tar.rs`, `history.rs`          | Avoid giant-file complexity & improve future changes             |
+| Create `transport/` module and move wormhole-specific code into `transport/wormhole.rs` | Make “wormhole” one backend option, not the whole system         |
+| Introduce a `DataTransport` trait                                                       | Enables plugging in direct, local, or QUIC transports later      |
+| Refactor send/receive calls to use `dyn DataTransport`                                  | Prevent UI and history code from depending on wormhole internals |
+| Remove wormhole-specific logging from generic layers                                    | Cleaner separation + easier debugging                            |
+
+> This work makes Warp Mode possible later **without a risky rewrite**.
+
+---
+
+### 📊 UI/UX Enhancements
+
+| Task                                                     | Why                                                       |
+| -------------------------------------------------------- | --------------------------------------------------------- |
+| Show `Transport: Relay (Legacy)` in transfer cards       | Helps users understand what transport they’re on today    |
+| Display throughput (MiB/s) below progress bars           | Makes performance visible and measurable before Warp Mode |
+| Improved relay test feedback (`Testing…`, inline status) | UX clarity when debugging custom relay setup              |
+
+> Surface speed & transport signals to users early, while everything is still relay-based.
+
+---
+
+### 🔍 Stability & Testing
+
+| Task                                                            | Why                                               |
+| --------------------------------------------------------------- | ------------------------------------------------- |
+| Write a **Happy Path Integration Test** (script or semi-manual) | Confidence that refactoring won’t break transfers |
+| Test: Send a known folder (e.g., 50MB), verify size + history   | Automated objective success criteria              |
+| Check error logs remain clean (`no [error]` on success runs)    | Detect regressions immediately                    |
+
+> This ensures **Wyrmhole keeps working** while internals change.
+
+---
+
+### 🧹 Developer Experience
+
+| Task                                                 | Why                                                        |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| Optional: add a debug flag for verbose transfer logs | Easier to diagnose relay/path issues during development    |
+| Document control-plane vs data-plane separation      | Prevents future contributors from merging the layers again |
+
+> We protect the architecture we’re building now.
+
+---
+
+### 🧭 After 0.4.0
+
+Once 0.4.0 lands, the system is ready for:
+
+| Future feature                | Depends on                          |
+| ----------------------------- | ----------------------------------- |
+| LAN-only transfers (no relay) | Clean DataTransport API             |
+| Direct NAT hole punching      | Wormhole-agnostic transport control |
+| Multi-stream Warp Mode        | Pluggable data plane                |
+| QUIC experiments              | No coupling to wormhole’s TCP flow  |
+
+> We unlock new performance paths while remaining backward-compatible.
+
 
 ### Future Considerations
 
 - [ ] Dark mode support
 - [ ] Transfer queue management
 - [ ] File preview capabilities
-- [ ] Transfer statistics and analytics
-- [ ] Messaging with the wormhole protocols (this will require modifications or updates to the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) cargo to work like a messager)
+- [ ] Better transfer telemetry & analytics
+- [ ] Direct TCP hole-punch paths
+- [ ] Multi-stream file chunking
+- [ ] QUIC fallback for WAN
+- [ ] LAN broadcast discovery
 
 ## 🤝 Contributing
 
