@@ -12,12 +12,21 @@ pub mod settings;
 // All actual logic is delegated to the appropriate modules
 
 #[tauri::command]
-async fn send_file_call(app_handle: AppHandle, file_path: &str, send_id: String) -> Result<String, String> {
+async fn send_file_call(
+    app_handle: AppHandle,
+    file_path: &str,
+    send_id: String,
+) -> Result<String, String> {
     files::send_file_call(app_handle, file_path, send_id).await
 }
 
 #[tauri::command]
-async fn send_multiple_files_call(app_handle: AppHandle, file_paths: Vec<String>, send_id: String, folder_name: Option<String>) -> Result<String, String> {
+async fn send_multiple_files_call(
+    app_handle: AppHandle,
+    file_paths: Vec<String>,
+    send_id: String,
+    folder_name: Option<String>,
+) -> Result<String, String> {
     files::send_multiple_files_call(app_handle, file_paths, send_id, folder_name).await
 }
 
@@ -29,6 +38,11 @@ async fn cancel_send(send_id: String, app_handle: AppHandle) -> Result<String, S
 #[tauri::command]
 async fn cancel_download(download_id: String, app_handle: AppHandle) -> Result<String, String> {
     files::cancel_download(download_id, app_handle).await
+}
+
+#[tauri::command]
+async fn cancel_all_transfers(app_handle: AppHandle) -> Result<String, String> {
+    files::cancel_all_transfers(app_handle).await
 }
 
 #[tauri::command]
@@ -77,8 +91,26 @@ async fn get_default_folder_name_format(app_handle: AppHandle) -> Result<String,
 }
 
 #[tauri::command]
-async fn set_default_folder_name_format(app_handle: AppHandle, value: String) -> Result<(), String> {
+async fn set_default_folder_name_format(
+    app_handle: AppHandle,
+    value: String,
+) -> Result<(), String> {
     settings::set_default_folder_name_format(app_handle, value).await
+}
+
+#[tauri::command]
+async fn get_relay_server_url(
+    app_handle: AppHandle,
+) -> Result<Option<String>, String> {
+    settings::get_relay_server_url(app_handle).await
+}
+
+#[tauri::command]
+async fn set_relay_server_url(
+    app_handle: AppHandle,
+    value: Option<String>,
+) -> Result<(), String> {
+    settings::set_relay_server_url(app_handle, value).await
 }
 
 #[tauri::command]
@@ -88,7 +120,10 @@ async fn received_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Va
 }
 
 #[tauri::command]
-async fn export_received_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
+async fn export_received_files_json(
+    app_handle: AppHandle,
+    file_path: String,
+) -> Result<(), String> {
     settings::export_received_files_json(app_handle, file_path).await
 }
 
@@ -101,6 +136,11 @@ async fn sent_files_data(app_handle: AppHandle) -> Result<Vec<serde_json::Value>
 #[tauri::command]
 async fn export_sent_files_json(app_handle: AppHandle, file_path: String) -> Result<(), String> {
     settings::export_sent_files_json(app_handle, file_path).await
+}
+
+#[tauri::command]
+async fn test_relay_server(app_handle: AppHandle) -> Result<String, String> {
+    files::test_relay_server(app_handle).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -117,7 +157,9 @@ pub fn run() {
 
             // Make window visible after state is restored (prevents flashing)
             if let Some(window) = app.get_webview_window("main") {
-                window.show().unwrap_or_else(|e| eprintln!("Failed to show window: {}", e));
+                window
+                    .show()
+                    .unwrap_or_else(|e| eprintln!("Failed to show window: {}", e));
             }
 
             Ok(())
@@ -128,6 +170,7 @@ pub fn run() {
             send_multiple_files_call,
             cancel_send,
             cancel_download,
+            cancel_all_transfers,
             request_file_call,
             cancel_connection,
             receiving_file_accept,
@@ -140,8 +183,11 @@ pub fn run() {
             set_auto_extract_tarballs,
             get_default_folder_name_format,
             set_default_folder_name_format,
+            get_relay_server_url,
+            set_relay_server_url,
             export_received_files_json,
-            export_sent_files_json
+            export_sent_files_json,
+            test_relay_server
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
