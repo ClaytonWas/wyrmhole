@@ -211,15 +211,11 @@ export default function SettingsMenu() {
               <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-4">
                 {/* Transfer Settings Section */}
                 <div className="bg-gray-50 rounded-2xl p-5 space-y-5 border border-gray-300 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-tight">
-                    Transfer
-                  </h3>
-                  
+                  <h3 className="text-sm font-semibold text-gray-900 tracking-tight">Transfer</h3>
+
                   {/* Download directory field */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-900">
-                      Download Location
-                    </label>
+                    <label className="text-sm font-medium text-gray-900">Download Location</label>
                     <button
                       onClick={() => {
                         const selection = window.getSelection?.();
@@ -230,7 +226,9 @@ export default function SettingsMenu() {
                       className="w-full text-left px-4 py-3 bg-white hover:bg-blue-50/30 border border-gray-200 rounded-lg transition-all text-sm text-gray-900 truncate cursor-pointer group active:scale-[0.98]"
                     >
                       <p className="truncate font-medium">
-                        {downloadDirectory ? downloadDirectory.split('/').pop() || downloadDirectory : "Click to select folder..."}
+                        {downloadDirectory
+                          ? downloadDirectory.split("/").pop() || downloadDirectory
+                          : "Click to select folder..."}
                       </p>
                     </button>
                   </div>
@@ -239,7 +237,10 @@ export default function SettingsMenu() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1">
-                        <label htmlFor="auto-extract" className="text-sm font-medium text-gray-900 block">
+                        <label
+                          htmlFor="auto-extract"
+                          className="text-sm font-medium text-gray-900 block"
+                        >
                           Auto-Extract Archives
                         </label>
                         <p className="text-xs text-gray-500 mt-1">
@@ -248,15 +249,20 @@ export default function SettingsMenu() {
                       </div>
                       <button
                         onClick={toggle_auto_extract_tarballs}
-                        className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors cursor-pointer ${autoExtractTarballs ? 'bg-blue-500' : 'bg-gray-300'}`}
-                        style={autoExtractTarballs ? {
-                          background: "rgba(59, 130, 246, 0.9)",
-                          boxShadow: "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                        } : undefined}
+                        className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors cursor-pointer ${autoExtractTarballs ? "bg-blue-500" : "bg-gray-300"}`}
+                        style={
+                          autoExtractTarballs
+                            ? {
+                                background: "rgba(59, 130, 246, 0.9)",
+                                boxShadow:
+                                  "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                              }
+                            : undefined
+                        }
                         id="auto-extract"
                       >
                         <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${autoExtractTarballs ? 'translate-x-4' : 'translate-x-0.5'}`}
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${autoExtractTarballs ? "translate-x-4" : "translate-x-0.5"}`}
                         />
                       </button>
                     </div>
@@ -264,7 +270,10 @@ export default function SettingsMenu() {
 
                   {/* Default folder name format setting */}
                   <div className="space-y-2">
-                    <label htmlFor="folder-format" className="text-sm font-medium text-gray-900 block">
+                    <label
+                      htmlFor="folder-format"
+                      className="text-sm font-medium text-gray-900 block"
+                    >
                       Folder Name Pattern
                     </label>
                     <input
@@ -277,7 +286,12 @@ export default function SettingsMenu() {
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all"
                     />
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      Use <code className="font-mono text-[11px] text-gray-700 bg-gray-100 px-2 py-1 rounded">#</code> for file count. Example: <code className="font-mono text-[11px] text-gray-700">#-photos</code>
+                      Use{" "}
+                      <code className="font-mono text-[11px] text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                        #
+                      </code>{" "}
+                      for file count. Example:{" "}
+                      <code className="font-mono text-[11px] text-gray-700">#-photos</code>
                     </p>
                   </div>
                 </div>
@@ -294,14 +308,19 @@ export default function SettingsMenu() {
                       </h3>
                       <svg
                         className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${
-                          isAdvancedOpen ? 'rotate-180' : ''
+                          isAdvancedOpen ? "rotate-180" : ""
                         }`}
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </div>
                   </button>
@@ -311,7 +330,10 @@ export default function SettingsMenu() {
                     <div className="border-t border-gray-200 px-5 pt-5 pb-5 space-y-5">
                       {/* Relay server URL setting */}
                       <div className="space-y-2">
-                        <label htmlFor="relay-url" className="text-sm font-medium text-gray-900 block">
+                        <label
+                          htmlFor="relay-url"
+                          className="text-sm font-medium text-gray-900 block"
+                        >
                           Custom Relay Server
                         </label>
                         <div className="flex gap-2">
@@ -342,9 +364,7 @@ export default function SettingsMenu() {
 
                       {/* Data Management Section */}
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-900">
-                          Export History
-                        </h4>
+                        <h4 className="text-sm font-medium text-gray-900">Export History</h4>
                         <p className="text-xs text-gray-500 mb-3">
                           Backup your transfer history as JSON files
                         </p>
@@ -357,15 +377,18 @@ export default function SettingsMenu() {
                               backdropFilter: "blur(4px)",
                               WebkitBackdropFilter: "blur(4px)",
                               border: "1px solid rgba(255, 255, 255, 0.3)",
-                              boxShadow: "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                              boxShadow:
+                                "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
-                              e.currentTarget.style.boxShadow = "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
+                              e.currentTarget.style.boxShadow =
+                                "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
-                              e.currentTarget.style.boxShadow = "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
+                              e.currentTarget.style.boxShadow =
+                                "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
                             }}
                           >
                             <span className="flex items-center justify-center gap-1.5">
@@ -391,15 +414,18 @@ export default function SettingsMenu() {
                               backdropFilter: "blur(4px)",
                               WebkitBackdropFilter: "blur(4px)",
                               border: "1px solid rgba(255, 255, 255, 0.3)",
-                              boxShadow: "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                              boxShadow:
+                                "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
-                              e.currentTarget.style.boxShadow = "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
+                              e.currentTarget.style.boxShadow =
+                                "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
-                              e.currentTarget.style.boxShadow = "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
+                              e.currentTarget.style.boxShadow =
+                                "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
                             }}
                           >
                             <span className="flex items-center justify-center gap-1.5">

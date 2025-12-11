@@ -8,13 +8,7 @@ use flate2::Compression;
 use futures::FutureExt;
 use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, WormholeError};
 use once_cell::sync::Lazy;
-use std::{
-    collections::HashMap,
-    net::SocketAddr,
-    path::Path,
-    path::PathBuf,
-    time::Instant,
-};
+use std::{collections::HashMap, net::SocketAddr, path::Path, path::PathBuf, time::Instant};
 use tar::{Archive, Builder};
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::fs::File;
@@ -794,9 +788,7 @@ pub async fn send_multiple_files_call(
         let tarball_path = tarball_path.clone();
         let tarball_folder_name = tarball_folder_name.clone();
         let file_paths = file_paths.clone();
-        move || {
-            create_tarball_from_paths(&file_paths, &tarball_path, &tarball_folder_name)
-        }
+        move || create_tarball_from_paths(&file_paths, &tarball_path, &tarball_folder_name)
     })
     .await
     .map_err(|e| format!("Failed to create tarball: {}", e))??;
@@ -1011,7 +1003,10 @@ pub async fn request_file_call(
         println!("[magic-wormhole][files][error] {}", error_message);
         error_message
     })?;
-    println!("[magic-wormhole][files][info] Parsed receive code: {:?}", code);
+    println!(
+        "[magic-wormhole][files][info] Parsed receive code: {:?}",
+        code
+    );
 
     // Create cancel channel for this connection
     let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
@@ -1049,9 +1044,9 @@ pub async fn request_file_call(
             tokio::spawn(async move {
                 ACTIVE_CONNECTIONS.lock().await.remove(&connection_id_clone);
             });
-        let msg = format!("Failed to connect to Wormhole: {}", e);
-        println!("[magic-wormhole][files][error] {}", msg);
-        msg
+            let msg = format!("Failed to connect to Wormhole: {}", e);
+            println!("[magic-wormhole][files][error] {}", msg);
+            msg
         })?;
 
     // Constructing default request_file(...) variables
@@ -1136,7 +1131,10 @@ pub async fn receiving_file_deny(id: String) -> Result<String, String> {
     let mut requests = REQUESTS_HASHMAP.lock().await;
     if let Some(entry) = requests.remove(&id) {
         if let Err(e) = entry.request.reject().await {
-            println!("[magic-wormhole][files][error] Failed to close request: {}", e);
+            println!(
+                "[magic-wormhole][files][error] Failed to close request: {}",
+                e
+            );
             return Err(format!("Failed to close request: {}", e));
         }
         println!(
@@ -1383,7 +1381,10 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
                     },
                 )
                 .map_err(|e| {
-                    println!("[magic-wormhole][files][error] Failed to add received file: {}", e);
+                    println!(
+                        "[magic-wormhole][files][error] Failed to add received file: {}",
+                        e
+                    );
                     e
                 })?;
 
@@ -1407,7 +1408,10 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
                 },
             )
             .map_err(|e| {
-                println!("[magic-wormhole][files][error] Failed to add received file: {}", e);
+                println!(
+                    "[magic-wormhole][files][error] Failed to add received file: {}",
+                    e
+                );
                 e
             })?;
 

@@ -99,17 +99,12 @@ async fn set_default_folder_name_format(
 }
 
 #[tauri::command]
-async fn get_relay_server_url(
-    app_handle: AppHandle,
-) -> Result<Option<String>, String> {
+async fn get_relay_server_url(app_handle: AppHandle) -> Result<Option<String>, String> {
     settings::get_relay_server_url(app_handle).await
 }
 
 #[tauri::command]
-async fn set_relay_server_url(
-    app_handle: AppHandle,
-    value: Option<String>,
-) -> Result<(), String> {
+async fn set_relay_server_url(app_handle: AppHandle, value: Option<String>) -> Result<(), String> {
     settings::set_relay_server_url(app_handle, value).await
 }
 

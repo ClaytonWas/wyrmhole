@@ -305,12 +305,12 @@ pub async fn set_default_folder_name_format(
     Ok(())
 }
 
-pub async fn get_relay_server_url(
-    app_handle: AppHandle,
-) -> Result<Option<String>, String> {
+pub async fn get_relay_server_url(app_handle: AppHandle) -> Result<Option<String>, String> {
     let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
     let app_settings_lock = app_settings_state.lock().await;
-    Ok(app_settings_lock.get_relay_server_url().map(|s| s.to_string()))
+    Ok(app_settings_lock
+        .get_relay_server_url()
+        .map(|s| s.to_string()))
 }
 
 pub async fn set_relay_server_url(

@@ -1455,119 +1455,106 @@ function App() {
                   }
                 }}
               >
-                {historyTab === "received"
-                  ? receivedFiles.length > 0
-                    ? (
-                      <div className="divide-y divide-gray-100">
-                        {receivedFiles
-                          .slice()
-                          .reverse()
-                          .filter((file) => {
-                            const nameMatch = historySearch
-                              ? file.file_name
-                                  .toLowerCase()
-                                  .includes(historySearch.toLowerCase())
-                              : true;
+                {historyTab === "received" ? (
+                  receivedFiles.length > 0 ? (
+                    <div className="divide-y divide-gray-100">
+                      {receivedFiles
+                        .slice()
+                        .reverse()
+                        .filter((file) => {
+                          const nameMatch = historySearch
+                            ? file.file_name.toLowerCase().includes(historySearch.toLowerCase())
+                            : true;
 
-                            let sizeMatch = true;
-                            if (historyMinSizeMb.trim() !== "") {
-                              const mb = Number(historyMinSizeMb);
-                              if (!Number.isNaN(mb) && mb > 0) {
-                                const threshold = mb * 1024 * 1024;
-                                sizeMatch =
-                                  historySizeMode === "atLeast"
-                                    ? file.file_size >= threshold
-                                    : file.file_size <= threshold;
-                              }
+                          let sizeMatch = true;
+                          if (historyMinSizeMb.trim() !== "") {
+                            const mb = Number(historyMinSizeMb);
+                            if (!Number.isNaN(mb) && mb > 0) {
+                              const threshold = mb * 1024 * 1024;
+                              sizeMatch =
+                                historySizeMode === "atLeast"
+                                  ? file.file_size >= threshold
+                                  : file.file_size <= threshold;
                             }
+                          }
 
-                            let dateMatch = true;
-                            if (historyDateFrom) {
-                              const boundary = new Date(historyDateFrom);
-                              const when = new Date(file.download_time);
-                              if (!Number.isNaN(boundary.getTime())) {
-                                dateMatch =
-                                  historyDateMode === "after"
-                                    ? when >= boundary
-                                    : when <= boundary;
-                              }
+                          let dateMatch = true;
+                          if (historyDateFrom) {
+                            const boundary = new Date(historyDateFrom);
+                            const when = new Date(file.download_time);
+                            if (!Number.isNaN(boundary.getTime())) {
+                              dateMatch =
+                                historyDateMode === "after" ? when >= boundary : when <= boundary;
                             }
+                          }
 
-                            return nameMatch && sizeMatch && dateMatch;
-                          })
-                          .map((file, idx) => (
-                            <ReceiveFileCard key={idx} {...file} />
-                          ))}
-                      </div>
-                    )
-                    : (
-                      <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
-                        No Received File History
-                      </div>
-                    )
-                  : sentFiles.length > 0
-                    ? (
-                      <div className="divide-y divide-gray-100">
-                        {sentFiles
-                          .slice()
-                          .reverse()
-                          .filter((file) => {
-                            const nameMatch = historySearch
-                              ? file.file_name
-                                  .toLowerCase()
-                                  .includes(historySearch.toLowerCase())
-                              : true;
+                          return nameMatch && sizeMatch && dateMatch;
+                        })
+                        .map((file, idx) => (
+                          <ReceiveFileCard key={idx} {...file} />
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                      No Received File History
+                    </div>
+                  )
+                ) : sentFiles.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {sentFiles
+                      .slice()
+                      .reverse()
+                      .filter((file) => {
+                        const nameMatch = historySearch
+                          ? file.file_name.toLowerCase().includes(historySearch.toLowerCase())
+                          : true;
 
-                            let sizeMatch = true;
-                            if (historyMinSizeMb.trim() !== "") {
-                              const mb = Number(historyMinSizeMb);
-                              if (!Number.isNaN(mb) && mb > 0) {
-                                const threshold = mb * 1024 * 1024;
-                                sizeMatch =
-                                  historySizeMode === "atLeast"
-                                    ? file.file_size >= threshold
-                                    : file.file_size <= threshold;
-                              }
-                            }
+                        let sizeMatch = true;
+                        if (historyMinSizeMb.trim() !== "") {
+                          const mb = Number(historyMinSizeMb);
+                          if (!Number.isNaN(mb) && mb > 0) {
+                            const threshold = mb * 1024 * 1024;
+                            sizeMatch =
+                              historySizeMode === "atLeast"
+                                ? file.file_size >= threshold
+                                : file.file_size <= threshold;
+                          }
+                        }
 
-                            let dateMatch = true;
-                            if (historyDateFrom) {
-                              const boundary = new Date(historyDateFrom);
-                              const when = new Date(file.send_time);
-                              if (!Number.isNaN(boundary.getTime())) {
-                                dateMatch =
-                                  historyDateMode === "after"
-                                    ? when >= boundary
-                                    : when <= boundary;
-                              }
-                            }
+                        let dateMatch = true;
+                        if (historyDateFrom) {
+                          const boundary = new Date(historyDateFrom);
+                          const when = new Date(file.send_time);
+                          if (!Number.isNaN(boundary.getTime())) {
+                            dateMatch =
+                              historyDateMode === "after" ? when >= boundary : when <= boundary;
+                          }
+                        }
 
-                            return nameMatch && sizeMatch && dateMatch;
-                          })
-                          .map((file, idx) => {
-                            const fileWithPaths: { file_paths: string[] } & Omit<
-                              SentFile,
-                              "file_path" | "file_paths"
-                            > = {
-                              ...file,
-                              file_paths:
-                                file.file_paths || (file.file_path ? [file.file_path] : []),
-                            };
-                            return (
-                              <SentFileCard
-                                key={idx}
-                                {...fileWithPaths}
-                                onResend={(paths) => prepare_resend_from_history(paths)}
-                              />
-                            );
-                          })}
-                      </div>
-                    )
-                    : (
-                      <div className="flex itemsCenter justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
-                        No Sent File History
-                      </div>
-                    )}
+                        return nameMatch && sizeMatch && dateMatch;
+                      })
+                      .map((file, idx) => {
+                        const fileWithPaths: { file_paths: string[] } & Omit<
+                          SentFile,
+                          "file_path" | "file_paths"
+                        > = {
+                          ...file,
+                          file_paths: file.file_paths || (file.file_path ? [file.file_path] : []),
+                        };
+                        return (
+                          <SentFileCard
+                            key={idx}
+                            {...fileWithPaths}
+                            onResend={(paths) => prepare_resend_from_history(paths)}
+                          />
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="flex itemsCenter justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                    No Sent File History
+                  </div>
+                )}
               </div>
             </div>
           </div>
