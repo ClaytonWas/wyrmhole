@@ -180,7 +180,7 @@ export default function SettingsMenu() {
             onClick={() => setIsOpen(false)}
           >
             <div
-              className="rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 border border-gray-200 shadow-lg"
+              className="rounded-2xl w-full max-w-md lg:max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 border border-gray-200 shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="sticky top-0 border-b border-gray-100 px-3 sm:px-4 py-2.5 sm:py-3 bg-white/95 rounded-t-2xl">
@@ -206,228 +206,204 @@ export default function SettingsMenu() {
                 </div>
               </div>
 
-              {/* Relay server URL setting */}
-              <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1">
-                <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1 text-gray-700">
-                  Custom Relay Server URL
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={relayServerUrl}
-                    onChange={(e) => setRelayServerUrl(e.target.value)}
-                    placeholder="Leave blank to use default relay"
-                    className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs xl:text-sm rounded-xl focus:outline-none transition-all"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.8)",
-                      backdropFilter: "blur(16px)",
-                      WebkitBackdropFilter: "blur(16px)",
-                      border: "2px solid rgba(255, 255, 255, 0.5)",
-                      boxShadow:
-                        "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)";
-                      e.currentTarget.style.boxShadow =
-                        "0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
-                      e.currentTarget.style.boxShadow =
-                        "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                      save_relay_server_url();
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={test_relay}
-                    className="px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs rounded-xl border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors whitespace-nowrap"
-                  >
-                    Test relay
-                  </button>
-                </div>
-                <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
-                  Optional. Set a custom magic-wormhole relay URL (e.g. tcp:host:port). Leave blank to
-                  use the default relay.
-                </p>
-              </div>
-
-                <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3.5">
-                {/* Download directory field */}
-                <div
-                  className="cursor-pointer group"
-                  onClick={() => {
-                    const selection = window.getSelection?.();
-                    if (!selection || selection.toString() === "") {
-                      choose_download_directory();
-                    }
-                  }}
-                >
-                  <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none cursor-pointer mb-1 text-gray-700 group-hover:text-gray-900">
-                    Download Directory
-                  </label>
-                  <div
-                    className="flex-1 rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs xl:text-sm select-none transition-all group-hover:shadow-sm"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.7)",
-                      backdropFilter: "blur(16px)",
-                      WebkitBackdropFilter: "blur(16px)",
-                      border: "2px solid rgba(255, 255, 255, 0.5)",
-                      boxShadow:
-                        "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
-                      e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-                    }}
-                  >
-                    <p className="text-gray-700 truncate">
-                      {downloadDirectory || "No directory set"}
+              {/* Settings Content */}
+              <div className="px-3 sm:px-4 py-3 sm:py-4 grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 auto-rows-max">
+                {/* Transfer Settings Section */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                    Transfer Settings
+                  </h3>
+                  
+                  {/* Download directory field */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                      Download Directory
+                    </label>
+                    <button
+                      onClick={() => {
+                        const selection = window.getSelection?.();
+                        if (!selection || selection.toString() === "") {
+                          choose_download_directory();
+                        }
+                      }}
+                      className="w-full text-left px-3 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-colors text-xs text-gray-700 truncate cursor-pointer group"
+                    >
+                      <p className="truncate text-gray-600 group-hover:text-gray-900">
+                        {downloadDirectory || "Click to select folder..."}
+                      </p>
+                    </button>
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Where received files will be saved
                     </p>
                   </div>
-                  <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 mt-0.5">
-                    Click to change download location
-                  </p>
-                </div>
 
-                {/* Auto-extract tarballs setting */}
-                <div className="p-2 sm:p-3 rounded-2xl transition-all">
-                  <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">
-                    Auto-Extract Tarballs
-                  </label>
-                  <div className="flex items-center gap-2">
+                  {/* Default folder name format setting */}
+                  <div>
+                    <label htmlFor="folder-format" className="block text-xs font-semibold text-gray-700 mb-2">
+                      Folder Name Template
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={autoExtractTarballs}
-                      onChange={toggle_auto_extract_tarballs}
-                      className="w-3.5 h-3.5 sm:w-4 sm:h-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      id="folder-format"
+                      type="text"
+                      value={defaultFolderNameFormat}
+                      onChange={(e) => setDefaultFolderNameFormat(e.target.value)}
+                      onBlur={save_default_folder_name_format}
+                      placeholder="#-files-via-wyrmhole"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
                     />
-                    <span className="text-[10px] sm:text-xs xl:text-sm text-gray-600 select-none">
-                      Automatically extract received tarballs (default: off)
-                    </span>
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Use <code className="bg-gray-100 px-1.5 py-0.5 rounded text-[11px] font-mono">#</code> as placeholder for file count (e.g., <code className="bg-gray-100 px-1.5 py-0.5 rounded text-[11px] font-mono">#-files</code>)
+                    </p>
+                  </div>
+
+                  {/* Auto-extract tarballs setting */}
+                  <div>
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <input
+                        type="checkbox"
+                        id="auto-extract"
+                        checked={autoExtractTarballs}
+                        onChange={toggle_auto_extract_tarballs}
+                        className="mt-1 w-4 h-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 accent-blue-600"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <label htmlFor="auto-extract" className="text-xs font-semibold text-gray-700 cursor-pointer block mb-0.5">
+                          Auto-Extract Tarballs
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          Automatically extract received multi-file transfers
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Default folder name format setting */}
-                <div className="p-2 sm:p-3 rounded-2xl transition-all">
-                  <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1 text-gray-700">
-                    Default Folder Name Format
-                  </label>
-                  <input
-                    type="text"
-                    value={defaultFolderNameFormat}
-                    onChange={(e) => setDefaultFolderNameFormat(e.target.value)}
-                    placeholder="#-files-via-wyrmhole"
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs xl:text-sm rounded-xl focus:outline-none transition-all"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.8)",
-                      backdropFilter: "blur(16px)",
-                      WebkitBackdropFilter: "blur(16px)",
-                      border: "2px solid rgba(255, 255, 255, 0.5)",
-                      boxShadow:
-                        "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)";
-                      e.currentTarget.style.boxShadow =
-                        "0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
-                      e.currentTarget.style.boxShadow =
-                        "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                      save_default_folder_name_format();
-                    }}
-                  />
-                  <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
-                    Use # as a placeholder for the number of files (e.g., "#-files-via-wyrmhole")
-                  </p>
-                </div>
+                {/* Server Settings Section */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                    Server Settings
+                  </h3>
 
-                {/* Export JSON History buttons */}
-                <div className="p-2 sm:p-3 rounded-2xl transition-all">
-                  <label className="block font-semibold text-[10px] sm:text-xs xl:text-sm select-none mb-1.5 sm:mb-2 text-gray-700">
-                    Export File History
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={export_received_files_json}
-                      className="px-2 sm:px-3 py-1.5 sm:py-2 text-white text-[10px] sm:text-xs xl:text-sm font-medium rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                      style={{
-                        background: "rgba(59, 130, 246, 0.9)",
-                        backdropFilter: "blur(4px)",
-                        WebkitBackdropFilter: "blur(4px)",
-                        border: "1px solid rgba(255, 255, 255, 0.3)",
-                        boxShadow:
-                          "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
-                        e.currentTarget.style.boxShadow =
-                          "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                      }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="flex-shrink-0"
+                  {/* Relay server URL setting */}
+                  <div>
+                    <label htmlFor="relay-url" className="block text-xs font-semibold text-gray-700 mb-2">
+                      Relay Server (Advanced)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="relay-url"
+                        type="text"
+                        value={relayServerUrl}
+                        onChange={(e) => setRelayServerUrl(e.target.value)}
+                        onBlur={save_relay_server_url}
+                        placeholder="Leave blank for default"
+                        className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={test_relay}
+                        className="px-3 py-2 text-xs font-medium text-white rounded-xl transition-all cursor-pointer whitespace-nowrap"
+                        style={{
+                          background: "rgba(59, 130, 246, 0.9)",
+                          backdropFilter: "blur(4px)",
+                          WebkitBackdropFilter: "blur(4px)",
+                          border: "1px solid rgba(255, 255, 255, 0.3)",
+                          boxShadow: "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
+                          e.currentTarget.style.boxShadow = "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
+                          e.currentTarget.style.boxShadow = "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
+                        }}
                       >
-                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
-                      </svg>
-                      <span className="truncate">Received</span>
-                    </button>
-                    <button
-                      onClick={export_sent_files_json}
-                      className="px-2 sm:px-3 py-1.5 sm:py-2 text-white text-[10px] sm:text-xs xl:text-sm font-medium rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                      style={{
-                        background: "rgba(59, 130, 246, 0.9)",
-                        backdropFilter: "blur(4px)",
-                        WebkitBackdropFilter: "blur(4px)",
-                        border: "1px solid rgba(255, 255, 255, 0.3)",
-                        boxShadow:
-                          "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
-                        e.currentTarget.style.boxShadow =
-                          "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                      }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="flex-shrink-0"
-                      >
-                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
-                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
-                      </svg>
-                      <span className="truncate">Sent</span>
-                    </button>
+                        Test
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Enter custom relay URL (e.g., tcp:host:port). Uses default if blank.
+                    </p>
                   </div>
-                  <p className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 select-none mt-1">
-                    Export file history as JSON files
-                  </p>
+
+                  {/* Data Management Section */}
+                  <div className="space-y-3 border-t border-gray-200 pt-5 mt-5">
+                    <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                      Data Management
+                    </h3>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-2.5">
+                        Export your transfer history as JSON files for backup
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={export_received_files_json}
+                          className="px-3 py-2.5 text-xs font-medium text-white rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                          style={{
+                            background: "rgba(59, 130, 246, 0.9)",
+                            backdropFilter: "blur(4px)",
+                            WebkitBackdropFilter: "blur(4px)",
+                            border: "1px solid rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
+                            e.currentTarget.style.boxShadow = "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
+                            e.currentTarget.style.boxShadow = "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            className="flex-shrink-0"
+                          >
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                          </svg>
+                          <span className="truncate">Received</span>
+                        </button>
+                        <button
+                          onClick={export_sent_files_json}
+                          className="px-3 py-2.5 text-xs font-medium text-white rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                          style={{
+                            background: "rgba(59, 130, 246, 0.9)",
+                            backdropFilter: "blur(4px)",
+                            WebkitBackdropFilter: "blur(4px)",
+                            border: "1px solid rgba(255, 255, 255, 0.3)",
+                            boxShadow: "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
+                            e.currentTarget.style.boxShadow = "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
+                            e.currentTarget.style.boxShadow = "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            className="flex-shrink-0"
+                          >
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                          </svg>
+                          <span className="truncate">Sent</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

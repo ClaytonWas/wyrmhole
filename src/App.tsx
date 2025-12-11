@@ -71,6 +71,8 @@ function App() {
   const [historySizeMode, setHistorySizeMode] = useState<"atLeast" | "atMost">("atLeast");
   const [historyDateFrom, setHistoryDateFrom] = useState("");
   const [historyDateMode, setHistoryDateMode] = useState<"after" | "before">("after");
+  const [dateButtonAnimating, setDateButtonAnimating] = useState(false);
+  const [sizeButtonAnimating, setSizeButtonAnimating] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(
     new Map(),
   );
@@ -961,12 +963,11 @@ function App() {
                           value={folderName}
                           onChange={(e) => setFolderName(e.target.value)}
                           placeholder={`Folder Name: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
-                          className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all border border-gray-300/60"
                           style={{
                             background: "rgba(255, 255, 255, 0.7)",
                             backdropFilter: "blur(16px)",
                             WebkitBackdropFilter: "blur(16px)",
-                            border: "1px solid rgba(255, 255, 255, 0.5)",
                             boxShadow:
                               "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
                           }}
@@ -1367,16 +1368,20 @@ function App() {
                   value={historySearch}
                   onChange={(e) => setHistorySearch(e.target.value)}
                   placeholder="Search filename"
-                  className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                  className="px-2 py-1 rounded-xl border border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
                   style={{ minWidth: "120px" }}
                 />
-                <div className="flex items-center gap-1">
+                <div className="flex items-center">
                   <button
                     type="button"
-                    onClick={() =>
-                      setHistoryDateMode((m) => (m === "after" ? "before" : "after"))
-                    }
-                    className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 hover:bg-white/80 transition-colors"
+                    onClick={() => {
+                      setHistoryDateMode((m) => (m === "after" ? "before" : "after"));
+                      setDateButtonAnimating(true);
+                      setTimeout(() => setDateButtonAnimating(false), 200);
+                    }}
+                    className={`px-2 py-1 border border-gray-300/60 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
+                      dateButtonAnimating ? "filter-button-click" : ""
+                    }`}
                   >
                     {historyDateMode === "after" ? "After" : "Before"}
                   </button>
@@ -1384,16 +1389,20 @@ function App() {
                     type="date"
                     value={historyDateFrom}
                     onChange={(e) => setHistoryDateFrom(e.target.value)}
-                    className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                    className="px-2 py-1 border border-l-0 border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
                   />
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center">
                   <button
                     type="button"
-                    onClick={() =>
-                      setHistorySizeMode((m) => (m === "atLeast" ? "atMost" : "atLeast"))
-                    }
-                    className="px-2 py-1 rounded-xl border border-white/40 bg-white/60 hover:bg-white/80 transition-colors"
+                    onClick={() => {
+                      setHistorySizeMode((m) => (m === "atLeast" ? "atMost" : "atLeast"));
+                      setSizeButtonAnimating(true);
+                      setTimeout(() => setSizeButtonAnimating(false), 200);
+                    }}
+                    className={`px-2 py-1 border border-gray-300/60 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
+                      sizeButtonAnimating ? "filter-button-click" : ""
+                    }`}
                   >
                     {historySizeMode === "atLeast" ? "≥ MB" : "≤ MB"}
                   </button>
@@ -1403,7 +1412,7 @@ function App() {
                     value={historyMinSizeMb}
                     onChange={(e) => setHistoryMinSizeMb(e.target.value)}
                     placeholder="MB"
-                    className="w-20 px-2 py-1 rounded-xl border border-white/40 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                    className="w-20 px-2 py-1 border border-l-0 border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
                   />
                 </div>
               </div>

@@ -12,7 +12,7 @@
 
 ## 📖 About
 
-Wyrmhole is a cross-platform desktop application that provides a beautiful, user-friendly interface for secure peer-to-peer file transfers using the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) protocol. It combines the security and efficiency of Rust and the Magic Wormhome protocol with the flexibility of modern React web technologies.
+Wyrmhole is a cross-platform desktop application that provides a beautiful, user-friendly interface for secure peer-to-peer file transfers using the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) protocol. It combines the security and efficiency of Rust with the flexibility of modern React web technologies.
 
 ### ✨ Features
 
@@ -20,8 +20,9 @@ Wyrmhole is a cross-platform desktop application that provides a beautiful, user
 - 📁 **Multiple File Support** - Send single files or entire directories with automatic tarball packaging
 - 📊 **Real-time Progress** - Live progress tracking for both sending and receiving operations
 - 📜 **Transfer History** - Complete history of received files with metadata
+- 🌐 **Custom Relay Server** - Configure your own relay server URL
 - 🚀 **Cross-platform** - Works on Windows, macOS, and Linux
-- 📦 **Compact Package** - Builds to < 15mB
+- 📦 **Compact Package** - Builds to < 15MB
 
 ## 🌀 Demo 
 [Multi_File_Send_and_Receive.webm](https://github.com/user-attachments/assets/16d9d46d-a24b-402e-be05-bc5009b7b30d)
@@ -86,6 +87,7 @@ Access settings via the gear icon in the top-right corner:
 - **Download Directory** - Set where received files are saved
 - **Auto-Extract Tarballs** - Automatically extract received archives
 - **Default Folder Name Format** - Customize folder naming for multiple file transfers
+- **Custom Relay Server URL** - Use your own relay server
 - **Export JSON History** - Export your transfer history as a JSON file
 
 ## 🛠️ Development
@@ -101,6 +103,7 @@ wyrmhole/
 ├── src-tauri/             # Rust backend
 │   ├── src/
 │   │   ├── lib.rs         # Main Tauri commands
+│   │   ├── files.rs       # File transfer logic
 │   │   ├── files_json.rs  # File history management
 │   │   └── settings.rs    # Settings management
 │   └── Cargo.toml
@@ -109,7 +112,7 @@ wyrmhole/
 
 ### Tech Stack
 
-- **Frontend**: React 18, Tailwind CSS, React Hot Toast
+- **Frontend**: React 18, Tailwind CSS, Sonner
 - **Backend**: Tauri 2, magic-wormhole-rs
 - **Build Tool**: Vite
 
@@ -139,90 +142,13 @@ npm run tauri build
 
 ## 📋 Roadmap
 
-### Version 0.4.0 — Foundations of the Warp Engine
+### Future Features
 
-Wyrmhole is evolving from a *Magic Wormhole UI* into a **modular P2P teleportation platform**.
-This roadmap ensures we grow **safely**, **incrementally**, and **without rewrites**.
-
-#### 🎯 Goal
-
-Prepare the backend for multiple future transports (Warp Mode, LAN mode, QUIC) **without changing current behavior**.
-
----
-
-### 🧱 Architecture & Maintainability
-
-| Task                                                                                    | Why it matters                                                   |
-| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Split `files.rs` into modules: `send.rs`, `receive.rs`, `tar.rs`, `history.rs`          | Avoid giant-file complexity & improve future changes             |
-| Create `transport/` module and move wormhole-specific code into `transport/wormhole.rs` | Make “wormhole” one backend option, not the whole system         |
-| Introduce a `DataTransport` trait                                                       | Enables plugging in direct, local, or QUIC transports later      |
-| Refactor send/receive calls to use `dyn DataTransport`                                  | Prevent UI and history code from depending on wormhole internals |
-| Remove wormhole-specific logging from generic layers                                    | Cleaner separation + easier debugging                            |
-
-> This work makes Warp Mode possible later **without a risky rewrite**.
-
----
-
-### 📊 UI/UX Enhancements
-
-| Task                                                     | Why                                                       |
-| -------------------------------------------------------- | --------------------------------------------------------- |
-| Show `Transport: Relay (Legacy)` in transfer cards       | Helps users understand what transport they’re on today    |
-| Display throughput (MiB/s) below progress bars           | Makes performance visible and measurable before Warp Mode |
-| Improved relay test feedback (`Testing…`, inline status) | UX clarity when debugging custom relay setup              |
-
-> Surface speed & transport signals to users early, while everything is still relay-based.
-
----
-
-### 🔍 Stability & Testing
-
-| Task                                                            | Why                                               |
-| --------------------------------------------------------------- | ------------------------------------------------- |
-| Write a **Happy Path Integration Test** (script or semi-manual) | Confidence that refactoring won’t break transfers |
-| Test: Send a known folder (e.g., 50MB), verify size + history   | Automated objective success criteria              |
-| Check error logs remain clean (`no [error]` on success runs)    | Detect regressions immediately                    |
-
-> This ensures **Wyrmhole keeps working** while internals change.
-
----
-
-### 🧹 Developer Experience
-
-| Task                                                 | Why                                                        |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| Optional: add a debug flag for verbose transfer logs | Easier to diagnose relay/path issues during development    |
-| Document control-plane vs data-plane separation      | Prevents future contributors from merging the layers again |
-
-> We protect the architecture we’re building now.
-
----
-
-### 🧭 After 0.4.0
-
-Once 0.4.0 lands, the system is ready for:
-
-| Future feature                | Depends on                          |
-| ----------------------------- | ----------------------------------- |
-| LAN-only transfers (no relay) | Clean DataTransport API             |
-| Direct NAT hole punching      | Wormhole-agnostic transport control |
-| Multi-stream Warp Mode        | Pluggable data plane                |
-| QUIC experiments              | No coupling to wormhole’s TCP flow  |
-
-> We unlock new performance paths while remaining backward-compatible.
-
-
-### Future Considerations
-
-- [ ] Dark mode support
-- [ ] Transfer queue management
-- [ ] File preview capabilities
-- [ ] Better transfer telemetry & analytics
-- [ ] Direct TCP hole-punch paths
-- [ ] Multi-stream file chunking
-- [ ] QUIC fallback for WAN
-- [ ] LAN broadcast discovery
+| Feature | Description |
+| ------- | ----------- |
+| 🖥️ **Embedded Relay Server** | Host your own relay server directly within Wyrmhole |
+| 👥 **Send to Multiple Recipients** | Send a file to multiple people simultaneously ([experimental feature](https://github.com/magic-wormhole/magic-wormhole.rs?tab=readme-ov-file)) |
+| 🌙 **Dark Mode** | Support for a dark mode at the system level using glassy UI |
 
 ## 🤝 Contributing
 
@@ -242,7 +168,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) - The secure file transfer protocol used in this application
 - [magic-wormhole.rs on crates.io](https://crates.io/crates/magic-wormhole)
-- [Tauri](https://tauri.app/) - The framework used for this applciation
+- [Tauri](https://tauri.app/) - The framework used for this application
 - [Tauri Documentation](https://tauri.app/)
 
 ## 🙏 Acknowledgments
@@ -253,7 +179,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Made with ❤️ by [ClaytonWas](https://github.com/ClaytonWas)**
+**Made with 💙 by [ClaytonWas](https://github.com/ClaytonWas)**
 
 [Report Bug](https://github.com/ClaytonWas/wyrmhole/issues) · [Request Feature](https://github.com/ClaytonWas/wyrmhole/issues)
 
