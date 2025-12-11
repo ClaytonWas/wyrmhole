@@ -24,9 +24,6 @@ Wyrmhole is a cross-platform desktop application that provides a beautiful, user
 - 🚀 **Cross-platform** - Works on Windows, macOS, and Linux
 - 📦 **Compact Package** - Builds to < 15MB
 
-## 🌀 Demo 
-[Multi_File_Send_and_Receive.webm](https://github.com/user-attachments/assets/16d9d46d-a24b-402e-be05-bc5009b7b30d)
-
 ## 🚀 Getting Started
 
 ### Prerequisites
