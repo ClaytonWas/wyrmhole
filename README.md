@@ -144,7 +144,7 @@ npm run tauri build
 | Feature | Description |
 | ------- | ----------- |
 | 🖥️ **Embedded Relay Server** | Host your own relay server directly within Wyrmhole |
-| 👥 **Send to Multiple Recipients** | Send a file to multiple people simultaneously ([experimental feature](https://github.com/magic-wormhole/magic-wormhole.rs?tab=readme-ov-file)) |
+| 👥 **Send to Multiple Recipients** | Send a file to multiple people ([experimental feature](https://github.com/magic-wormhole/magic-wormhole.rs?tab=readme-ov-file)) |
 | 🌙 **Dark Mode** | Support for a dark mode at the system level using glassy UI |
 
 ## 🤝 Contributing
@@ -166,7 +166,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) - The secure file transfer protocol used in this application
 - [magic-wormhole.rs on crates.io](https://crates.io/crates/magic-wormhole)
 - [Tauri](https://tauri.app/) - The framework used for this application
-- [Tauri Documentation](https://tauri.app/)
 
 ## 🙏 Acknowledgments
 
@@ -178,6 +177,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with 💙 by [ClaytonWas](https://github.com/ClaytonWas)**
 
-[Report Bug](https://github.com/ClaytonWas/wyrmhole/issues) · [Request Feature](https://github.com/ClaytonWas/wyrmhole/issues)
+[Report Bug/Request Feature](https://github.com/ClaytonWas/wyrmhole/issues)
 
 </div>
