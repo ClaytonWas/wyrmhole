@@ -1,10 +1,10 @@
-# 🛡️ Wyrmhole Security Policy
+# Wyrmhole Security Policy
 
 Thank you for helping to keep Wyrmhole secure!  
 We take user privacy and the integrity of file transfers seriously — and we welcome community involvement in improving security.
 
 
-## 🧠 Security Model Summary
+## Security Model Summary
 
 Wyrmhole uses the **magic-wormhole.rs** protocol to establish secure, zero-trust file transfer channels.  
 This means **even the relay cannot read or modify your data**.
@@ -20,7 +20,7 @@ This means **even the relay cannot read or modify your data**.
 Wyrmhole transfers are encrypted **before** any data reaches a server.
 
 
-## 🔐 Cryptography Details
+## Cryptography Details
 
 | Component | Algorithm | Purpose |
 |----------|-----------|---------|
@@ -38,34 +38,16 @@ Relay servers **cannot** see:
 - Keys or wormhole code
 - Sender/receiver identity
 
-Future enhancements may include:
-- Traffic padding to reduce metadata leakage
-- Optional onion-style routing
-
-
-## 📣 Reporting a Vulnerability
+## Reporting a Vulnerability
 
 If you find a security issue, please report it privately:
 
-📩 **Email:** security@wyrmhole.app
+ **Email:** security@wyrmhole.app
 
 Please include:
 - Description of the issue
 - Reproduction steps / logs if available
 - Impact (what could an attacker do?)
-
-
-⚠️ High-impact issues **should not** be reported publicly in GitHub Issues.
-
-
-## ⏱ Response Commitment
-
-We aim to **acknowledge** and provide a **status update** within **48 hours**
-
-
-Bugs affecting cryptography or user exposure are prioritized.
-
-## 🙌 Good Faith Security Research
 
 We support legitimate researchers following these principles:
 - No harm to users or data
@@ -73,5 +55,4 @@ We support legitimate researchers following these principles:
 - Avoid accessing data you don’t own
 - Use private reporting channels
 
-
-If you have ideas to improve Wyrmhole’s security design, architecture, or documentation — we would love to hear from you. Thank you for helping safeguard our users! 🧙‍♂️✨
+If you have ideas to improve Wyrmhole’s security design or architecture we would love to hear from you. Thank you for helping safeguard our users! 🧙‍♂️✨
