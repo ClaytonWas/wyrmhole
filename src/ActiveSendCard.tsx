@@ -127,13 +127,13 @@ const ActiveSendCard = ({
         }}
       >
         <div
-          className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 min-w-0 ${hasError ? "text-red-700" : "text-gray-700"}`}
+          className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 min-w-0 ${hasError ? "text-red-700 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}
         >
           <FileIcon fileName={file_name} className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
           <span className="text-[10px] sm:text-xs xl:text-sm truncate">{file_name}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 md:h-2.5 shadow-inner">
+          <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 sm:h-2 md:h-2.5 shadow-inner">
             <div
               className={`${progressBarColor} h-1.5 sm:h-2 md:h-2.5 rounded-full transition-all duration-300 shadow-sm`}
               style={{ width: `${Math.min(percentage, 100)}%` }}
@@ -149,12 +149,12 @@ const ActiveSendCard = ({
           )}
         </div>
         <div
-          className={`text-[8px] sm:text-[9px] md:text-[10px] xl:text-xs text-center whitespace-nowrap ${hasError ? "text-red-600" : "text-gray-600"}`}
+          className={`text-[8px] sm:text-[9px] md:text-[10px] xl:text-xs text-center whitespace-nowrap ${hasError ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400"}`}
         >
           {percentage}%
         </div>
         <div
-          className={`text-[8px] sm:text-[9px] md:text-[10px] xl:text-xs text-right flex items-center justify-end gap-0.5 sm:gap-1 md:gap-2 min-w-0 ${hasError ? "text-red-600 font-semibold" : "text-gray-500"}`}
+          className={`text-[8px] sm:text-[9px] md:text-[10px] xl:text-xs text-right flex items-center justify-end gap-0.5 sm:gap-1 md:gap-2 min-w-0 ${hasError ? "text-red-600 font-semibold dark:text-red-400" : "text-gray-500 dark:text-gray-400"}`}
         >
           <span className="flex items-center truncate">{status}</span>
           {hasError && onDismiss && (
@@ -205,15 +205,15 @@ const ActiveSendCard = ({
                       <FileIcon fileName={file_name} className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {file_name}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">Sending file</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Sending file</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
                     title="Close (Esc)"
                   >
                     <svg
@@ -221,7 +221,7 @@ const ActiveSendCard = ({
                       width="20"
                       height="20"
                       viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
+                      className="fill-gray-500 dark:fill-gray-400 hover:fill-gray-700 dark:hover:fill-gray-300"
                     >
                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                     </svg>
@@ -234,16 +234,16 @@ const ActiveSendCard = ({
                 {/* Progress */}
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-sm font-medium text-gray-700">Progress</span>
-                    <span className="text-sm font-bold text-gray-900">{percentage}%</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{percentage}%</span>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
                     <div
                       className={`${progressBarColor} h-full rounded-full transition-all duration-500`}
                       style={{ width: `${Math.min(percentage, 100)}%` }}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {formatBytes(sent)} / {formatBytes(total)}
                   </p>
                 </div>
@@ -251,12 +251,12 @@ const ActiveSendCard = ({
                 {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Size</p>
-                    <p className="text-sm font-semibold text-gray-900">{formatBytes(total)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Size</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatBytes(total)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Status</p>
-                    <p className="text-sm font-semibold text-gray-900">{status}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{status}</p>
                   </div>
                 </div>
 
@@ -270,7 +270,7 @@ const ActiveSendCard = ({
                 {/* Connection Code - Refined */}
                 {code && (
                   <div className="pt-2">
-                    <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2.5 uppercase tracking-wide">
                       Connection Code
                     </p>
                     <div className="relative group">
@@ -278,7 +278,7 @@ const ActiveSendCard = ({
                         type="text"
                         readOnly
                         value={code}
-                        className="w-full text-sm font-mono text-gray-900 rounded-xl px-4 py-3 pr-10 cursor-pointer transition-all"
+                        className="w-full text-sm font-mono text-gray-900 dark:text-gray-100 rounded-xl px-4 py-3 pr-10 cursor-pointer transition-all"
                         style={{
                           background: "rgba(255, 255, 255, 0.7)",
                           backdropFilter: "blur(16px)",
@@ -324,7 +324,7 @@ const ActiveSendCard = ({
                           width="16"
                           height="16"
                           viewBox="0 0 16 16"
-                          className="fill-gray-400"
+                          className="fill-gray-400 dark:fill-gray-500"
                         >
                           <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
                           <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />

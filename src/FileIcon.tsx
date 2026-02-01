@@ -265,7 +265,7 @@ export function FileIcon({ fileName, className = "w-4 h-4 flex-shrink-0" }: File
     } else if (codeExtensions.includes(extension)) {
       return "text-indigo-500";
     } else {
-      return "text-gray-500";
+      return "text-gray-500 dark:text-gray-400";
     }
   };
 

@@ -43,7 +43,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
           e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
         }}
       >
-        <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
+        <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 min-w-0">
           <div className="animate-spin flex-shrink-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -127,15 +127,15 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                       </div>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                         Connecting to Sender
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">Connection code: {code}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Connection code: {code}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
                     title="Close (Esc)"
                   >
                     <svg
@@ -143,7 +143,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                       width="20"
                       height="20"
                       viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
+                      className="fill-gray-500 dark:fill-gray-400 hover:fill-gray-700 dark:hover:fill-gray-300"
                     >
                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                     </svg>
@@ -184,7 +184,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
 
                 {/* Connection Code - Refined */}
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2.5 uppercase tracking-wide">
                     Connection Code
                   </p>
                   <div className="relative group">
@@ -192,7 +192,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                       type="text"
                       readOnly
                       value={code}
-                      className="w-full text-sm font-mono text-gray-900 rounded-xl px-4 py-3 pr-10 cursor-pointer transition-all"
+                      className="w-full text-sm font-mono text-gray-900 dark:text-gray-100 rounded-xl px-4 py-3 pr-10 cursor-pointer transition-all"
                       style={{
                         background: "rgba(255, 255, 255, 0.7)",
                         backdropFilter: "blur(16px)",
@@ -238,7 +238,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                         width="16"
                         height="16"
                         viewBox="0 0 16 16"
-                        className="fill-gray-400"
+                        className="fill-gray-400 dark:fill-gray-500"
                       >
                         <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
                         <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />

@@ -53,7 +53,7 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
           e.currentTarget.style.background = "rgba(254, 252, 232, 0.4)";
         }}
       >
-        <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
+        <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 min-w-0">
           <FileIcon fileName={file_name} className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="text-[11px] xl:text-xs truncate font-medium">{file_name}</span>
         </div>
@@ -124,15 +124,15 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
                       <FileIcon fileName={file_name} className="w-5 h-5 text-yellow-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {file_name}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">File offer</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">File offer</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
                     title="Close (Esc)"
                   >
                     <svg
@@ -140,7 +140,7 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
                       width="20"
                       height="20"
                       viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
+                      className="fill-gray-500 dark:fill-gray-400 hover:fill-gray-700 dark:hover:fill-gray-300"
                     >
                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                     </svg>
@@ -153,12 +153,12 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
                 {/* File Info */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Size</p>
-                    <p className="text-sm font-semibold text-gray-900">{formatBytes(file_size)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Size</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatBytes(file_size)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Filename</p>
-                    <p className="text-sm font-semibold text-gray-900 truncate" title={file_name}>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Filename</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={file_name}>
                       {file_name || "Unknown"}
                     </p>
                   </div>

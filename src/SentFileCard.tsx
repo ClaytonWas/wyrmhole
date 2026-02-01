@@ -54,7 +54,7 @@ const SentFileCard = ({
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0"
+        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 dark:text-gray-300 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0"
         style={{ background: "transparent" }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
@@ -74,8 +74,8 @@ const SentFileCard = ({
           />
           <span>{displayName}</span>
         </div>
-        <div className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500">.{file_extension}</div>
-        <div className="text-[9px] sm:text-[10px] xl:text-xs font-medium text-gray-600">
+        <div className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 dark:text-gray-400">.{file_extension}</div>
+        <div className="text-[9px] sm:text-[10px] xl:text-xs font-medium text-gray-600 dark:text-gray-400">
           {format_file_size(file_size)}
         </div>
       </div>
@@ -108,15 +108,15 @@ const SentFileCard = ({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {displayName}.{file_extension}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">Sent file</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Sent file</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
                     title="Close (Esc)"
                   >
                     <svg
@@ -124,7 +124,7 @@ const SentFileCard = ({
                       width="20"
                       height="20"
                       viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
+                      className="fill-gray-500 dark:fill-gray-400 hover:fill-gray-700 dark:hover:fill-gray-300"
                     >
                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                     </svg>
@@ -137,20 +137,20 @@ const SentFileCard = ({
                 {/* File Info Grid */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Size</p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Size</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                       {format_file_size(file_size)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Extension</p>
-                    <p className="text-sm font-semibold text-gray-900">.{file_extension}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Extension</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">.{file_extension}</p>
                   </div>
                 </div>
 
                 {/* Files Sent List */}
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2.5 uppercase tracking-wide">
                     {file_paths.length === 1 ? "File Sent" : `Files Sent (${file_paths.length})`}
                   </p>
                   {file_paths.length > 0 ? (
@@ -164,7 +164,7 @@ const SentFileCard = ({
                         return (
                           <div
                             key={idx}
-                            className="px-3 py-2 text-sm font-mono text-gray-900 rounded-xl"
+                            className="px-3 py-2 text-sm font-mono text-gray-900 dark:text-gray-100 rounded-xl"
                             style={{
                               background: "rgba(255, 255, 255, 0.7)",
                               backdropFilter: "blur(16px)",
@@ -180,14 +180,14 @@ const SentFileCard = ({
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400 italic">No file names available</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 italic">No file names available</p>
                   )}
                 </div>
 
                 {/* Connection Info */}
                 <div className="pt-2 border-t border-white/20 space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                       Connection
                     </p>
                     {onResend && file_paths.length > 0 && (
@@ -213,7 +213,7 @@ const SentFileCard = ({
                       type="text"
                       readOnly
                       value={connection_code}
-                      className="w-full text-sm font-mono text-gray-900 rounded-xl px-4 py-3 cursor-pointer transition-all"
+                      className="w-full text-sm font-mono text-gray-900 dark:text-gray-100 rounded-xl px-4 py-3 cursor-pointer transition-all"
                       style={{
                         background: "rgba(255, 255, 255, 0.7)",
                         backdropFilter: "blur(16px)",
@@ -255,8 +255,8 @@ const SentFileCard = ({
                     />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Connection Code</p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sent</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                       {new Date(send_time).toLocaleString()}
                     </p>
                   </div>

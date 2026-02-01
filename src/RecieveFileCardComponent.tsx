@@ -49,7 +49,7 @@ const ReceiveFileCard = ({
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0"
+        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 dark:text-gray-300 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0"
         style={{ background: "transparent" }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
@@ -66,8 +66,8 @@ const ReceiveFileCard = ({
           <FileIcon fileName={`${file_name}.${file_extension}`} className="w-4 h-4 flex-shrink-0" />
           <span>{file_name}</span>
         </div>
-        <div className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500">.{file_extension}</div>
-        <div className="text-[9px] sm:text-[10px] xl:text-xs font-medium text-gray-600">
+        <div className="text-[9px] sm:text-[10px] xl:text-xs text-gray-500 dark:text-gray-400">.{file_extension}</div>
+        <div className="text-[9px] sm:text-[10px] xl:text-xs font-medium text-gray-600 dark:text-gray-400">
           {formatFileSize(file_size)}
         </div>
       </div>
@@ -100,15 +100,15 @@ const ReceiveFileCard = ({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {file_name}.{file_extension}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">Received file</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Received file</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
                     title="Close (Esc)"
                   >
                     <svg
@@ -116,7 +116,7 @@ const ReceiveFileCard = ({
                       width="20"
                       height="20"
                       viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
+                      className="fill-gray-500 dark:fill-gray-400 hover:fill-gray-700 dark:hover:fill-gray-300"
                     >
                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                     </svg>
@@ -129,20 +129,20 @@ const ReceiveFileCard = ({
                 {/* File Info Grid */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Size</p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Size</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                       {formatFileSize(file_size)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Extension</p>
-                    <p className="text-sm font-semibold text-gray-900">.{file_extension}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Extension</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">.{file_extension}</p>
                   </div>
                 </div>
 
                 {/* Download Path - Refined */}
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2.5 uppercase tracking-wide">
                     Downloaded To
                   </p>
                   <div
@@ -156,7 +156,7 @@ const ReceiveFileCard = ({
                         "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
                     }}
                   >
-                    <p className="text-sm font-mono text-gray-900 break-words whitespace-pre-wrap">
+                    <p className="text-sm font-mono text-gray-900 dark:text-gray-100 break-words whitespace-pre-wrap">
                       {download_url}
                     </p>
                   </div>
@@ -164,22 +164,22 @@ const ReceiveFileCard = ({
 
                 {/* Connection Info */}
                 <div className="pt-2 border-t border-white/20">
-                  <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">
                     Connection
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">IP Address</p>
-                      <p className="text-sm font-semibold text-gray-900 truncate">{peer_address}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">IP Address</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{peer_address}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Type</p>
-                      <p className="text-sm font-semibold text-gray-900">{connection_type}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Type</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{connection_type}</p>
                     </div>
                   </div>
                   <div className="mt-3">
-                    <p className="text-xs text-gray-500 mb-1">Downloaded</p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Downloaded</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                       {new Date(download_time).toLocaleString()}
                     </p>
                   </div>
