@@ -286,11 +286,15 @@ export default function SettingsMenu() {
 
                 {/* Transfer Settings Section */}
                 <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-5 space-y-5 border border-gray-300 dark:border-slate-700 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">Transfer</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
+                    Transfer
+                  </h3>
 
                   {/* Download directory field */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Download Location</label>
+                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Download Location
+                    </label>
                     <button
                       onClick={() => {
                         const selection = window.getSelection?.();
@@ -366,7 +370,9 @@ export default function SettingsMenu() {
                         #
                       </code>{" "}
                       for file count. Example:{" "}
-                      <code className="font-mono text-[11px] text-gray-700 dark:text-gray-300">#-photos</code>
+                      <code className="font-mono text-[11px] text-gray-700 dark:text-gray-300">
+                        #-photos
+                      </code>
                     </p>
                   </div>
                 </div>
@@ -439,7 +445,9 @@ export default function SettingsMenu() {
 
                       {/* Data Management Section */}
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Export History</h4>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          Export History
+                        </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                           Backup your transfer history as JSON files
                         </p>

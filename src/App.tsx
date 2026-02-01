@@ -796,7 +796,7 @@ function App() {
 
       <nav className="glass-navbar flex-shrink-0 z-10">
         <div className="px-3 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center">
-          <h1 className="text-lg sm:text-2xl xl:text-3xl font-bold flex items-center select-none gap-1 sm:gap-2 text-gray-800">
+          <h1 className="text-lg sm:text-2xl xl:text-3xl font-bold flex items-center select-none gap-1 sm:gap-2 text-gray-800 dark:text-gray-100">
             <span className="spin-on-hover cursor-pointer text-lg sm:text-2xl xl:text-3xl flex items-center">
               🌀
             </span>
@@ -813,14 +813,14 @@ function App() {
             className={`mb-3 sm:mb-4 ${sendProgress.size === 0 && downloadProgress.size === 0 ? "hidden md:block" : ""}`}
           >
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 select-none cursor-default">
+              <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 dark:text-gray-100 select-none cursor-default">
                 Active Transfers
               </h2>
               {(sendProgress.size > 0 || downloadProgress.size > 0) && (
                 <button
                   type="button"
                   onClick={cancel_all_transfers}
-                  className="text-[10px] sm:text-xs xl:text-sm text-red-600 hover:text-red-700 px-2 py-1 rounded-xl border border-red-200 hover:border-red-300 bg-red-50/70 cursor-pointer transition-colors"
+                  className="text-[10px] sm:text-xs xl:text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-1 rounded-xl border border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700 bg-red-50/70 dark:bg-red-900/30 cursor-pointer transition-colors"
                 >
                   Cancel all
                 </button>
@@ -847,7 +847,7 @@ function App() {
                     WebkitBackdropFilter: "blur(8px)",
                   }}
                 >
-                  <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                  <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
                     Sending {sendProgress.size > 0 && `(${sendProgress.size})`}
                   </p>
                 </div>
@@ -879,7 +879,7 @@ function App() {
                       />
                     ))
                   ) : (
-                    <div className="text-center text-xs xl:text-sm text-gray-400">
+                    <div className="text-center text-xs xl:text-sm text-gray-400 dark:text-gray-500">
                       No active sends
                     </div>
                   )}
@@ -906,7 +906,7 @@ function App() {
                     WebkitBackdropFilter: "blur(8px)",
                   }}
                 >
-                  <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-green-700 uppercase tracking-wide">
+                  <p className="text-[9px] sm:text-[10px] xl:text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">
                     Receiving {downloadProgress.size > 0 && `(${downloadProgress.size})`}
                   </p>
                 </div>
@@ -938,7 +938,7 @@ function App() {
                       />
                     ))
                   ) : (
-                    <div className="text-center text-xs xl:text-sm text-gray-400">
+                    <div className="text-center text-xs xl:text-sm text-gray-400 dark:text-gray-500">
                       No active downloads
                     </div>
                   )}
@@ -949,7 +949,7 @@ function App() {
 
           {/* Actions Section - Fixed Height */}
           <div className="mb-3 sm:mb-4">
-            <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 mb-2 select-none cursor-default">
+            <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 dark:text-gray-100 mb-2 select-none cursor-default">
               Actions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
@@ -967,7 +967,7 @@ function App() {
               >
                 <div className="px-3 py-2 border-b border-white/20 flex-shrink-0">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">
+                    <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
                       Send Files
                     </h3>
                     <div className="flex items-center gap-2 flex-1 justify-end">
@@ -977,7 +977,7 @@ function App() {
                           value={folderName}
                           onChange={(e) => setFolderName(e.target.value)}
                           placeholder={`Folder Name: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
-                          className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all border border-gray-300/60"
+                          className="flex-1 px-2 py-1 text-xs xl:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all border border-gray-300/60 dark:border-slate-600"
                           style={{
                             background: "rgba(255, 255, 255, 0.7)",
                             backdropFilter: "blur(16px)",
@@ -1058,7 +1058,7 @@ function App() {
                         viewBox="0 0 24 24"
                         strokeWidth="1.5"
                         stroke="currentColor"
-                        className="w-5 h-5 text-gray-400 mb-1"
+                        className="w-5 h-5 text-gray-400 dark:text-gray-500 mb-1"
                       >
                         <path
                           strokeLinecap="round"
@@ -1066,14 +1066,14 @@ function App() {
                           d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"
                         />
                       </svg>
-                      <span className="text-xs xl:text-sm text-gray-600">
+                      <span className="text-xs xl:text-sm text-gray-600 dark:text-gray-400">
                         Click to select files
                       </span>
                     </label>
                   ) : (
                     <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                        <span className="text-xs xl:text-sm font-medium text-gray-700">
+                        <span className="text-xs xl:text-sm font-medium text-gray-700 dark:text-gray-300">
                           {selectedFiles.length} {selectedFiles.length === 1 ? "file" : "files"}
                         </span>
                         <div className="flex items-center gap-2">
@@ -1082,7 +1082,7 @@ function App() {
                               e.stopPropagation();
                               append_files();
                             }}
-                            className="text-[10px] xl:text-xs text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+                            className="text-[10px] xl:text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer"
                             title="Add more files"
                           >
                             Add files
@@ -1093,7 +1093,7 @@ function App() {
                               setSelectedFiles(null);
                               setFolderName("");
                             }}
-                            className="text-[10px] xl:text-xs text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
+                            className="text-[10px] xl:text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
                             title="Clear"
                           >
                             Clear
@@ -1129,7 +1129,7 @@ function App() {
                               fileName={selectedFiles[0].split(/[/\\]/).pop() || "Unknown"}
                               className="w-4 h-4 flex-shrink-0"
                             />
-                            <p className="text-xs xl:text-sm font-medium text-gray-900 truncate flex-1">
+                            <p className="text-xs xl:text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex-1">
                               {selectedFiles[0].split(/[/\\]/).pop() || "Unknown"}
                             </p>
                             <button
@@ -1137,13 +1137,13 @@ function App() {
                                 e.stopPropagation();
                                 remove_file_at_index(0);
                               }}
-                              className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                              className="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
                               title="Remove"
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 16 16"
-                                className="w-4 h-4 fill-gray-400 hover:fill-red-600"
+                                className="w-4 h-4 fill-gray-400 dark:fill-gray-500 hover:fill-red-600 dark:hover:fill-red-400"
                               >
                                 <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                               </svg>
@@ -1170,7 +1170,7 @@ function App() {
                                   }}
                                 >
                                   <FileIcon fileName={name} className="w-3.5 h-3.5 flex-shrink-0" />
-                                  <p className="text-[11px] xl:text-xs font-medium text-gray-900 truncate flex-1">
+                                  <p className="text-[11px] xl:text-xs font-medium text-gray-900 dark:text-gray-100 truncate flex-1">
                                     {name}
                                   </p>
                                   <button
@@ -1178,13 +1178,13 @@ function App() {
                                       e.stopPropagation();
                                       remove_file_at_index(idx);
                                     }}
-                                    className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                                    className="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
                                     title="Remove"
                                   >
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
                                       viewBox="0 0 16 16"
-                                      className="w-4 h-4 fill-gray-400 hover:fill-red-600"
+                                      className="w-4 h-4 fill-gray-400 dark:fill-gray-500 hover:fill-red-600 dark:hover:fill-red-400"
                                     >
                                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                                     </svg>
@@ -1220,14 +1220,14 @@ function App() {
                     }}
                     className="flex items-center gap-2"
                   >
-                    <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">
+                    <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
                       Receive Files
                     </h3>
                     <input
                       value={receiveCode}
                       onChange={(e) => setReceiveCode(e.target.value)}
                       placeholder="Enter code: ex. 7-helpful-tiger"
-                      className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      className="flex-1 px-2 py-1 text-xs xl:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                       style={{
                         background: "rgba(255, 255, 255, 0.3)",
                         backdropFilter: "blur(16px)",
@@ -1283,7 +1283,7 @@ function App() {
                   {connectingCodes.size > 0 || pendingFileOffers.size > 0 ? (
                     <div className="flex flex-col">
                       {(connectingCodes.size > 0 || pendingFileOffers.size > 0) && (
-                        <div className="text-[10px] sm:text-xs xl:text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 flex-shrink-0">
+                        <div className="text-[10px] sm:text-xs xl:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2 flex-shrink-0">
                           {connectingCodes.size > 0 && pendingFileOffers.size > 0
                             ? `Connecting (${connectingCodes.size}) • Pending Offers (${pendingFileOffers.size})`
                             : connectingCodes.size > 0
@@ -1327,7 +1327,7 @@ function App() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center text-xs xl:text-sm text-gray-400 py-2">
+                    <div className="flex items-center justify-center text-xs xl:text-sm text-gray-400 dark:text-gray-500 py-2">
                       No pending offers
                     </div>
                   )}
@@ -1340,7 +1340,7 @@ function App() {
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
-                <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 select-none cursor-default">
+                <h2 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-800 dark:text-gray-100 select-none cursor-default">
                   File History
                 </h2>
                 <div className="flex items-center gap-1.5 text-xs">
@@ -1353,13 +1353,13 @@ function App() {
                     }}
                     className={`px-2 py-1 rounded-xl transition-all duration-200 ${
                       historyTab === "received"
-                        ? "text-blue-700 font-semibold"
-                        : "text-gray-500 hover:text-blue-600"
+                        ? "text-blue-700 dark:text-blue-400 font-semibold"
+                        : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                     }`}
                   >
                     Received
                   </button>
-                  <span className="text-gray-400">/</span>
+                  <span className="text-gray-400 dark:text-gray-500">/</span>
                   <button
                     onClick={() => {
                       if (historyTab !== "sent") {
@@ -1369,8 +1369,8 @@ function App() {
                     }}
                     className={`px-2 py-1 rounded-xl transition-all duration-200 ${
                       historyTab === "sent"
-                        ? "text-blue-700 font-semibold"
-                        : "text-gray-500 hover:text-blue-600"
+                        ? "text-blue-700 dark:text-blue-400 font-semibold"
+                        : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                     }`}
                   >
                     Sent
@@ -1382,7 +1382,7 @@ function App() {
                   value={historySearch}
                   onChange={(e) => setHistorySearch(e.target.value)}
                   placeholder="Search filename"
-                  className="px-2 py-1 rounded-xl border border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                  className="px-2 py-1 rounded-xl border border-gray-300/60 dark:border-slate-600 bg-white/60 dark:bg-slate-800/50 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
                   style={{ minWidth: "120px" }}
                 />
                 <div className="flex items-center">
@@ -1393,7 +1393,7 @@ function App() {
                       setDateButtonAnimating(true);
                       setTimeout(() => setDateButtonAnimating(false), 200);
                     }}
-                    className={`px-2 py-1 border border-gray-300/60 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
+                    className={`px-2 py-1 border border-gray-300/60 dark:border-slate-600 bg-white/60 dark:bg-slate-800/50 text-gray-900 dark:text-gray-100 hover:bg-white/80 dark:hover:bg-slate-700 hover:cursor-pointer transition-colors rounded-l-xl ${
                       dateButtonAnimating ? "filter-button-click" : ""
                     }`}
                   >
@@ -1403,7 +1403,7 @@ function App() {
                     type="date"
                     value={historyDateFrom}
                     onChange={(e) => setHistoryDateFrom(e.target.value)}
-                    className="px-2 py-1 border border-l-0 border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
+                    className="px-2 py-1 border border-l-0 border-gray-300/60 dark:border-slate-600 bg-white/60 dark:bg-slate-800/50 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
                   />
                 </div>
                 <div className="flex items-center">
@@ -1414,7 +1414,7 @@ function App() {
                       setSizeButtonAnimating(true);
                       setTimeout(() => setSizeButtonAnimating(false), 200);
                     }}
-                    className={`px-2 py-1 border border-gray-300/60 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
+                    className={`px-2 py-1 border border-gray-300/60 dark:border-slate-600 bg-white/60 dark:bg-slate-800/50 text-gray-900 dark:text-gray-100 hover:bg-white/80 dark:hover:bg-slate-700 hover:cursor-pointer transition-colors rounded-l-xl ${
                       sizeButtonAnimating ? "filter-button-click" : ""
                     }`}
                   >
@@ -1426,7 +1426,7 @@ function App() {
                     value={historyMinSizeMb}
                     onChange={(e) => setHistoryMinSizeMb(e.target.value)}
                     placeholder="MB"
-                    className="w-20 px-2 py-1 border border-l-0 border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
+                    className="w-20 px-2 py-1 border border-l-0 border-gray-300/60 dark:border-slate-600 bg-white/60 dark:bg-slate-800/50 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
                   />
                 </div>
               </div>
@@ -1444,7 +1444,7 @@ function App() {
               }}
             >
               <div
-                className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-white/20 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0"
+                className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-white/20 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide flex-shrink-0"
                 style={{
                   background: "rgba(255, 255, 255, 0.3)",
                   backdropFilter: "blur(8px)",
@@ -1471,7 +1471,7 @@ function App() {
               >
                 {historyTab === "received" ? (
                   receivedFiles.length > 0 ? (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-gray-100 dark:divide-slate-700">
                       {receivedFiles
                         .slice()
                         .reverse()
@@ -1509,12 +1509,12 @@ function App() {
                         ))}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                    <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
                       No Received File History
                     </div>
                   )
                 ) : sentFiles.length > 0 ? (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-slate-700">
                     {sentFiles
                       .slice()
                       .reverse()
@@ -1565,7 +1565,7 @@ function App() {
                       })}
                   </div>
                 ) : (
-                  <div className="flex itemsCenter justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400">
+                  <div className="flex items-center justify-center h-48 sm:h-64 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
                     No Sent File History
                   </div>
                 )}
