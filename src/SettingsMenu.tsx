@@ -12,6 +12,7 @@ export default function SettingsMenu() {
   const [defaultFolderNameFormat, setDefaultFolderNameFormat] =
     useState<string>("#-files-via-wyrmhole");
   const [relayServerUrl, setRelayServerUrl] = useState<string>("");
+  const [darkMode, setDarkMode] = useState<boolean>(false);
 
   async function choose_download_directory() {
     const selected = await open({ directory: true, multiple: false });
@@ -99,6 +100,37 @@ export default function SettingsMenu() {
     }
   }
 
+  async function get_dark_mode() {
+    try {
+      const value = await invoke<boolean>("get_dark_mode");
+      setDarkMode(value);
+      // Apply dark mode class to root element
+      if (value) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } catch (error) {
+      console.error("Error getting dark mode setting:", error);
+    }
+  }
+
+  async function toggle_dark_mode() {
+    try {
+      const newValue = !darkMode;
+      await invoke("set_dark_mode", { value: newValue });
+      setDarkMode(newValue);
+      // Apply dark mode class to root element
+      if (newValue) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } catch (error) {
+      console.error("Error setting dark mode:", error);
+    }
+  }
+
   async function export_received_files_json() {
     try {
       const filePath = await save({
@@ -150,6 +182,7 @@ export default function SettingsMenu() {
       await get_auto_extract_tarballs();
       await get_default_folder_name_format();
       await get_relay_server_url();
+      await get_dark_mode();
     })();
   }, []);
 
@@ -158,7 +191,7 @@ export default function SettingsMenu() {
       {/* Settings Open Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="p-3 sm:p-3.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
+        className="p-3 sm:p-3.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors cursor-pointer"
         title="Settings"
       >
         <svg
@@ -166,7 +199,7 @@ export default function SettingsMenu() {
           width="24"
           height="24"
           viewBox="0 0 16 16"
-          className="fill-gray-600 hover:fill-gray-800 transition-colors"
+          className="fill-gray-600 dark:fill-gray-400 hover:fill-gray-800 dark:hover:fill-gray-200 transition-colors"
         >
           <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
           <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
@@ -181,17 +214,17 @@ export default function SettingsMenu() {
             onClick={() => setIsOpen(false)}
           >
             <div
-              className="rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 border border-gray-200 shadow-lg"
+              className="rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 border-b border-gray-100 px-3 sm:px-4 py-2.5 sm:py-3 bg-white/95 rounded-t-2xl">
+              <div className="sticky top-0 border-b border-gray-100 dark:border-slate-700 px-3 sm:px-4 py-2.5 sm:py-3 bg-white/95 dark:bg-slate-800/95 rounded-t-2xl">
                 <div className="flex justify-between items-center gap-2">
-                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 select-none">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100 select-none">
                     Settings
                   </h2>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors cursor-pointer"
                     title="Close"
                   >
                     <svg
@@ -199,7 +232,7 @@ export default function SettingsMenu() {
                       width="18"
                       height="18"
                       viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
+                      className="fill-gray-500 dark:fill-gray-400 hover:fill-gray-700 dark:hover:fill-gray-300"
                     >
                       <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
                     </svg>
@@ -209,13 +242,55 @@ export default function SettingsMenu() {
 
               {/* Settings Content */}
               <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-4">
+                {/* Appearance Section */}
+                <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-5 space-y-5 border border-gray-300 dark:border-slate-700 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
+                    Appearance
+                  </h3>
+
+                  {/* Dark mode toggle */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1">
+                        <label
+                          htmlFor="dark-mode"
+                          className="text-sm font-medium text-gray-900 dark:text-gray-100 block"
+                        >
+                          Dark Mode
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Use dark theme for the interface
+                        </p>
+                      </div>
+                      <button
+                        onClick={toggle_dark_mode}
+                        className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors cursor-pointer ${darkMode ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                        style={
+                          darkMode
+                            ? {
+                                background: "rgba(59, 130, 246, 0.9)",
+                                boxShadow:
+                                  "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+                              }
+                            : undefined
+                        }
+                        id="dark-mode"
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${darkMode ? "translate-x-4" : "translate-x-0.5"}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Transfer Settings Section */}
-                <div className="bg-gray-50 rounded-2xl p-5 space-y-5 border border-gray-300 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-tight">Transfer</h3>
+                <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-5 space-y-5 border border-gray-300 dark:border-slate-700 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">Transfer</h3>
 
                   {/* Download directory field */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-900">Download Location</label>
+                    <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Download Location</label>
                     <button
                       onClick={() => {
                         const selection = window.getSelection?.();
@@ -223,7 +298,7 @@ export default function SettingsMenu() {
                           choose_download_directory();
                         }
                       }}
-                      className="w-full text-left px-4 py-3 bg-white hover:bg-blue-50/30 border border-gray-200 rounded-lg transition-all text-sm text-gray-900 truncate cursor-pointer group active:scale-[0.98]"
+                      className="w-full text-left px-4 py-3 bg-white dark:bg-slate-700 hover:bg-blue-50/30 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-600 rounded-lg transition-all text-sm text-gray-900 dark:text-gray-100 truncate cursor-pointer group active:scale-[0.98]"
                     >
                       <p className="truncate font-medium">
                         {downloadDirectory
@@ -239,17 +314,17 @@ export default function SettingsMenu() {
                       <div className="flex-1">
                         <label
                           htmlFor="auto-extract"
-                          className="text-sm font-medium text-gray-900 block"
+                          className="text-sm font-medium text-gray-900 dark:text-gray-100 block"
                         >
                           Auto-Extract Archives
                         </label>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Automatically extract multi-file transfers
                         </p>
                       </div>
                       <button
                         onClick={toggle_auto_extract_tarballs}
-                        className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors cursor-pointer ${autoExtractTarballs ? "bg-blue-500" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors cursor-pointer ${autoExtractTarballs ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"}`}
                         style={
                           autoExtractTarballs
                             ? {
@@ -272,7 +347,7 @@ export default function SettingsMenu() {
                   <div className="space-y-2">
                     <label
                       htmlFor="folder-format"
-                      className="text-sm font-medium text-gray-900 block"
+                      className="text-sm font-medium text-gray-900 dark:text-gray-100 block"
                     >
                       Folder Name Pattern
                     </label>
@@ -283,31 +358,31 @@ export default function SettingsMenu() {
                       onChange={(e) => setDefaultFolderNameFormat(e.target.value)}
                       onBlur={save_default_folder_name_format}
                       placeholder="#-files-via-wyrmhole"
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all"
                     />
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                       Use{" "}
-                      <code className="font-mono text-[11px] text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                      <code className="font-mono text-[11px] text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded">
                         #
                       </code>{" "}
                       for file count. Example:{" "}
-                      <code className="font-mono text-[11px] text-gray-700">#-photos</code>
+                      <code className="font-mono text-[11px] text-gray-700 dark:text-gray-300">#-photos</code>
                     </p>
                   </div>
                 </div>
 
                 {/* Advanced Section - Collapsible Card */}
-                <div className="bg-gray-50 rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
+                <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-300 dark:border-slate-700 shadow-sm overflow-hidden">
                   <button
                     onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-                    className="w-full p-5 hover:bg-gray-100/50 transition-colors text-left active:scale-[0.98]"
+                    className="w-full p-5 hover:bg-gray-100/50 dark:hover:bg-slate-700/50 transition-colors text-left active:scale-[0.98]"
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 tracking-tight">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
                         Advanced
                       </h3>
                       <svg
-                        className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${
+                        className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform duration-300 ${
                           isAdvancedOpen ? "rotate-180" : ""
                         }`}
                         xmlns="http://www.w3.org/2000/svg"
@@ -327,12 +402,12 @@ export default function SettingsMenu() {
 
                   {/* Advanced Content */}
                   {isAdvancedOpen && (
-                    <div className="border-t border-gray-200 px-5 pt-5 pb-5 space-y-5">
+                    <div className="border-t border-gray-200 dark:border-slate-700 px-5 pt-5 pb-5 space-y-5">
                       {/* Relay server URL setting */}
                       <div className="space-y-2">
                         <label
                           htmlFor="relay-url"
-                          className="text-sm font-medium text-gray-900 block"
+                          className="text-sm font-medium text-gray-900 dark:text-gray-100 block"
                         >
                           Custom Relay Server
                         </label>
@@ -344,28 +419,28 @@ export default function SettingsMenu() {
                             onChange={(e) => setRelayServerUrl(e.target.value)}
                             onBlur={save_relay_server_url}
                             placeholder="tcp:host:port"
-                            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all"
+                            className="flex-1 px-4 py-3 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all"
                           />
                           <button
                             type="button"
                             onClick={test_relay}
-                            className="px-4 py-3 text-sm font-medium text-blue-600 hover:text-blue-700 rounded-lg transition-colors active:scale-[0.98] cursor-pointer"
+                            className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 rounded-lg transition-colors active:scale-[0.98] cursor-pointer"
                           >
                             Test
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                           Leave blank to use default relay
                         </p>
                       </div>
 
                       {/* Divider */}
-                      <div className="border-t border-gray-200" />
+                      <div className="border-t border-gray-200 dark:border-slate-700" />
 
                       {/* Data Management Section */}
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-900">Export History</h4>
-                        <p className="text-xs text-gray-500 mb-3">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Export History</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                           Backup your transfer history as JSON files
                         </p>
                         <div className="grid grid-cols-2 gap-2">

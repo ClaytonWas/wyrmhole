@@ -17,6 +17,8 @@ pub struct AppSettings {
     pub default_folder_name_format: String,
     #[serde(default = "default_relay_server_url")]
     pub relay_server_url: Option<String>,
+    #[serde(default = "default_dark_mode")]
+    pub dark_mode: bool,
 }
 
 fn default_auto_extract() -> bool {
@@ -29,6 +31,10 @@ fn default_folder_name_format() -> String {
 
 fn default_relay_server_url() -> Option<String> {
     None
+}
+
+fn default_dark_mode() -> bool {
+    false
 }
 
 impl AppSettings {
@@ -70,6 +76,14 @@ impl AppSettings {
 
     pub fn set_relay_server_url(&mut self, value: Option<String>) {
         self.relay_server_url = value;
+    }
+
+    pub fn get_dark_mode(&self) -> bool {
+        self.dark_mode
+    }
+
+    pub fn set_dark_mode(&mut self, value: bool) {
+        self.dark_mode = value;
     }
 }
 
@@ -162,6 +176,7 @@ fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
         auto_extract_tarballs: false,
         default_folder_name_format: default_folder_name_format(),
         relay_server_url: default_relay_server_url(),
+        dark_mode: default_dark_mode(),
     }
 }
 
@@ -360,6 +375,26 @@ pub async fn export_sent_files_json(
     // Write to the user-selected location
     fs::write(&file_path, json_content)
         .map_err(|e| format!("Failed to write exported file: {}", e))?;
+
+    Ok(())
+}
+
+pub async fn get_dark_mode(app_handle: AppHandle) -> Result<bool, String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_dark_mode())
+}
+
+pub async fn set_dark_mode(app_handle: AppHandle, value: bool) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_dark_mode(value);
+
+    // Save settings
+    let settings_path = get_settings_path(&app_handle);
+    if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
 
     Ok(())
 }

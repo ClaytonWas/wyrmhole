@@ -138,6 +138,16 @@ async fn test_relay_server(app_handle: AppHandle) -> Result<String, String> {
     files::test_relay_server(app_handle).await
 }
 
+#[tauri::command]
+async fn get_dark_mode(app_handle: AppHandle) -> Result<bool, String> {
+    settings::get_dark_mode(app_handle).await
+}
+
+#[tauri::command]
+async fn set_dark_mode(app_handle: AppHandle, value: bool) -> Result<(), String> {
+    settings::set_dark_mode(app_handle, value).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -182,7 +192,9 @@ pub fn run() {
             set_relay_server_url,
             export_received_files_json,
             export_sent_files_json,
-            test_relay_server
+            test_relay_server,
+            get_dark_mode,
+            set_dark_mode
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

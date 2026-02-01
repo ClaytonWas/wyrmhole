@@ -489,6 +489,20 @@ function App() {
     recieved_files_data();
     sent_files_data();
     get_default_folder_name_format();
+
+    // Initialize dark mode from settings
+    (async () => {
+      try {
+        const isDark = await invoke<boolean>("get_dark_mode");
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      } catch (error) {
+        console.error("Error initializing dark mode:", error);
+      }
+    })();
   }, []);
 
   // Listen for received file added event - updates table automatically
