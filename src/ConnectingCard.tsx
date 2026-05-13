@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { toast } from "sonner";
 import { LoadingDots } from "./LoadingDots";
+import { DetailModal } from "./DetailModal";
 
 type Props = {
   code: string;
@@ -11,36 +11,15 @@ type Props = {
 const ConnectingCard = ({ code, onCancel }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Handle Escape key to close modal
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen]);
-
   return (
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-white/20 last:border-b-0 cursor-pointer transition-all rounded-xl"
+        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-white/20 last:border-b-0 cursor-pointer transition-all rounded-xl bg-[rgba(239,246,255,0.4)] hover:bg-[rgba(239,246,255,0.6)]"
         style={{
-          background: "rgba(239, 246, 255, 0.4)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           border: "1px solid rgba(255, 255, 255, 0.3)",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(239, 246, 255, 0.6)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
         }}
       >
         <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
@@ -86,73 +65,56 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
           </button>
         </div>
       </div>
-      {isOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setIsOpen(false)}
-          >
-            <div
-              className="rounded-3xl w-full max-w-md overflow-hidden"
-              style={{
-                background: "rgba(255, 255, 255, 0.85)",
-                backdropFilter: "blur(40px)",
-                WebkitBackdropFilter: "blur(40px)",
-                border: "1px solid rgba(255, 255, 255, 0.5)",
-                boxShadow:
-                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)",
+      <DetailModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        iconSlot={
+          <div className="flex-shrink-0 p-2 bg-blue-50 rounded-xl">
+            <div className="animate-spin">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                className="w-5 h-5 text-blue-600"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                />
+              </svg>
+            </div>
+          </div>
+        }
+        title="Connecting to Sender"
+        subtitle={`Connection code: ${code}`}
+        footer={
+          <div className="px-6 py-4 border-t border-white/20">
+            <button
+              onClick={() => {
+                onCancel(code);
+                setIsOpen(false);
               }}
-              onClick={(e) => e.stopPropagation()}
+              className="modal-btn-danger w-full px-4 py-2.5 text-red-600 text-sm font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
             >
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-white/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex-shrink-0 p-2 bg-blue-50 rounded-xl">
-                      <div className="animate-spin">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="2"
-                          stroke="currentColor"
-                          className="w-5 h-5 text-blue-600"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
-                        Connecting to Sender
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">Connection code: {code}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                    title="Close (Esc)"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
-                    >
-                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="px-6 py-5 space-y-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2.5"
+                stroke="currentColor"
+                className="w-4 h-4"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel Connection
+            </button>
+          </div>
+        }
+      >
+        <div className="px-6 py-5 space-y-4">
                 {/* Status */}
                 <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
                   <div className="animate-spin flex-shrink-0">
@@ -246,54 +208,8 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Cancel Button - Refined */}
-              <div className="px-6 py-4 border-t border-white/20">
-                <button
-                  onClick={() => {
-                    onCancel(code);
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-4 py-2.5 text-red-600 text-sm font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
-                  style={{
-                    background: "rgba(255, 255, 255, 0.8)",
-                    backdropFilter: "blur(24px)",
-                    WebkitBackdropFilter: "blur(24px)",
-                    border: "2px solid rgba(254, 202, 202, 0.7)",
-                    boxShadow:
-                      "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(254, 242, 242, 0.6)";
-                    e.currentTarget.style.borderColor = "rgba(252, 165, 165, 0.8)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 16px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.5)";
-                    e.currentTarget.style.borderColor = "rgba(254, 202, 202, 0.6)";
-                    e.currentTarget.style.boxShadow =
-                      "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2.5"
-                    stroke="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Cancel Connection
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+        </div>
+      </DetailModal>
     </>
   );
 };

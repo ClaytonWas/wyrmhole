@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { FileIcon } from "./FileIcon";
+import { DetailModal } from "./DetailModal";
 
 type Props = {
   connection_type: string;
@@ -31,36 +31,11 @@ const ReceiveFileCard = ({
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Handle Escape key to close modal
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen]);
-
   return (
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0"
-        style={{ background: "transparent" }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
-          e.currentTarget.style.backdropFilter = "blur(8px)";
-          e.currentTarget.style.setProperty("-webkit-backdrop-filter", "blur(8px)");
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.backdropFilter = "none";
-          e.currentTarget.style.setProperty("-webkit-backdrop-filter", "none");
-        }}
+        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0 bg-transparent hover:bg-[rgba(239,246,255,0.4)] hover:backdrop-blur-sm"
       >
         <div className="flex items-center gap-1.5 sm:gap-2 font-medium truncate text-[10px] sm:text-xs xl:text-sm">
           <FileIcon fileName={`${file_name}.${file_extension}`} className="w-4 h-4 flex-shrink-0" />
@@ -71,61 +46,21 @@ const ReceiveFileCard = ({
           {formatFileSize(file_size)}
         </div>
       </div>
-      {isOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => setIsOpen(false)}
-          >
-            <div
-              className="rounded-3xl w-full max-w-md overflow-hidden"
-              style={{
-                background: "rgba(255, 255, 255, 0.85)",
-                backdropFilter: "blur(40px)",
-                WebkitBackdropFilter: "blur(40px)",
-                border: "1px solid rgba(255, 255, 255, 0.5)",
-                boxShadow:
-                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-white/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex-shrink-0 p-2 bg-purple-50 rounded-xl">
-                      <FileIcon
-                        fileName={`${file_name}.${file_extension}`}
-                        className="w-5 h-5 text-purple-600"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
-                        {file_name}.{file_extension}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">Received file</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                    title="Close (Esc)"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
-                    >
-                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="px-6 py-5 space-y-4">
+      <DetailModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        iconSlot={
+          <div className="flex-shrink-0 p-2 bg-purple-50 rounded-xl">
+            <FileIcon
+              fileName={`${file_name}.${file_extension}`}
+              className="w-5 h-5 text-purple-600"
+            />
+          </div>
+        }
+        title={`${file_name}.${file_extension}`}
+        subtitle="Received file"
+      >
+        <div className="px-6 py-5 space-y-4">
                 {/* File Info Grid */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -184,11 +119,8 @@ const ReceiveFileCard = ({
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+        </div>
+      </DetailModal>
     </>
   );
 };

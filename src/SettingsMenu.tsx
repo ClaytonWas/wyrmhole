@@ -3,6 +3,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
+import { XIcon } from "./Icons";
 
 export default function SettingsMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -194,15 +195,7 @@ export default function SettingsMenu() {
                     className="p-1.5 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer"
                     title="Close"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 16 16"
-                      className="fill-gray-500 hover:fill-gray-700"
-                    >
-                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-                    </svg>
+                    <XIcon className="w-[18px] h-[18px] fill-gray-500 hover:fill-gray-700" />
                   </button>
                 </div>
               </div>

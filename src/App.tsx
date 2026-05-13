@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Toaster, toast } from "sonner";
 import ReceiveFileCard from "./RecieveFileCardComponent";
 import SentFileCard from "./SentFileCard";
@@ -12,7 +12,92 @@ import PendingFileOfferCard from "./PendingFileOfferCard";
 import ConnectingCard from "./ConnectingCard";
 import SettingsMenu from "./SettingsMenu";
 import { FileIcon } from "./FileIcon";
+import { XIcon } from "./Icons";
 import "./App.css";
+
+// Stops vertical wheel scroll from bubbling past a scrollable region when the
+// inner element isn't already at the top or bottom edge.
+function containScroll(e: React.WheelEvent<HTMLElement>) {
+  const t = e.currentTarget;
+  const atTop = t.scrollTop === 0;
+  const atBottom = t.scrollTop + t.clientHeight >= t.scrollHeight - 1;
+  if ((!atTop && e.deltaY < 0) || (!atBottom && e.deltaY > 0)) {
+    e.stopPropagation();
+  }
+}
+
+// --- Shared glass styles -------------------------------------------------
+// Inline `style={GLASS_X}` reuses the same object across renders so React
+// won't reapply it, and inline hover handlers can still mutate
+// `element.style` directly.
+
+const GLASS_CARD: CSSProperties = {
+  background: "rgba(255, 255, 255, 0.5)",
+  backdropFilter: "blur(24px)",
+  WebkitBackdropFilter: "blur(24px)",
+  border: "1px solid rgba(255, 255, 255, 0.4)",
+  boxShadow:
+    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+};
+
+const GLASS_INPUT: CSSProperties = {
+  background: "rgba(255, 255, 255, 0.3)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  border: "1px solid rgba(255, 255, 255, 0.3)",
+  boxShadow:
+    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+};
+
+// --- Local hooks ---------------------------------------------------------
+
+// Listen to a Tauri event for the component's lifetime. Handler closure is
+// kept fresh via a ref so callers can read the latest state without
+// re-attaching the listener.
+function useTauriEvent<P = unknown>(name: string, handler: (payload: P) => void) {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  useEffect(() => {
+    const unlistenPromise = listen<P>(name, (event) => handlerRef.current(event.payload));
+    return () => {
+      unlistenPromise.then((fn) => fn());
+    };
+  }, [name]);
+}
+
+// Map-valued state with set/delete/clear/update helpers. The raw Map is
+// returned for `.size` / `.values()` / `.get()` reads.
+function useMapState<K, V>() {
+  const [value, setValue] = useState<Map<K, V>>(new Map());
+  const ops = useMemo(
+    () => ({
+      set: (k: K, v: V) =>
+        setValue((prev) => {
+          const next = new Map(prev);
+          next.set(k, v);
+          return next;
+        }),
+      delete: (k: K) =>
+        setValue((prev) => {
+          const next = new Map(prev);
+          next.delete(k);
+          return next;
+        }),
+      clear: () => setValue(new Map()),
+      // Merge `partial` into the existing entry for `k`; if none exists,
+      // insert `fallback`.
+      update: (k: K, partial: Partial<V>, fallback: V) =>
+        setValue((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(k);
+          next.set(k, existing ? { ...existing, ...partial } : fallback);
+          return next;
+        }),
+    }),
+    [],
+  );
+  return [value, ops] as const;
+}
 
 interface ReceivedFile {
   connection_type: string;
@@ -74,16 +159,12 @@ function App() {
   const [historyDateMode, setHistoryDateMode] = useState<"after" | "before">("after");
   const [dateButtonAnimating, setDateButtonAnimating] = useState(false);
   const [sizeButtonAnimating, setSizeButtonAnimating] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(
-    new Map(),
-  );
-  const [sendProgress, setSendProgress] = useState<Map<string, SendProgress>>(new Map());
-  const [pendingFileOffers, setPendingFileOffers] = useState<Map<string, PendingFileOffer>>(
-    new Map(),
-  );
+  const [downloadProgress, downloadOps] = useMapState<string, DownloadProgress>();
+  const [sendProgress, sendOps] = useMapState<string, SendProgress>();
+  const [pendingFileOffers, offerOps] = useMapState<string, PendingFileOffer>();
   const [defaultFolderNameFormat, setDefaultFolderNameFormat] =
     useState<string>("#-files-via-wyrmhole");
-  const [connectingCodes, setConnectingCodes] = useState<Map<string, string>>(new Map()); // Map<id, code>
+  const [connectingCodes, connectingOps] = useMapState<string, string>(); // Map<id, code>
   const [isDragging, setIsDragging] = useState(false);
   const cancelledConnections = useRef<Set<string>>(new Set()); // Track cancelled connection IDs
   const connectionCodeToasts = useRef<Map<string | number, string>>(new Map()); // Map<toastId, code>
@@ -107,12 +188,7 @@ function App() {
     try {
       await invoke("receiving_file_deny", { id });
       console.log("Denied file:", id);
-      // Remove from pending offers
-      setPendingFileOffers((prev) => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      });
+      offerOps.delete(id);
     } catch (error) {
       console.error("Error denying file:", error);
     }
@@ -120,24 +196,13 @@ function App() {
 
   async function accept_file_receive(id: string, file_name?: string) {
     try {
-      // Remove from pending offers first
-      setPendingFileOffers((prev) => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      });
-
-      // Initialize download progress
-      setDownloadProgress((prev) => {
-        const next = new Map(prev);
-        next.set(id, {
-          id,
-          file_name: file_name || "Unknown file",
-          transferred: 0,
-          total: 0,
-          percentage: 0,
-        });
-        return next;
+      offerOps.delete(id);
+      downloadOps.set(id, {
+        id,
+        file_name: file_name || "Unknown file",
+        transferred: 0,
+        total: 0,
+        percentage: 0,
       });
 
       await invoke("receiving_file_accept", { id });
@@ -146,27 +211,18 @@ function App() {
       console.error("Error accepting file:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       // Don't show toast here - the download-error event handler will show it
-      // Update download progress with error state
-      setDownloadProgress((prev) => {
-        const next = new Map(prev);
-        const existing = next.get(id);
-        if (existing) {
-          next.set(id, {
-            ...existing,
-            error: errorMessage,
-          });
-        } else {
-          next.set(id, {
-            id,
-            file_name: file_name || "Unknown file",
-            transferred: 0,
-            total: 0,
-            percentage: 0,
-            error: errorMessage,
-          });
-        }
-        return next;
-      });
+      downloadOps.update(
+        id,
+        { error: errorMessage },
+        {
+          id,
+          file_name: file_name || "Unknown file",
+          transferred: 0,
+          total: 0,
+          percentage: 0,
+          error: errorMessage,
+        },
+      );
     }
   }
 
@@ -216,24 +272,19 @@ function App() {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
     const sendId = crypto.randomUUID();
-    let displayName: string;
+    let displayName = "files";
 
     if (selectedFiles.length === 1) {
       const filePath = selectedFiles[0];
       displayName = filePath.split(/[/\\]/).pop() || "Unknown file";
 
-      // Initialize send progress with "preparing" status
-      setSendProgress((prev) => {
-        const next = new Map(prev);
-        next.set(sendId, {
-          id: sendId,
-          file_name: displayName,
-          sent: 0,
-          total: 0,
-          percentage: 0,
-          status: "preparing",
-        });
-        return next;
+      sendOps.set(sendId, {
+        id: sendId,
+        file_name: displayName,
+        sent: 0,
+        total: 0,
+        percentage: 0,
+        status: "preparing",
       });
 
       try {
@@ -242,45 +293,28 @@ function App() {
       } catch (err) {
         console.error("Error sending file:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
-        // Don't show toast here - the send-error event handler will show it
-        // Update send progress with error state
-        setSendProgress((prev) => {
-          const next = new Map(prev);
-          const existing = next.get(sendId);
-          if (existing) {
-            next.set(sendId, {
-              ...existing,
-              error: errorMessage,
-            });
-          } else {
-            next.set(sendId, {
-              id: sendId,
-              file_name: displayName,
-              sent: 0,
-              total: 0,
-              percentage: 0,
-              error: errorMessage,
-            });
-          }
-          return next;
-        });
+        sendOps.update(
+          sendId,
+          { error: errorMessage },
+          {
+            id: sendId,
+            file_name: displayName,
+            sent: 0,
+            total: 0,
+            percentage: 0,
+            error: errorMessage,
+          },
+        );
       }
     } else {
-      // Multiple files/folders - create tarball and send
-      // Don't set an initial name - let the backend emit it immediately via progress event
-      // This ensures we show the correct name (custom, folder name, or default format) from the start
-
-      // Initialize send progress with a temporary placeholder that will be updated immediately
-      setSendProgress((prev) => {
-        const next = new Map(prev);
-        next.set(sendId, {
-          id: sendId,
-          file_name: "Preparing...", // Temporary placeholder, backend will update immediately
-          sent: 0,
-          total: 0,
-          percentage: 0,
-        });
-        return next;
+      // Multiple files/folders - create tarball and send. Backend will replace
+      // the "Preparing..." placeholder via the first send-progress event.
+      sendOps.set(sendId, {
+        id: sendId,
+        file_name: "Preparing...",
+        sent: 0,
+        total: 0,
+        percentage: 0,
       });
 
       try {
@@ -295,28 +329,18 @@ function App() {
       } catch (err) {
         console.error("Error sending files:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
-        // Don't show toast here - the send-error event handler will show it
-        // Update send progress with error state
-        setSendProgress((prev) => {
-          const next = new Map(prev);
-          const existing = next.get(sendId);
-          if (existing) {
-            next.set(sendId, {
-              ...existing,
-              error: errorMessage,
-            });
-          } else {
-            next.set(sendId, {
-              id: sendId,
-              file_name: displayName,
-              sent: 0,
-              total: 0,
-              percentage: 0,
-              error: errorMessage,
-            });
-          }
-          return next;
-        });
+        sendOps.update(
+          sendId,
+          { error: errorMessage },
+          {
+            id: sendId,
+            file_name: displayName,
+            sent: 0,
+            total: 0,
+            percentage: 0,
+            error: errorMessage,
+          },
+        );
       }
     }
   }
@@ -329,30 +353,16 @@ function App() {
     const codeToUse = receiveCode.trim();
     const connectionId = `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Add to connecting codes
-    setConnectingCodes((prev) => {
-      const next = new Map(prev);
-      next.set(connectionId, codeToUse);
-      return next;
-    });
-
-    // Clear the receive code input
+    connectingOps.set(connectionId, codeToUse);
     setReceiveCode("");
 
     try {
       const response = await invoke("request_file_call", { receiveCode: codeToUse, connectionId });
       const data = JSON.parse(response as string);
 
-      // Check if this connection was cancelled while waiting
       const wasCancelled = cancelledConnections.current.has(connectionId);
-      cancelledConnections.current.delete(connectionId); // Clean up
-
-      // Remove from connecting codes
-      setConnectingCodes((prev) => {
-        const next = new Map(prev);
-        next.delete(connectionId);
-        return next;
-      });
+      cancelledConnections.current.delete(connectionId);
+      connectingOps.delete(connectionId);
 
       if (!data || !data.id || !data.file_name) {
         if (!wasCancelled) {
@@ -372,31 +382,18 @@ function App() {
         return;
       }
 
-      // Add to pending file offers instead of showing toast
-      setPendingFileOffers((prev) => {
-        const next = new Map(prev);
-        next.set(data.id, {
-          id: data.id,
-          file_name: data.file_name,
-          file_size: data.file_size,
-        });
-        return next;
+      offerOps.set(data.id, {
+        id: data.id,
+        file_name: data.file_name,
+        file_size: data.file_size,
       });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
 
-      // Check if this connection was cancelled while waiting
       const wasCancelled = cancelledConnections.current.has(connectionId);
-      cancelledConnections.current.delete(connectionId); // Clean up
+      cancelledConnections.current.delete(connectionId);
+      connectingOps.delete(connectionId);
 
-      // Remove from connecting codes
-      setConnectingCodes((prev) => {
-        const next = new Map(prev);
-        next.delete(connectionId);
-        return next;
-      });
-
-      // Only show error if it wasn't cancelled
       if (!wasCancelled) {
         toast.error(errorMessage || "Failed to connect to sender.");
         console.error("Request file error:", e);
@@ -405,23 +402,16 @@ function App() {
   }
 
   async function cancelConnection(code: string) {
-    // Find the connection ID by code
     let connectionId: string | null = null;
-    setConnectingCodes((prev) => {
-      const next = new Map(prev);
-      for (const [id, connCode] of next.entries()) {
-        if (connCode === code) {
-          connectionId = id;
-          // Mark this connection as cancelled
-          cancelledConnections.current.add(id);
-          next.delete(id);
-          break;
-        }
+    for (const [id, connCode] of connectingCodes.entries()) {
+      if (connCode === code) {
+        connectionId = id;
+        cancelledConnections.current.add(id);
+        connectingOps.delete(id);
+        break;
       }
-      return next;
-    });
+    }
 
-    // Call backend to actually cancel the connection
     if (connectionId) {
       try {
         await invoke("cancel_connection", { connectionId });
@@ -474,10 +464,10 @@ function App() {
     try {
       await invoke("cancel_all_transfers");
 
-      setSendProgress(new Map());
-      setDownloadProgress(new Map());
-      setPendingFileOffers(new Map());
-      setConnectingCodes(new Map());
+      sendOps.clear();
+      downloadOps.clear();
+      offerOps.clear();
+      connectingOps.clear();
       cancelledConnections.current = new Set();
 
       toast.success("All active transfers cancelled", { duration: 3000 });
@@ -522,254 +512,119 @@ function App() {
     };
   }, []);
 
-  // Listen for received file added event - updates table automatically
-  useEffect(() => {
-    console.log("Listening for received-file-added event");
-    const unlistenPromise = listen("received-file-added", () => {
-      console.log("Received file added event, refreshing received files");
-      recieved_files_data();
-    });
+  // Refresh history tables when backend emits add events.
+  useTauriEvent("received-file-added", () => recieved_files_data());
+  useTauriEvent("sent-file-added", () => sent_files_data());
 
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
+  useTauriEvent<{ value: string }>("default-folder-name-format-updated", (payload) => {
+    setDefaultFolderNameFormat(payload.value);
+  });
 
-  // Listen for sent file added event - updates table automatically
-  useEffect(() => {
-    console.log("Listening for sent-file-added event");
-    const unlistenPromise = listen("sent-file-added", () => {
-      console.log("Sent file added event, refreshing sent files");
-      sent_files_data();
-    });
-
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log("Listening for default-folder-name-format-updated event");
-
-    const unlistenPromise = listen("default-folder-name-format-updated", (event) => {
-      const payload = event.payload as { value: string };
-      console.log("Default folder name format updated:", payload.value);
-      setDefaultFolderNameFormat(payload.value);
-    });
-
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log("Listening for connection-code event");
-
-    const unlistenPromise = listen("connection-code", (event) => {
-      const payload = event.payload as {
-        status: string;
-        code?: string;
-        message?: string;
-        send_id?: string;
-      };
-      if (payload.status === "success" && payload.send_id) {
-        // Update send progress with connection code
-        setSendProgress((prev) => {
-          const next = new Map(prev);
-          const existing = next.get(payload.send_id!);
-          if (existing) {
-            next.set(payload.send_id!, {
-              ...existing,
-              code: payload.code,
-            });
-          }
-          return next;
-        });
-
-        // Show toast with connection code (click to copy)
-        const codeToCopy = payload.code ?? "";
-        const toastId = toast(`📨 Connection code: ${codeToCopy}`, {
-          duration: 10000,
-          className: "connection-code-toast",
-          description: "Click anywhere to copy",
-          style: {
-            gap: "2px",
-          },
-        });
-        connectionCodeToasts.current.set(toastId, codeToCopy);
-      } else if (payload.status === "success") {
-        // Legacy toast for non-send connections - stays until dismissed
-        const codeToCopy = payload.code ?? "";
-        const toastId = toast(`📨 Connection code: ${codeToCopy}`, {
-          duration: 999999999, // Very long duration, effectively infinite
-          className: "connection-code-toast",
-          description: "Click anywhere to copy",
-          style: {
-            gap: "2px",
-          },
-        });
-        connectionCodeToasts.current.set(toastId, codeToCopy);
-      } else {
-        toast.error(payload.message ?? "Unknown error in mailbox creation");
+  useTauriEvent<{
+    status: string;
+    code?: string;
+    message?: string;
+    send_id?: string;
+  }>("connection-code", (payload) => {
+    if (payload.status === "success" && payload.send_id) {
+      const existing = sendProgress.get(payload.send_id);
+      if (existing) {
+        sendOps.set(payload.send_id, { ...existing, code: payload.code });
       }
-    });
 
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log("Listening for download-progress event");
-
-    const unlistenPromise = listen("download-progress", (event) => {
-      const payload = event.payload as DownloadProgress;
-
-      // Update download progress
-      setDownloadProgress((prev) => {
-        const next = new Map(prev);
-        next.set(payload.id, payload);
-        return next;
+      // Show toast with connection code (click to copy)
+      const codeToCopy = payload.code ?? "";
+      const toastId = toast(`📨 Connection code: ${codeToCopy}`, {
+        duration: 10000,
+        className: "connection-code-toast",
+        description: "Click anywhere to copy",
+        style: {
+          gap: "2px",
+        },
       });
+      connectionCodeToasts.current.set(toastId, codeToCopy);
+    } else if (payload.status === "success") {
+      // Legacy toast for non-send connections - stays until dismissed
+      const codeToCopy = payload.code ?? "";
+      const toastId = toast(`📨 Connection code: ${codeToCopy}`, {
+        duration: 999999999, // Very long duration, effectively infinite
+        className: "connection-code-toast",
+        description: "Click anywhere to copy",
+        style: {
+          gap: "2px",
+        },
+      });
+      connectionCodeToasts.current.set(toastId, codeToCopy);
+    } else {
+      toast.error(payload.message ?? "Unknown error in mailbox creation");
+    }
+  });
 
-      // Check if download is complete
-      if (payload.percentage >= 100) {
-        setTimeout(() => {
-          toast.success(`Downloaded ${payload.file_name}`, { duration: 5000 });
-          setDownloadProgress((prev) => {
-            const next = new Map(prev);
-            next.delete(payload.id);
-            return next;
-          });
-          // File will be added to history and event will trigger refresh
-        }, 500);
-      }
-    });
+  useTauriEvent<DownloadProgress>("download-progress", (payload) => {
+    downloadOps.set(payload.id, payload);
 
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
+    if (payload.percentage >= 100) {
+      setTimeout(() => {
+        toast.success(`Downloaded ${payload.file_name}`, { duration: 5000 });
+        downloadOps.delete(payload.id);
+      }, 500);
+    }
+  });
 
-  useEffect(() => {
-    console.log("Listening for download-error event");
-
-    const unlistenPromise = listen("download-error", (event) => {
-      const payload = event.payload as { id: string; file_name: string; error: string };
-
-      // If cancelled by user, remove it immediately instead of showing error
+  useTauriEvent<{ id: string; file_name: string; error: string }>(
+    "download-error",
+    (payload) => {
       if (payload.error === "Transfer cancelled by user") {
-        setDownloadProgress((prev) => {
-          const next = new Map(prev);
-          next.delete(payload.id);
-          return next;
-        });
+        downloadOps.delete(payload.id);
         return;
       }
 
-      // For other errors, update download progress with error state
-      setDownloadProgress((prev) => {
-        const next = new Map(prev);
-        const existing = next.get(payload.id);
-        if (existing) {
-          next.set(payload.id, {
-            ...existing,
-            error: payload.error,
-          });
-        } else {
-          // If download wasn't tracked yet, add it with error
-          next.set(payload.id, {
-            id: payload.id,
-            file_name: payload.file_name,
-            transferred: 0,
-            total: 0,
-            percentage: 0,
-            error: payload.error,
-          });
-        }
-        return next;
-      });
+      downloadOps.update(
+        payload.id,
+        { error: payload.error },
+        {
+          id: payload.id,
+          file_name: payload.file_name,
+          transferred: 0,
+          total: 0,
+          percentage: 0,
+          error: payload.error,
+        },
+      );
 
       toast.error(`Download failed: ${payload.file_name}`, { duration: 5000 });
-    });
+    },
+  );
 
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
+  useTauriEvent<SendProgress>("send-progress", (payload) => {
+    sendOps.set(payload.id, payload);
 
-  useEffect(() => {
-    console.log("Listening for send-progress event");
+    if (payload.percentage >= 100) {
+      setTimeout(() => {
+        toast.success(`Sent ${payload.file_name}`, { duration: 5000 });
+        sendOps.delete(payload.id);
+      }, 500);
+    }
+  });
 
-    const unlistenPromise = listen("send-progress", (event) => {
-      const payload = event.payload as SendProgress;
-      console.log("Received send-progress event:", payload);
+  useTauriEvent<{ id: string; file_name: string; error: string }>("send-error", (payload) => {
+    sendOps.update(
+      payload.id,
+      { error: payload.error },
+      {
+        id: payload.id,
+        file_name: payload.file_name,
+        sent: 0,
+        total: 0,
+        percentage: 0,
+        error: payload.error,
+      },
+    );
 
-      // Update send progress (includes code from backend)
-      setSendProgress((prev) => {
-        const next = new Map(prev);
-        next.set(payload.id, payload);
-        return next;
-      });
-
-      // Check if send is complete
-      if (payload.percentage >= 100) {
-        setTimeout(() => {
-          toast.success(`Sent ${payload.file_name}`, { duration: 5000 });
-          setSendProgress((prev) => {
-            const next = new Map(prev);
-            next.delete(payload.id);
-            return next;
-          });
-          // File will be added to history and event will trigger refresh
-        }, 500);
-      }
-    });
-
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log("Listening for send-error event");
-
-    const unlistenPromise = listen("send-error", (event) => {
-      const payload = event.payload as { id: string; file_name: string; error: string };
-
-      // Update send progress with error state
-      setSendProgress((prev) => {
-        const next = new Map(prev);
-        const existing = next.get(payload.id);
-        if (existing) {
-          next.set(payload.id, {
-            ...existing,
-            error: payload.error,
-          });
-        } else {
-          // If send wasn't tracked yet, add it with error
-          next.set(payload.id, {
-            id: payload.id,
-            file_name: payload.file_name,
-            sent: 0,
-            total: 0,
-            percentage: 0,
-            error: payload.error,
-          });
-        }
-        return next;
-      });
-
-      // Don't show error toast if it was cancelled by user (success toast already shown)
-      if (payload.error !== "Transfer cancelled by user") {
-        toast.error(`Send failed: ${payload.file_name}`, { duration: 5000 });
-      }
-    });
-
-    return () => {
-      unlistenPromise.then((unlisten) => unlisten());
-    };
-  }, []);
+    if (payload.error !== "Transfer cancelled by user") {
+      toast.error(`Send failed: ${payload.file_name}`, { duration: 5000 });
+    }
+  });
 
   // Set up event delegation for connection code toasts
   useEffect(() => {
@@ -858,14 +713,7 @@ function App() {
               {/* Active Sends */}
               <div
                 className={`rounded-2xl overflow-hidden md:h-[140px] flex flex-col ${sendProgress.size === 0 ? "hidden md:flex" : ""}`}
-                style={{
-                  background: "rgba(255, 255, 255, 0.5)",
-                  backdropFilter: "blur(24px)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  border: "1px solid rgba(255, 255, 255, 0.4)",
-                  boxShadow:
-                    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                }}
+                style={GLASS_CARD}
               >
                 <div
                   className="px-2 sm:px-3 py-1.5 border-b border-white/20 flex-shrink-0"
@@ -882,28 +730,14 @@ function App() {
                 <div
                   className={`overflow-y-auto md:flex-1 ${sendProgress.size === 0 ? "flex items-center justify-center" : ""}`}
                   style={{ scrollbarWidth: "thin" }}
-                  onWheel={(e) => {
-                    const target = e.currentTarget;
-                    const isAtTop = target.scrollTop === 0;
-                    const isAtBottom =
-                      target.scrollTop + target.clientHeight >= target.scrollHeight - 1;
-                    if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
-                      e.stopPropagation();
-                    }
-                  }}
+                  onWheel={containScroll}
                 >
                   {sendProgress.size > 0 ? (
                     Array.from(sendProgress.values()).map((progress) => (
                       <ActiveSendCard
                         key={progress.id}
                         {...progress}
-                        onDismiss={(id) => {
-                          setSendProgress((prev) => {
-                            const next = new Map(prev);
-                            next.delete(id);
-                            return next;
-                          });
-                        }}
+                        onDismiss={(id) => sendOps.delete(id)}
                       />
                     ))
                   ) : (
@@ -917,14 +751,7 @@ function App() {
               {/* Active Downloads */}
               <div
                 className={`rounded-2xl overflow-hidden md:h-[140px] flex flex-col ${downloadProgress.size === 0 ? "hidden md:flex" : ""}`}
-                style={{
-                  background: "rgba(255, 255, 255, 0.5)",
-                  backdropFilter: "blur(24px)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  border: "1px solid rgba(255, 255, 255, 0.4)",
-                  boxShadow:
-                    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                }}
+                style={GLASS_CARD}
               >
                 <div
                   className="px-2 sm:px-3 py-1.5 border-b border-white/20 flex-shrink-0"
@@ -941,28 +768,14 @@ function App() {
                 <div
                   className={`overflow-y-auto md:flex-1 ${downloadProgress.size === 0 ? "flex items-center justify-center" : ""}`}
                   style={{ scrollbarWidth: "thin" }}
-                  onWheel={(e) => {
-                    const target = e.currentTarget;
-                    const isAtTop = target.scrollTop === 0;
-                    const isAtBottom =
-                      target.scrollTop + target.clientHeight >= target.scrollHeight - 1;
-                    if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
-                      e.stopPropagation();
-                    }
-                  }}
+                  onWheel={containScroll}
                 >
                   {downloadProgress.size > 0 ? (
                     Array.from(downloadProgress.values()).map((progress) => (
                       <ActiveDownloadCard
                         key={progress.id}
                         {...progress}
-                        onDismiss={(id) => {
-                          setDownloadProgress((prev) => {
-                            const next = new Map(prev);
-                            next.delete(id);
-                            return next;
-                          });
-                        }}
+                        onDismiss={(id) => downloadOps.delete(id)}
                       />
                     ))
                   ) : (
@@ -984,14 +797,7 @@ function App() {
               {/* Send Files Section - Fixed Height */}
               <div
                 className="rounded-2xl overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col"
-                style={{
-                  background: "rgba(255, 255, 255, 0.5)",
-                  backdropFilter: "blur(24px)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  border: "1px solid rgba(255, 255, 255, 0.4)",
-                  boxShadow:
-                    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                }}
+                style={GLASS_CARD}
               >
                 <div className="px-3 py-2 border-b border-white/20 flex-shrink-0">
                   <div className="flex items-center justify-between gap-2">
@@ -1019,25 +825,7 @@ function App() {
                       {selectedFiles && (
                         <button
                           onClick={send_files}
-                          className="font-medium flex items-center justify-center gap-1 px-2 py-1 text-white text-xs xl:text-sm rounded-2xl transition-all cursor-pointer flex-shrink-0"
-                          style={{
-                            background: "rgba(59, 130, 246, 0.9)",
-                            backdropFilter: "blur(4px)",
-                            WebkitBackdropFilter: "blur(4px)",
-                            border: "1px solid rgba(255, 255, 255, 0.3)",
-                            boxShadow:
-                              "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
-                            e.currentTarget.style.boxShadow =
-                              "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
-                            e.currentTarget.style.boxShadow =
-                              "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                          }}
+                          className="glass-primary-btn font-medium flex items-center justify-center gap-1 px-2 py-1 text-white text-xs xl:text-sm rounded-2xl transition-all cursor-pointer flex-shrink-0"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -1139,27 +927,12 @@ function App() {
                       <div
                         className="flex-1 overflow-y-auto pr-1 min-h-0"
                         style={{ scrollbarWidth: "thin" }}
-                        onWheel={(e) => {
-                          const target = e.currentTarget;
-                          const isAtTop = target.scrollTop === 0;
-                          const isAtBottom =
-                            target.scrollTop + target.clientHeight >= target.scrollHeight - 1;
-                          if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
-                            e.stopPropagation();
-                          }
-                        }}
+                        onWheel={containScroll}
                       >
                         {selectedFiles.length === 1 ? (
                           <div
                             className="group flex items-center gap-2 p-2 rounded-xl"
-                            style={{
-                              background: "rgba(255, 255, 255, 0.3)",
-                              backdropFilter: "blur(16px)",
-                              WebkitBackdropFilter: "blur(16px)",
-                              border: "1px solid rgba(255, 255, 255, 0.3)",
-                              boxShadow:
-                                "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                            }}
+                            style={GLASS_INPUT}
                           >
                             <FileIcon
                               fileName={selectedFiles[0].split(/[/\\]/).pop() || "Unknown"}
@@ -1176,13 +949,7 @@ function App() {
                               className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
                               title="Remove"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 16 16"
-                                className="w-4 h-4 fill-gray-400 hover:fill-red-600"
-                              >
-                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
-                              </svg>
+                              <XIcon className="w-4 h-4 fill-gray-400 hover:fill-red-600" />
                             </button>
                           </div>
                         ) : (
@@ -1196,14 +963,7 @@ function App() {
                                 <div
                                   key={idx}
                                   className="group flex items-center gap-2 p-1.5 rounded-xl"
-                                  style={{
-                                    background: "rgba(255, 255, 255, 0.3)",
-                                    backdropFilter: "blur(16px)",
-                                    WebkitBackdropFilter: "blur(16px)",
-                                    border: "1px solid rgba(255, 255, 255, 0.3)",
-                                    boxShadow:
-                                      "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                                  }}
+                                  style={GLASS_INPUT}
                                 >
                                   <FileIcon fileName={name} className="w-3.5 h-3.5 flex-shrink-0" />
                                   <p className="text-[11px] xl:text-xs font-medium text-gray-900 truncate flex-1">
@@ -1239,14 +999,7 @@ function App() {
               {/* Receive Files Section - Compact - Grows with content */}
               <div
                 className="rounded-2xl overflow-hidden flex flex-col"
-                style={{
-                  background: "rgba(255, 255, 255, 0.5)",
-                  backdropFilter: "blur(24px)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  border: "1px solid rgba(255, 255, 255, 0.4)",
-                  boxShadow:
-                    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                }}
+                style={GLASS_CARD}
               >
                 <div className="px-3 py-2 border-b border-white/20 flex-shrink-0">
                   <form
@@ -1264,37 +1017,12 @@ function App() {
                       onChange={(e) => setReceiveCode(e.target.value)}
                       placeholder="Enter code: ex. 7-helpful-tiger"
                       className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                      style={{
-                        background: "rgba(255, 255, 255, 0.3)",
-                        backdropFilter: "blur(16px)",
-                        WebkitBackdropFilter: "blur(16px)",
-                        border: "1px solid rgba(255, 255, 255, 0.3)",
-                        boxShadow:
-                          "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                      }}
+                      style={GLASS_INPUT}
                       title="Enter the connection code provided by the sender. The code format is typically numbers and words separated by hyphens, like '7-helpful-tiger'."
                     />
                     <button
                       type="submit"
-                      className="font-medium flex items-center justify-center gap-1 px-2 py-1 text-white text-xs xl:text-sm rounded-2xl transition-all cursor-pointer flex-shrink-0"
-                      style={{
-                        background: "rgba(59, 130, 246, 0.9)",
-                        backdropFilter: "blur(4px)",
-                        WebkitBackdropFilter: "blur(4px)",
-                        border: "1px solid rgba(255, 255, 255, 0.3)",
-                        boxShadow:
-                          "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
-                        e.currentTarget.style.boxShadow =
-                          "0 4px 16px 0 rgba(59, 130, 246, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.9)";
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 8px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                      }}
+                      className="glass-primary-btn font-medium flex items-center justify-center gap-1 px-2 py-1 text-white text-xs xl:text-sm rounded-2xl transition-all cursor-pointer flex-shrink-0"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1330,15 +1058,7 @@ function App() {
                       <div
                         className="overflow-y-auto space-y-1 max-h-[200px] md:max-h-[240px]"
                         style={{ scrollbarWidth: "thin" }}
-                        onWheel={(e) => {
-                          const target = e.currentTarget;
-                          const isAtTop = target.scrollTop === 0;
-                          const isAtBottom =
-                            target.scrollTop + target.clientHeight >= target.scrollHeight - 1;
-                          if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
-                            e.stopPropagation();
-                          }
-                        }}
+                        onWheel={containScroll}
                       >
                         {/* Connecting Cards */}
                         {Array.from(connectingCodes.entries()).map(([id, code]) => (
@@ -1470,14 +1190,7 @@ function App() {
 
             <div
               className="rounded-2xl overflow-hidden"
-              style={{
-                background: "rgba(255, 255, 255, 0.5)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-                border: "1px solid rgba(255, 255, 255, 0.4)",
-                boxShadow:
-                  "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-              }}
+              style={GLASS_CARD}
             >
               <div
                 className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-white/20 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0"
@@ -1495,15 +1208,7 @@ function App() {
               <div
                 className="max-h-48 sm:max-h-64 overflow-y-auto"
                 style={{ scrollbarWidth: "thin" }}
-                onWheel={(e) => {
-                  const target = e.currentTarget;
-                  const isAtTop = target.scrollTop === 0;
-                  const isAtBottom =
-                    target.scrollTop + target.clientHeight >= target.scrollHeight - 1;
-                  if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
-                    e.stopPropagation();
-                  }
-                }}
+                onWheel={containScroll}
               >
                 {historyTab === "received" ? (
                   receivedFiles.length > 0 ? (
