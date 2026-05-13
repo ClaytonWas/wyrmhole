@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "wyrmhole",
-  "version": "0.3.2",
   "identifier": "com.wyrmhole",
   "build": {
     "beforeDevCommand": "npm run dev",
