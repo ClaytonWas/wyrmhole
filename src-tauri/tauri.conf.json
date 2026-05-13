@@ -13,8 +13,7 @@
       {
         "title": "wyrmhole",
         "width": 500,
-        "height": 700,
-        "visible": false
+        "height": 700
       }
     ],
     "security": {
