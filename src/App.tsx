@@ -35,7 +35,7 @@ const GLASS_CARD: CSSProperties = {
   background: "rgba(255, 255, 255, 0.5)",
   backdropFilter: "blur(24px)",
   WebkitBackdropFilter: "blur(24px)",
-  border: "1px solid rgba(255, 255, 255, 0.4)",
+  border: "1px solid rgb(229, 231, 235)",
   boxShadow:
     "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
 };
@@ -44,7 +44,7 @@ const GLASS_INPUT: CSSProperties = {
   background: "rgba(255, 255, 255, 0.3)",
   backdropFilter: "blur(16px)",
   WebkitBackdropFilter: "blur(16px)",
-  border: "1px solid rgba(255, 255, 255, 0.3)",
+  border: "1px solid rgb(229, 231, 235)",
   boxShadow:
     "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
 };
@@ -716,7 +716,7 @@ function App() {
                 style={GLASS_CARD}
               >
                 <div
-                  className="px-2 sm:px-3 py-1.5 border-b border-white/20 flex-shrink-0"
+                  className="px-2 sm:px-3 py-1.5 border-b border-gray-200 flex-shrink-0"
                   style={{
                     background: "rgba(59, 130, 246, 0.15)",
                     backdropFilter: "blur(8px)",
@@ -754,7 +754,7 @@ function App() {
                 style={GLASS_CARD}
               >
                 <div
-                  className="px-2 sm:px-3 py-1.5 border-b border-white/20 flex-shrink-0"
+                  className="px-2 sm:px-3 py-1.5 border-b border-gray-200 flex-shrink-0"
                   style={{
                     background: "rgba(34, 197, 94, 0.15)",
                     backdropFilter: "blur(8px)",
@@ -799,7 +799,7 @@ function App() {
                 className="rounded-2xl overflow-hidden min-h-[200px] md:max-h-[240px] flex flex-col"
                 style={GLASS_CARD}
               >
-                <div className="px-3 py-2 border-b border-white/20 flex-shrink-0">
+                <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-xs sm:text-sm xl:text-base font-semibold text-gray-700 flex-shrink-0">
                       Send Files
@@ -811,7 +811,7 @@ function App() {
                           value={folderName}
                           onChange={(e) => setFolderName(e.target.value)}
                           placeholder={`Folder Name: ${(defaultFolderNameFormat.trim() || "#-files-via-wyrmhole").replace("#", selectedFiles.length.toString())}`}
-                          className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all border border-gray-300/60"
+                          className="flex-1 px-2 py-1 text-xs xl:text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all border border-gray-200"
                           style={{
                             background: "rgba(255, 255, 255, 0.7)",
                             backdropFilter: "blur(16px)",
@@ -855,7 +855,7 @@ function App() {
                       style={{
                         borderColor: isDragging
                           ? "rgba(59, 130, 246, 0.7)"
-                          : "rgba(255, 255, 255, 0.3)",
+                          : "rgb(229, 231, 235)",
                         background: isDragging
                           ? "rgba(219, 234, 254, 0.4)"
                           : "rgba(255, 255, 255, 0.2)",
@@ -870,7 +870,7 @@ function App() {
                       }}
                       onMouseLeave={(e) => {
                         if (!isDragging) {
-                          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                          e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
                           e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
                         }
                       }}
@@ -1001,7 +1001,7 @@ function App() {
                 className="rounded-2xl overflow-hidden flex flex-col"
                 style={GLASS_CARD}
               >
-                <div className="px-3 py-2 border-b border-white/20 flex-shrink-0">
+                <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -1138,7 +1138,7 @@ function App() {
                   value={historySearch}
                   onChange={(e) => setHistorySearch(e.target.value)}
                   placeholder="Search filename"
-                  className="px-2 py-1 rounded-xl border border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
+                  className="px-2 py-1 rounded-xl border border-gray-200 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60"
                   style={{ minWidth: "120px" }}
                 />
                 <div className="flex items-center">
@@ -1149,7 +1149,7 @@ function App() {
                       setDateButtonAnimating(true);
                       setTimeout(() => setDateButtonAnimating(false), 200);
                     }}
-                    className={`px-2 py-1 border border-gray-300/60 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
+                    className={`px-2 py-1 border border-gray-200 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
                       dateButtonAnimating ? "filter-button-click" : ""
                     }`}
                   >
@@ -1159,7 +1159,7 @@ function App() {
                     type="date"
                     value={historyDateFrom}
                     onChange={(e) => setHistoryDateFrom(e.target.value)}
-                    className="px-2 py-1 border border-l-0 border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
+                    className="px-2 py-1 border border-l-0 border-gray-200 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
                   />
                 </div>
                 <div className="flex items-center">
@@ -1170,7 +1170,7 @@ function App() {
                       setSizeButtonAnimating(true);
                       setTimeout(() => setSizeButtonAnimating(false), 200);
                     }}
-                    className={`px-2 py-1 border border-gray-300/60 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
+                    className={`px-2 py-1 border border-gray-200 bg-white/60 hover:bg-white/80 hover:cursor-pointer transition-colors rounded-l-xl ${
                       sizeButtonAnimating ? "filter-button-click" : ""
                     }`}
                   >
@@ -1182,7 +1182,7 @@ function App() {
                     value={historyMinSizeMb}
                     onChange={(e) => setHistoryMinSizeMb(e.target.value)}
                     placeholder="MB"
-                    className="w-20 px-2 py-1 border border-l-0 border-gray-300/60 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
+                    className="w-20 px-2 py-1 border border-l-0 border-gray-200 bg-white/60 focus:outline-none focus:ring-1 focus:ring-blue-400/60 rounded-r-xl hover:cursor-pointer"
                   />
                 </div>
               </div>
@@ -1193,7 +1193,7 @@ function App() {
               style={GLASS_CARD}
             >
               <div
-                className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-white/20 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0"
+                className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-gray-200 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0"
                 style={{
                   background: "rgba(255, 255, 255, 0.3)",
                   backdropFilter: "blur(8px)",

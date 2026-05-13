@@ -66,7 +66,7 @@ const ActiveDownloadCard = ({
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-white/20 cursor-pointer transition-all m-0 ${
+        className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-200 cursor-pointer transition-all m-0 ${
           hasError
             ? "bg-[rgba(254,242,242,0.5)] backdrop-blur-sm"
             : "bg-transparent hover:bg-[rgba(255,255,255,0.3)] hover:backdrop-blur-sm"
@@ -129,7 +129,7 @@ const ActiveDownloadCard = ({
         subtitle="Downloading file"
         footer={
           !isComplete && !hasError ? (
-            <div className="px-6 py-4 border-t border-white/20">
+            <div className="px-6 py-4 border-t border-gray-200">
               <button
                 onClick={handleCancel}
                 className="modal-btn-danger w-full px-4 py-2.5 text-red-600 text-sm font-semibold rounded-2xl transition-all duration-200"

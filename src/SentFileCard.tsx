@@ -39,7 +39,7 @@ const SentFileCard = ({
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 transition-all duration-200 border-b border-white/20 last:border-b-0 group m-0 bg-transparent hover:bg-[rgba(239,246,255,0.4)] hover:backdrop-blur-sm"
+        className="grid grid-cols-[2fr_1fr_1fr] items-center select-none px-2 sm:px-4 py-2 sm:py-3 cursor-pointer text-gray-700 transition-all duration-200 border-b border-gray-200 last:border-b-0 group m-0 bg-transparent hover:bg-[rgba(239,246,255,0.4)] hover:backdrop-blur-sm"
       >
         <div className="flex items-center gap-1.5 sm:gap-2 font-medium truncate text-[10px] sm:text-xs xl:text-sm">
           <FileIcon
@@ -103,7 +103,7 @@ const SentFileCard = ({
                               background: "rgba(255, 255, 255, 0.7)",
                               backdropFilter: "blur(16px)",
                               WebkitBackdropFilter: "blur(16px)",
-                              border: "1px solid rgba(255, 255, 255, 0.5)",
+                              border: "1px solid rgb(229, 231, 235)",
                               boxShadow:
                                 "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
                             }}
@@ -119,7 +119,7 @@ const SentFileCard = ({
                 </div>
 
                 {/* Connection Info */}
-                <div className="pt-2 border-t border-white/20 space-y-3">
+                <div className="pt-2 border-t border-gray-200 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                       Connection
@@ -152,7 +152,7 @@ const SentFileCard = ({
                         background: "rgba(255, 255, 255, 0.7)",
                         backdropFilter: "blur(16px)",
                         WebkitBackdropFilter: "blur(16px)",
-                        border: "1px solid rgba(255, 255, 255, 0.5)",
+                        border: "1px solid rgb(229, 231, 235)",
                         boxShadow:
                           "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
                       }}
@@ -161,7 +161,7 @@ const SentFileCard = ({
                         e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                        e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
                         e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
                       }}
                       onFocus={(e) => {
@@ -171,7 +171,7 @@ const SentFileCard = ({
                           "0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                        e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
                         e.currentTarget.style.boxShadow =
                           "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
                       }}

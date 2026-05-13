@@ -25,11 +25,11 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-white/20 last:border-b-0 cursor-pointer transition-all rounded-xl bg-[rgba(254,252,232,0.4)] hover:bg-[rgba(254,252,232,0.6)]"
+        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-gray-200 last:border-b-0 cursor-pointer transition-all rounded-xl bg-[rgba(254,252,232,0.4)] hover:bg-[rgba(254,252,232,0.6)]"
         style={{
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
-          border: "1px solid rgba(255, 255, 255, 0.3)",
+          border: "1px solid rgb(229, 231, 235)",
         }}
       >
         <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
@@ -88,7 +88,7 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
         title={file_name}
         subtitle="File offer"
         footer={
-          <div className="px-6 py-4 border-t border-white/20 flex gap-3">
+          <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
             <button
               onClick={() => {
                 onAccept(id);

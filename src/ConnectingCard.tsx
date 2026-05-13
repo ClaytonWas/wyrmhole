@@ -15,11 +15,11 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-white/20 last:border-b-0 cursor-pointer transition-all rounded-xl bg-[rgba(239,246,255,0.4)] hover:bg-[rgba(239,246,255,0.6)]"
+        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-gray-200 last:border-b-0 cursor-pointer transition-all rounded-xl bg-[rgba(239,246,255,0.4)] hover:bg-[rgba(239,246,255,0.6)]"
         style={{
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
-          border: "1px solid rgba(255, 255, 255, 0.3)",
+          border: "1px solid rgb(229, 231, 235)",
         }}
       >
         <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
@@ -91,7 +91,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
         title="Connecting to Sender"
         subtitle={`Connection code: ${code}`}
         footer={
-          <div className="px-6 py-4 border-t border-white/20">
+          <div className="px-6 py-4 border-t border-gray-200">
             <button
               onClick={() => {
                 onCancel(code);
@@ -159,7 +159,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                         background: "rgba(255, 255, 255, 0.7)",
                         backdropFilter: "blur(16px)",
                         WebkitBackdropFilter: "blur(16px)",
-                        border: "1px solid rgba(255, 255, 255, 0.5)",
+                        border: "1px solid rgb(229, 231, 235)",
                         boxShadow:
                           "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
                       }}
@@ -168,7 +168,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                         e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                        e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
                         e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
                       }}
                       onFocus={(e) => {
@@ -178,7 +178,7 @@ const ConnectingCard = ({ code, onCancel }: Props) => {
                           "0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                        e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
                         e.currentTarget.style.boxShadow =
                           "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
                       }}
