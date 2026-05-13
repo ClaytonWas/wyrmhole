@@ -10,7 +10,6 @@ use tokio::sync::Mutex;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
     pub download_directory: PathBuf,
-    pub received_files_directory: PathBuf,
     #[serde(default = "default_auto_extract")]
     pub auto_extract_tarballs: bool,
     #[serde(default = "default_folder_name_format")]
@@ -36,16 +35,8 @@ impl AppSettings {
         &self.download_directory
     }
 
-    pub fn get_received_files_directory(&self) -> &PathBuf {
-        &self.received_files_directory
-    }
-
     pub fn set_download_directory(&mut self, path: PathBuf) {
         self.download_directory = path;
-    }
-
-    pub fn set_received_files_directory(&mut self, path: PathBuf) {
-        self.received_files_directory = path;
     }
 
     pub fn get_auto_extract_tarballs(&self) -> bool {
@@ -154,11 +145,9 @@ fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
         );
         PathBuf::from(".")
     });
-    let received_dir = get_received_files_path(app_handle);
 
     AppSettings {
         download_directory: download_dir,
-        received_files_directory: received_dir,
         auto_extract_tarballs: false,
         default_folder_name_format: default_folder_name_format(),
         relay_server_url: default_relay_server_url(),

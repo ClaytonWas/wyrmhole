@@ -36,8 +36,8 @@ async fn cancel_send(send_id: String, app_handle: AppHandle) -> Result<String, S
 }
 
 #[tauri::command]
-async fn cancel_download(download_id: String, app_handle: AppHandle) -> Result<String, String> {
-    files::cancel_download(download_id, app_handle).await
+async fn cancel_download(download_id: String) -> Result<String, String> {
+    files::cancel_download(download_id).await
 }
 
 #[tauri::command]

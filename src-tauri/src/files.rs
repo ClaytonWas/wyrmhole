@@ -21,10 +21,6 @@ use crate::files_json;
 use crate::settings;
 
 // State structures for tracking active transfers
-struct OpenRequests {
-    request: transfer::ReceiveRequest,
-}
-
 struct ActiveSend {
     code: String,
     cancel_tx: Option<oneshot::Sender<()>>,
@@ -32,7 +28,6 @@ struct ActiveSend {
 
 struct ActiveDownload {
     cancel_tx: oneshot::Sender<()>,
-    file_name: String,
 }
 
 struct ActiveConnection {
@@ -40,7 +35,7 @@ struct ActiveConnection {
 }
 
 // Static hash maps for tracking active transfers
-static REQUESTS_HASHMAP: Lazy<Mutex<HashMap<String, OpenRequests>>> =
+static REQUESTS_HASHMAP: Lazy<Mutex<HashMap<String, transfer::ReceiveRequest>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 static ACTIVE_SENDS: Lazy<Mutex<HashMap<String, ActiveSend>>> =
@@ -1080,12 +1075,9 @@ pub async fn request_file_call(
         let file_name = receive_request.file_name().to_string().to_owned();
         let file_size = receive_request.file_size();
 
-        // Store OpenRequests entry with the ReceiveRequest for answering later.
+        // Store the ReceiveRequest for answering later.
         let id = Uuid::new_v4().to_string();
-        let entry = OpenRequests {
-            request: receive_request,
-        };
-        REQUESTS_HASHMAP.lock().await.insert(id.clone(), entry);
+        REQUESTS_HASHMAP.lock().await.insert(id.clone(), receive_request);
 
         println!(
             "[magic-wormhole][files][info] Incoming file offer: {} ({} bytes)",
@@ -1129,8 +1121,8 @@ pub async fn receiving_file_deny(id: String) -> Result<String, String> {
     // This function is called when the user denies the file offer.
     // It will close the Wormhole connection associated with the given ID.
     let mut requests = REQUESTS_HASHMAP.lock().await;
-    if let Some(entry) = requests.remove(&id) {
-        if let Err(e) = entry.request.reject().await {
+    if let Some(request) = requests.remove(&id) {
+        if let Err(e) = request.reject().await {
             println!(
                 "[magic-wormhole][files][error] Failed to close request: {}",
                 e
@@ -1148,13 +1140,13 @@ pub async fn receiving_file_deny(id: String) -> Result<String, String> {
 }
 
 pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<String, String> {
-    let mut requests: tokio::sync::MutexGuard<'_, HashMap<String, OpenRequests>> =
+    let mut requests: tokio::sync::MutexGuard<'_, HashMap<String, transfer::ReceiveRequest>> =
         REQUESTS_HASHMAP.lock().await;
-    if let Some(entry) = requests.remove(&id) {
+    if let Some(request) = requests.remove(&id) {
         println!(
             "[magic-wormhole][files][info] receiving_file_accept for id: {}, file: {}",
             id,
-            entry.request.file_name()
+            request.file_name()
         );
 
         // Build the transit handler and get variables available for JSON metadata file.
@@ -1184,7 +1176,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
         let app_settings_lock = app_settings_state.lock().await;
         let download_dir = app_settings_lock.get_download_directory().to_path_buf();
         drop(app_settings_lock); // Drop lock so we can get the app_handle again later.
-        let file_name_with_extension = entry.request.file_name();
+        let file_name_with_extension = request.file_name();
 
         // Clone values needed for progress handler and error handling
         let progress_id = id.clone();
@@ -1211,7 +1203,7 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
                 }),
             );
         };
-        let file_size = entry.request.file_size();
+        let file_size = request.file_size();
 
         // Check and create the download directory if it doesn't exist
         if let Err(e) = tokio::fs::create_dir_all(&download_dir).await {
@@ -1270,21 +1262,16 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
         // Create cancel channel for this download
         let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
 
-        // Store the cancel sender and file name in ACTIVE_DOWNLOADS
-        let download_file_name = file_name_with_extension.clone();
-        ACTIVE_DOWNLOADS.lock().await.insert(
-            id.clone(),
-            ActiveDownload {
-                cancel_tx,
-                file_name: download_file_name.clone(),
-            },
-        );
+        // Store the cancel sender in ACTIVE_DOWNLOADS
+        ACTIVE_DOWNLOADS
+            .lock()
+            .await
+            .insert(id.clone(), ActiveDownload { cancel_tx });
 
         // Use the cancel receiver as the cancel future
         let cancel = cancel_rx.map(|_| ());
 
-        entry
-            .request
+        request
             .accept(transit_handler, progress_handler, &mut compat_file, cancel)
             .await
             .map_err(|e| {
@@ -1425,15 +1412,12 @@ pub async fn receiving_file_accept(id: String, app_handle: AppHandle) -> Result<
     }
 }
 
-pub async fn cancel_download(
-    download_id: String,
-    _app_handle: AppHandle,
-) -> Result<String, String> {
-    // Get the cancel sender and file name, then remove from active downloads
-    let (cancel_tx, _file_name) = {
+pub async fn cancel_download(download_id: String) -> Result<String, String> {
+    // Get the cancel sender, then remove from active downloads
+    let cancel_tx = {
         let mut active_downloads = ACTIVE_DOWNLOADS.lock().await;
         if let Some(active_download) = active_downloads.remove(&download_id) {
-            (active_download.cancel_tx, active_download.file_name)
+            active_download.cancel_tx
         } else {
             return Err("No active download found for this ID".to_string());
         }
