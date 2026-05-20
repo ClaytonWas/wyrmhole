@@ -80,7 +80,7 @@ Access settings via the gear icon in the top-right corner:
 - **Custom Relay Server URL** - Use your own relay server
 - **Export JSON History** - Export your transfer history as a JSON file
 
-## 🛠️ Development
+## Development
 
 ### Project Structure
 
