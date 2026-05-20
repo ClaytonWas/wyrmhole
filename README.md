@@ -1,36 +1,29 @@
-# 🧙‍♂️ Wyrmhole
-
-<div align="center">
+# 🧙‍♂️ Wyrmhole [![macOS](https://img.shields.io/badge/macOS-0A1929?logo=apple&logoColor=4FC3F7)](#) [![Linux](https://img.shields.io/badge/Linux-0A1929?logo=linux&logoColor=4FC3F7)](#) [![Windows](https://img.shields.io/badge/Windows-0A1929?logo=windows11&logoColor=4FC3F7)](#)
 
 **A lightweight, secure file transfer GUI**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Built with Tauri](https://img.shields.io/badge/Built%20with-Tauri-2C2D72?logo=tauri)](https://tauri.app/)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0A1929?logoColor=4FC3F7)](https://opensource.org/licenses/MIT)
+[![Built with Tauri](https://img.shields.io/badge/Built%20with-Tauri-0A1929?logo=tauri&logoColor=4FC3F7)](https://tauri.app/)
+[![React](https://img.shields.io/badge/React-18.3-0A1929?logo=react&logoColor=4FC3F7)](https://react.dev/)
 
-</div>
+## About
 
-## 📖 About
+Wyrmhole is a cross-platform desktop application that provides a user-friendly interface for secure peer-to-peer file transfers using the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) protocol.
 
-Wyrmhole is a cross-platform desktop application that provides a beautiful, user-friendly interface for secure peer-to-peer file transfers using the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) protocol. It combines the security and efficiency of Rust with the flexibility of modern React web technologies.
+### Features
 
-### ✨ Features
+- 🔐 **End-to-end encrypted file transfers** using the magic-wormhole protocol.
+- 📊 **Real-time download progress** for sending and receiving files.
+- 📜 **Transfer History** of sent and received files with metadata.
+- 🌐 **Custom Relay Server** with the ability configure your own relay server URL.
 
-- 🔐 **Secure Transfers** - End-to-end encrypted file transfers using the magic-wormhole protocol
-- 📁 **Multiple File Support** - Send single files or entire directories with automatic tarball packaging
-- 📊 **Real-time Progress** - Live progress tracking for both sending and receiving operations
-- 📜 **Transfer History** - Complete history of received files with metadata
-- 🌐 **Custom Relay Server** - Configure your own relay server URL
-- 🚀 **Cross-platform** - Works on Windows, macOS, and Linux
-- 📦 **Compact Package** - Builds to < 15MB
+## Getting Started
 
-## 🚀 Getting Started
+### Dependencies
 
-### Prerequisites
-
-- **Node.js** (v18 or higher)
-- **Rust** (latest stable version)
-- **System dependencies** for Tauri (see [Tauri prerequisites](https://tauri.app/start/prerequisites/))
+- [**Rust** (latest stable version)](https://rust-lang.org/learn/get-started/)
+- [**Node.js** (v18 or higher)](https://nodejs.org/en/download)
+- [System Prerequisites for **Tauri**](https://tauri.app/start/prerequisites/)
 
 ### Installation
 
@@ -59,7 +52,7 @@ npm run tauri build
 
 The built application will be in `src-tauri/target/release/`.
 
-## 💻 Usage
+## Usage
 
 ### Sending Files
 
@@ -109,9 +102,8 @@ wyrmhole/
 
 ### Tech Stack
 
-- **Frontend**: React 18, Tailwind CSS, Sonner
-- **Backend**: Tauri 2, magic-wormhole-rs
-- **Build Tool**: Vite
+- **Frontend**: React 18
+- **Backend**: Tauri 2
 
 ### Formatting, Linting, and Analysis
 
@@ -137,41 +129,23 @@ npm run tauri dev
 npm run tauri build
 ```
 
-## 📋 Roadmap
-
-### Future Features
+## Future Features
 
 | Feature | Description |
 | ------- | ----------- |
-| 🖥️ **Embedded Relay Server** | Host your own relay server directly within Wyrmhole |
 | 👥 **Send to Multiple Recipients** | Send a file to multiple people ([experimental feature](https://github.com/magic-wormhole/magic-wormhole.rs?tab=readme-ov-file)) |
 | 🌙 **Dark Mode** | Support for a dark mode at the system level using glassy UI |
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Open an issue or submit a pull request. For major changes, please include a comment with decisions made. 
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Resources
 
-## 📄 License
+- [magic-wormhole.rs on GitHub](https://github.com/magic-wormhole/magic-wormhole.rs/)
+- [magic-wormhole.rs documentation on crates.io](https://crates.io/crates/magic-wormhole) 
+- [Tauri 2 website](https://tauri.app/)
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📚 Resources
-
-- [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) - The secure file transfer protocol used in this application
-- [magic-wormhole.rs on crates.io](https://crates.io/crates/magic-wormhole)
-- [Tauri](https://tauri.app/) - The framework used for this application
-
-## 🙏 Acknowledgments
-
-- [Magic-Wormhole](https://magic-wormhole.readthedocs.io/) - The original Python implementation and documentation
-
----
 
 <div align="center">
 
