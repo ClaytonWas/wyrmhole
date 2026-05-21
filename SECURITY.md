@@ -1,58 +1,48 @@
-# Wyrmhole Security Policy
+# Security Policy
 
-Thank you for helping to keep Wyrmhole secure!  
-We take user privacy and the integrity of file transfers seriously — and we welcome community involvement in improving security.
+## Scope
 
+Wyrmhole is a Tauri/React GUI wrapper around [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs).
+The cryptographic guarantees of file transfers using SPAKE2 key exchange,
+end-to-end encryption, code-phrase authentication inherited from that
+library. Vulnerabilities in the underlying protocol or `magic-wormhole.rs`
+itself should be reported upstream.
 
-## Security Model Summary
+This policy covers the Wyrmhole application code: the Tauri shell, IPC
+boundary, frontend, transfer history storage, and relay configuration.
 
-Wyrmhole uses the **magic-wormhole.rs** protocol to establish secure, zero-trust file transfer channels.  
-This means **even the relay cannot read or modify your data**.
+### In scope
 
-| Protection | Status |
-|----------|:--:|
-| End-to-end encryption | ✔ |
-| Mutual authentication (no MITM) | ✔ |
-| Zero-knowledge relay | ✔ |
-| Tamper detection | ✔ |
-| No persistent identity | ✔ |
+- Memory safety issues in the Rust backend
+- IPC commands that leak data or accept unsanitized input
+- Path traversal or arbitrary file write on receive
+- Tauri allowlist or CSP misconfigurations
+- Insecure handling of relay URLs, transfer history, or user settings
+- Privilege escalation via the installer or auto-updater
 
-Wyrmhole transfers are encrypted **before** any data reaches a server.
+### Out of scope
 
+- Issues in `magic-wormhole.rs` or the wormhole protocol (report upstream)
+- Social-engineering attacks involving shared code phrases
+- Vulnerabilities requiring local root or physical device access
+- Denial of service against public relay servers
 
-## Cryptography Details
+## Reporting
 
-| Component | Algorithm | Purpose |
-|----------|-----------|---------|
-| PAKE handshake | **SPAKE2** | Both peers prove they know the code **without revealing it**, eliminating MITM & offline brute force |
-| Encryption | **AES-256-GCM** | Confidentiality + integrity via authenticated encryption |
-| Key Derivation | HKDF-SHA256 | Derive strong keys from the handshake result |
-| Hashing | SHA-256 | Cryptographic identifiers and validation |
+Report vulnerabilities privately via GitHub's
+[security advisory form](https://github.com/ClaytonWas/wyrmhole/security/advisories/new).
 
-Relay servers can see:
-- File size + timing metadata
-- Connection attempts
+Do **not** open public issues for security reports.
 
-Relay servers **cannot** see:
-- File contents
-- Keys or wormhole code
-- Sender/receiver identity
+## Response
 
-## Reporting a Vulnerability
+I aim to acknowledge reports within 72 hours and provide a remediation
+timeline within 7 days. Critical issues will be patched as fast as
+practical; lower-severity issues will be batched into the next release.
 
-If you find a security issue, please report it privately:
+Reporters are credited in release notes unless they request otherwise.
 
- **Email:** security@wyrmhole.app
+## Supported versions
 
-Please include:
-- Description of the issue
-- Reproduction steps / logs if available
-- Impact (what could an attacker do?)
-
-We support legitimate researchers following these principles:
-- No harm to users or data
-- No service degradation or denial
-- Avoid accessing data you don’t own
-- Use private reporting channels
-
-If you have ideas to improve Wyrmhole’s security design or architecture we would love to hear from you. Thank you for helping safeguard our users! 🧙‍♂️✨
+Only the latest release receives security updates. Wyrmhole is pre-1.0;
+upgrade promptly.
