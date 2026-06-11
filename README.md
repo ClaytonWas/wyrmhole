@@ -63,9 +63,7 @@ Issues and pull requests welcome. For major changes, include a note on the decis
  
 ## Resources
  
-[magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) · [crates.io docs](https://crates.io/crates/magic-wormhole) · [Tauri 2](https://tauri.app/)[Screencast from 2026-06-11 15-24-02.webm](https://github.com/user-attachments/assets/f3d53140-071a-46f1-a94c-802f81de8fb8)
-
-
+[magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) · [crates.io docs](https://crates.io/crates/magic-wormhole) · [Tauri 2](https://tauri.app/)
 
 <div align="center">
 
