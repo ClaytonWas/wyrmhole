@@ -1,4 +1,4 @@
-# 🧙‍♂️ Wyrmhole [![macOS](https://img.shields.io/badge/macOS-0A1929?logo=apple&logoColor=4FC3F7)](#) [![Linux](https://img.shields.io/badge/Linux-0A1929?logo=linux&logoColor=4FC3F7)](#) [![Windows](https://img.shields.io/badge/Windows-0A1929?logo=windows11&logoColor=4FC3F7)](#)
+# 🧙‍♂️ wyrmhole [![macOS](https://img.shields.io/badge/macOS-0A1929?logo=apple&logoColor=4FC3F7)](#) [![Linux](https://img.shields.io/badge/Linux-0A1929?logo=linux&logoColor=4FC3F7)](#) [![Windows](https://img.shields.io/badge/Windows-0A1929?logo=windows11&logoColor=4FC3F7)](#)
 
 **A lightweight, secure file transfer GUI**
 
@@ -6,145 +6,65 @@
 [![Built with Tauri](https://img.shields.io/badge/Built%20with-Tauri-0A1929?logo=tauri&logoColor=4FC3F7)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-18.3-0A1929?logo=react&logoColor=4FC3F7)](https://react.dev/)
 
+[Demo 3_3.webm](https://github.com/user-attachments/assets/afbcb482-5e8e-4aac-a4f3-4ea870539e63)
+
 ## About
 
 Wyrmhole is a cross-platform desktop application that provides a user-friendly interface for secure peer-to-peer file transfers using the [magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) protocol.
 
-### Features
-
-- 🔐 **End-to-end encrypted file transfers** using the magic-wormhole protocol.
-- 📊 **Real-time download progress** for sending and receiving files.
-- 📜 **Transfer History** of sent and received files with metadata.
-- 🌐 **Custom Relay Server** with the ability configure your own relay server URL.
-
-## Getting Started
-
-### Dependencies
-
-- [**Rust** (latest stable version)](https://rust-lang.org/learn/get-started/)
-- [**Node.js** (v18 or higher)](https://nodejs.org/en/download)
-- [System Prerequisites for **Tauri**](https://tauri.app/start/prerequisites/)
-
-### Installation
-
-#### From Source
-
-1. Clone the repository:
+## Features
+ 
+- **End-to-end encrypted** -- PAKE-secured transfers over the magic-wormhole protocol
+- **Live progress** -- real-time tracking for sends and receives
+- **Transfer history** -- every sent and received file, with metadata and JSON export
+- **Bring your own relay** -- point at any custom relay server URL
+- **Quality of life** -- auto-extract tarballs, configurable download directory and folder naming
+## Quick Start
+ 
+Requires [Rust](https://rust-lang.org/learn/get-started/) (stable), [Node.js](https://nodejs.org/en/download) (v18+), and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform.
+ 
 ```bash
 git clone https://github.com/ClaytonWas/wyrmhole.git
 cd wyrmhole
-```
-
-2. Install dependencies:
-```bash
 npm install
+npm run tauri dev     # development
+npm run tauri build   # production, output in src-tauri/target/release/
 ```
-
-3. Run in development mode:
-```bash
-npm run tauri dev
-```
-
-4. Build for production:
-```bash
-npm run tauri build
-```
-
-The built application will be in `src-tauri/target/release/`.
-
+ 
 ## Usage
-
-### Sending Files
-
-1. Click the **Send Files** section
-2. Select one or more files/folders to send
-3. Click **Send** to generate a transfer code
-4. Share the code with the recipient
-5. Monitor progress in the **Active Transfers** section
-
-### Receiving Files
-
-1. Enter the transfer code provided by the sender
-2. Click **Receive** to start the connection
-3. Review the file offer and accept or deny
-4. Monitor download progress
-5. Access received files from the **File History** section
-
-### Settings
-
-Access settings via the gear icon in the top-right corner:
-
-- **Download Directory** - Set where received files are saved
-- **Auto-Extract Tarballs** - Automatically extract received archives
-- **Default Folder Name Format** - Customize folder naming for multiple file transfers
-- **Custom Relay Server URL** - Use your own relay server
-- **Export JSON History** - Export your transfer history as a JSON file
-
+ 
+**Send:** select files or folders, click **Send**, and share the generated code.
+**Receive:** enter the code, review the offer, and accept. Files land in your configured download directory and appear in **File History**.
+ 
+Settings (gear icon, top right) cover the download directory, tarball auto-extraction, folder naming, relay server, and history export.
+ 
 ## Development
-
-### Project Structure
-
+ 
 ```
-wyrmhole/
-├── src/                    # React frontend
-│   ├── App.tsx            # Main application component
-│   ├── SettingsMenu.tsx   # Settings modal
-│   └── ...
-├── src-tauri/             # Rust backend
-│   ├── src/
-│   │   ├── lib.rs         # Main Tauri commands
-│   │   ├── files.rs       # File transfer logic
-│   │   ├── files_json.rs  # File history management
-│   │   └── settings.rs    # Settings management
-│   └── Cargo.toml
-└── package.json
+src/         React frontend (App.tsx, SettingsMenu.tsx, ...)
+src-tauri/   Rust backend (lib.rs, files.rs, files_json.rs, settings.rs)
 ```
+ 
+<details>
+<summary><strong>Tooling commands</strong></summary>
+  
+- `npm run fmt` / `npm run fmt:rs` -- Prettier / rustfmt
+- `npm run lint` / `npm run lint:rs` -- ESLint / clippy
+- `npm run analyze` -- CLI report: tooling summary, dependency overview, bundle and binary sizes (run `npm run build` first)
+</details>
 
-### Tech Stack
-
-- **Frontend**: React 18
-- **Backend**: Tauri 2
-
-### Formatting, Linting, and Analysis
-
-Use the following commands during development:
-
-- `npm run fmt` – Format the React/TypeScript code with Prettier
-- `npm run fmt:rs` – Format the Rust/Tauri backend with `rustfmt`
-- `npm run lint` – Lint the frontend TypeScript/React code with ESLint
-- `npm run lint:rs` – Run `clippy` on the Rust backend
-- `npm run analyze` – Generate a CLI report including:
-  - Code style tooling summary
-  - Dependency overview and likely-unused packages
-  - Bundle size summary from `dist/assets` (run `npm run build` first)
-  - Rust binary sizes from `src-tauri/target`
-
-### Building
-
-```bash
-# Development build
-npm run tauri dev
-
-# Production build
-npm run tauri build
-```
-
-## Future Features
-
-| Feature | Description |
-| ------- | ----------- |
-| 👥 **Send to Multiple Recipients** | Send a file to multiple people ([experimental feature](https://github.com/magic-wormhole/magic-wormhole.rs?tab=readme-ov-file)) |
-| 🌙 **Dark Mode** | Support for a dark mode at the system level using glassy UI |
-
+## Roadmap
+ 
+Multi-recipient sends ([experimental upstream](https://github.com/magic-wormhole/magic-wormhole.rs?tab=readme-ov-file)) and system-level dark mode. See [issues](https://github.com/ClaytonWas/wyrmhole/issues) for more.
+ 
 ## Contributing
-
-Contributions are welcome! Open an issue or submit a pull request. For major changes, please include a comment with decisions made. 
-
+ 
+Issues and pull requests welcome. For major changes, include a note on the decisions made.
+ 
 ## Resources
+ 
+[magic-wormhole.rs](https://github.com/magic-wormhole/magic-wormhole.rs/) · [crates.io docs](https://crates.io/crates/magic-wormhole) · [Tauri 2](https://tauri.app/)[Screencast from 2026-06-11 15-24-02.webm](https://github.com/user-attachments/assets/f3d53140-071a-46f1-a94c-802f81de8fb8)
 
-- [magic-wormhole.rs on GitHub](https://github.com/magic-wormhole/magic-wormhole.rs/)
-- [magic-wormhole.rs documentation on crates.io](https://crates.io/crates/magic-wormhole) 
-- [Tauri 2 website](https://tauri.app/)
 
 
 <div align="center">
