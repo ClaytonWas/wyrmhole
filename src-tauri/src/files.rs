@@ -2,17 +2,17 @@
 // It handles sending files, receiving files, tarball operations, and transfer state management.
 
 use chrono::prelude::*;
+use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
-use flate2::Compression;
 use futures::FutureExt;
-use magic_wormhole::{transfer, transit, Code, MailboxConnection, Wormhole, WormholeError};
+use magic_wormhole::{Code, MailboxConnection, Wormhole, WormholeError, transfer, transit};
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, net::SocketAddr, path::Path, path::PathBuf, time::Instant};
 use tar::{Archive, Builder};
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::fs::File;
-use tokio::sync::{oneshot, Mutex};
+use tokio::sync::{Mutex, oneshot};
 use tokio_util::compat::TokioAsyncReadCompatExt;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
 use uuid::Uuid;
@@ -360,7 +360,7 @@ pub async fn send_file_call(
             let mb = actual_tarball_size as f64 / (1024.0 * 1024.0);
             let mbps = mb / elapsed.as_secs_f64();
             println!(
-            "[magic-wormhole][perf][files] Folder transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
+                "[magic-wormhole][perf][files] Folder transfer complete: {:.2} MiB in {:?} ({:.2} MiB/s)",
                 mb, elapsed, mbps
             );
         }
@@ -1077,7 +1077,10 @@ pub async fn request_file_call(
 
         // Store the ReceiveRequest for answering later.
         let id = Uuid::new_v4().to_string();
-        REQUESTS_HASHMAP.lock().await.insert(id.clone(), receive_request);
+        REQUESTS_HASHMAP
+            .lock()
+            .await
+            .insert(id.clone(), receive_request);
 
         println!(
             "[magic-wormhole][files][info] Incoming file offer: {} ({} bytes)",

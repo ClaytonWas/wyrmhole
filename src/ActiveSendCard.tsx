@@ -93,9 +93,7 @@ const ActiveSendCard = ({
       <div
         onClick={() => setIsOpen(true)}
         className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-200 cursor-pointer transition-all m-0 ${
-          hasError
-            ? "bg-[rgba(254,242,242,0.5)] backdrop-blur-sm"
-            : "bg-transparent hover:bg-[rgba(255,255,255,0.3)] hover:backdrop-blur-sm"
+          hasError ? "bg-red-50" : "bg-transparent hover:bg-gray-50"
         }`}
       >
         <div
@@ -167,108 +165,106 @@ const ActiveSendCard = ({
         }
       >
         <div className="px-6 py-5 space-y-4">
-                {/* Progress */}
-                <div>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-sm font-medium text-gray-700">Progress</span>
-                    <span className="text-sm font-bold text-gray-900">{percentage}%</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className={`${progressBarColor} h-full rounded-full transition-all duration-500`}
-                      style={{ width: `${Math.min(percentage, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {formatBytes(sent)} / {formatBytes(total)}
-                  </p>
+          {/* Progress */}
+          <div>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-sm font-medium text-gray-700">Progress</span>
+              <span className="text-sm font-bold text-gray-900">{percentage}%</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div
+                className={`${progressBarColor} h-full rounded-full transition-all duration-500`}
+                style={{ width: `${Math.min(percentage, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {formatBytes(sent)} / {formatBytes(total)}
+            </p>
+          </div>
+
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Size</p>
+              <p className="text-sm font-semibold text-gray-900">{formatBytes(total)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Status</p>
+              <p className="text-sm font-semibold text-gray-900">{status}</p>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="p-3 bg-red-50 rounded-xl border border-red-100">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          {/* Connection Code - Refined */}
+          {code && (
+            <div className="pt-2">
+              <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">
+                Connection Code
+              </p>
+              <div className="relative group">
+                <input
+                  type="text"
+                  readOnly
+                  value={code}
+                  className="w-full text-sm font-mono text-gray-900 rounded-xl px-4 py-3 pr-10 cursor-pointer transition-all"
+                  style={{
+                    background: "#ffffff",
+                    WebkitBackdropFilter: "blur(16px)",
+                    border: "1px solid rgb(229, 231, 235)",
+                    boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 #ffffff",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
+                    e.currentTarget.style.background = "rgb(239, 246, 255)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
+                    e.currentTarget.style.background = "#ffffff";
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.outline = "none";
+                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)";
+                    e.currentTarget.style.boxShadow =
+                      "0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 #ffffff";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 #ffffff";
+                  }}
+                  onClick={async (e) => {
+                    const input = e.target as HTMLInputElement;
+                    input.select();
+                    try {
+                      await navigator.clipboard.writeText(code);
+                      toast.success("Code copied");
+                    } catch (err) {
+                      console.error("Failed to copy:", err);
+                    }
+                  }}
+                  title="Click to copy"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    className="fill-gray-400"
+                  >
+                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                  </svg>
                 </div>
-
-                {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Size</p>
-                    <p className="text-sm font-semibold text-gray-900">{formatBytes(total)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Status</p>
-                    <p className="text-sm font-semibold text-gray-900">{status}</p>
-                  </div>
-                </div>
-
-                {/* Error */}
-                {error && (
-                  <div className="p-3 bg-red-50 rounded-xl border border-red-100">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
-                )}
-
-                {/* Connection Code - Refined */}
-                {code && (
-                  <div className="pt-2">
-                    <p className="text-xs font-medium text-gray-500 mb-2.5 uppercase tracking-wide">
-                      Connection Code
-                    </p>
-                    <div className="relative group">
-                      <input
-                        type="text"
-                        readOnly
-                        value={code}
-                        className="w-full text-sm font-mono text-gray-900 rounded-xl px-4 py-3 pr-10 cursor-pointer transition-all"
-                        style={{
-                          background: "rgba(255, 255, 255, 0.7)",
-                          backdropFilter: "blur(16px)",
-                          WebkitBackdropFilter: "blur(16px)",
-                          border: "1px solid rgb(229, 231, 235)",
-                          boxShadow:
-                            "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
-                          e.currentTarget.style.background = "rgba(239, 246, 255, 0.4)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
-                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.outline = "none";
-                          e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)";
-                          e.currentTarget.style.boxShadow =
-                            "0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = "rgb(229, 231, 235)";
-                          e.currentTarget.style.boxShadow =
-                            "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)";
-                        }}
-                        onClick={async (e) => {
-                          const input = e.target as HTMLInputElement;
-                          input.select();
-                          try {
-                            await navigator.clipboard.writeText(code);
-                            toast.success("Code copied");
-                          } catch (err) {
-                            console.error("Failed to copy:", err);
-                          }
-                        }}
-                        title="Click to copy"
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          className="fill-gray-400"
-                        >
-                          <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
-                          <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              </div>
+            </div>
+          )}
         </div>
       </DetailModal>
     </>

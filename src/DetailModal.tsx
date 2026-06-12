@@ -43,12 +43,9 @@ export function DetailModal({
       <div
         className="rounded-3xl w-full max-w-md overflow-hidden"
         style={{
-          background: "rgba(255, 255, 255, 0.85)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
+          background: "#ffffff",
           border: "1px solid rgb(229, 231, 235)",
-          boxShadow:
-            "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)",
+          boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
         }}
         onClick={(e) => e.stopPropagation()}
       >

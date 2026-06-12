@@ -36,8 +36,7 @@ const GLASS_CARD: CSSProperties = {
   backdropFilter: "blur(24px)",
   WebkitBackdropFilter: "blur(24px)",
   border: "1px solid rgb(229, 231, 235)",
-  boxShadow:
-    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+  boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
 };
 
 const GLASS_INPUT: CSSProperties = {
@@ -45,8 +44,7 @@ const GLASS_INPUT: CSSProperties = {
   backdropFilter: "blur(16px)",
   WebkitBackdropFilter: "blur(16px)",
   border: "1px solid rgb(229, 231, 235)",
-  boxShadow:
-    "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
+  boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)",
 };
 
 // --- Local hooks ---------------------------------------------------------
@@ -571,30 +569,27 @@ function App() {
     }
   });
 
-  useTauriEvent<{ id: string; file_name: string; error: string }>(
-    "download-error",
-    (payload) => {
-      if (payload.error === "Transfer cancelled by user") {
-        downloadOps.delete(payload.id);
-        return;
-      }
+  useTauriEvent<{ id: string; file_name: string; error: string }>("download-error", (payload) => {
+    if (payload.error === "Transfer cancelled by user") {
+      downloadOps.delete(payload.id);
+      return;
+    }
 
-      downloadOps.update(
-        payload.id,
-        { error: payload.error },
-        {
-          id: payload.id,
-          file_name: payload.file_name,
-          transferred: 0,
-          total: 0,
-          percentage: 0,
-          error: payload.error,
-        },
-      );
+    downloadOps.update(
+      payload.id,
+      { error: payload.error },
+      {
+        id: payload.id,
+        file_name: payload.file_name,
+        transferred: 0,
+        total: 0,
+        percentage: 0,
+        error: payload.error,
+      },
+    );
 
-      toast.error(`Download failed: ${payload.file_name}`, { duration: 5000 });
-    },
-  );
+    toast.error(`Download failed: ${payload.file_name}`, { duration: 5000 });
+  });
 
   useTauriEvent<SendProgress>("send-progress", (payload) => {
     sendOps.set(payload.id, payload);
@@ -853,9 +848,7 @@ function App() {
                       htmlFor="File"
                       className={`flex-1 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed transition-all duration-200 rounded-2xl ${isDragging ? "scale-[1.02]" : ""}`}
                       style={{
-                        borderColor: isDragging
-                          ? "rgba(59, 130, 246, 0.7)"
-                          : "rgb(229, 231, 235)",
+                        borderColor: isDragging ? "rgba(59, 130, 246, 0.7)" : "rgb(229, 231, 235)",
                         background: isDragging
                           ? "rgba(219, 234, 254, 0.4)"
                           : "rgba(255, 255, 255, 0.2)",
@@ -890,7 +883,9 @@ function App() {
                           d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75"
                         />
                       </svg>
-                      <span className={`text-xs xl:text-sm transition-colors ${isDragging ? "text-blue-600 font-medium" : "text-gray-600"}`}>
+                      <span
+                        className={`text-xs xl:text-sm transition-colors ${isDragging ? "text-blue-600 font-medium" : "text-gray-600"}`}
+                      >
                         {isDragging ? "Drop files here" : "Click or drag files here"}
                       </span>
                     </label>
@@ -997,10 +992,7 @@ function App() {
               </div>
 
               {/* Receive Files Section - Compact - Grows with content */}
-              <div
-                className="rounded-2xl overflow-hidden flex flex-col"
-                style={GLASS_CARD}
-              >
+              <div className="rounded-2xl overflow-hidden flex flex-col" style={GLASS_CARD}>
                 <div className="px-3 py-2 border-b border-gray-200 flex-shrink-0">
                   <form
                     onSubmit={(e) => {
@@ -1188,10 +1180,7 @@ function App() {
               </div>
             </div>
 
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={GLASS_CARD}
-            >
+            <div className="rounded-2xl overflow-hidden" style={GLASS_CARD}>
               <div
                 className="grid grid-cols-[2fr_1fr_1fr] select-none border-b border-gray-200 px-2 sm:px-3 py-1.5 text-[9px] sm:text-[10px] xl:text-xs font-semibold text-gray-600 uppercase tracking-wide flex-shrink-0"
                 style={{

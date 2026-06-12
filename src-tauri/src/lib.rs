@@ -140,6 +140,20 @@ async fn test_relay_server(app_handle: AppHandle) -> Result<String, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // WebKitGTK's DMABUF renderer causes a blank window on some Linux setups
+    // (certain GPU drivers, compositors, and VMs — e.g. KDE/X11 on Debian).
+    // Disable it unless the user has set the variable themselves, so the
+    // override `WEBKIT_DISABLE_DMABUF_RENDERER=0` still re-enables hardware
+    // acceleration on systems where it works correctly.
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        // SAFETY: this runs at the very start of `run()`, before any other
+        // threads are spawned, so there is no concurrent access to the env.
+        unsafe {
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        }
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())

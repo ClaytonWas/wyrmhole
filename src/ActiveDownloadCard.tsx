@@ -67,9 +67,7 @@ const ActiveDownloadCard = ({
       <div
         onClick={() => setIsOpen(true)}
         className={`grid grid-cols-[minmax(0,1fr)_minmax(60px,1fr)_auto_auto] items-center gap-1 sm:gap-2 md:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-200 cursor-pointer transition-all m-0 ${
-          hasError
-            ? "bg-[rgba(254,242,242,0.5)] backdrop-blur-sm"
-            : "bg-transparent hover:bg-[rgba(255,255,255,0.3)] hover:backdrop-blur-sm"
+          hasError ? "bg-red-50" : "bg-transparent hover:bg-gray-50"
         }`}
       >
         <div

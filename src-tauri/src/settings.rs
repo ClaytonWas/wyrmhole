@@ -75,13 +75,13 @@ pub fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
     });
 
     // Ensure the config directory exists before writing to it.
-    if !path.exists() {
-        if let Err(e) = fs::create_dir_all(&path) {
-            eprintln!(
-                "[magic-wormhole][settings][error] Failed to create config directory: {}",
-                e
-            );
-        }
+    if !path.exists()
+        && let Err(e) = fs::create_dir_all(&path)
+    {
+        eprintln!(
+            "[magic-wormhole][settings][error] Failed to create config directory: {}",
+            e
+        );
     }
 
     path.push("settings.json");
@@ -99,13 +99,13 @@ pub fn get_received_files_path(app_handle: &AppHandle) -> PathBuf {
     });
 
     // Ensure the config directory exists before writing to it.
-    if !path.exists() {
-        if let Err(e) = fs::create_dir_all(&path) {
-            eprintln!(
-                "[magic-wormhole][settings][error] Failed to create data directory: {}",
-                e
-            );
-        }
+    if !path.exists()
+        && let Err(e) = fs::create_dir_all(&path)
+    {
+        eprintln!(
+            "[magic-wormhole][settings][error] Failed to create data directory: {}",
+            e
+        );
     }
 
     path.push("received_files.json");
@@ -123,13 +123,13 @@ pub fn get_sent_files_path(app_handle: &AppHandle) -> PathBuf {
     });
 
     // Ensure the config directory exists before writing to it.
-    if !path.exists() {
-        if let Err(e) = fs::create_dir_all(&path) {
-            eprintln!(
-                "[magic-wormhole][settings][error] Failed to create data directory: {}",
-                e
-            );
-        }
+    if !path.exists()
+        && let Err(e) = fs::create_dir_all(&path)
+    {
+        eprintln!(
+            "[magic-wormhole][settings][error] Failed to create data directory: {}",
+            e
+        );
     }
 
     path.push("sent_files.json");

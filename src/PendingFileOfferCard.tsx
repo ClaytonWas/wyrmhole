@@ -25,9 +25,8 @@ const PendingFileOfferCard = ({ id, file_name, file_size, onAccept, onDeny }: Pr
     <>
       <div
         onClick={() => setIsOpen(true)}
-        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-gray-200 last:border-b-0 cursor-pointer transition-all rounded-xl bg-[rgba(254,252,232,0.4)] hover:bg-[rgba(254,252,232,0.6)]"
+        className="grid grid-cols-[1fr_auto] items-center gap-2 px-2 py-1.5 border-b border-gray-200 last:border-b-0 cursor-pointer transition-all rounded-xl bg-yellow-50 hover:bg-yellow-100"
         style={{
-          backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           border: "1px solid rgb(229, 231, 235)",
         }}
