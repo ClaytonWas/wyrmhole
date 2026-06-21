@@ -266,6 +266,33 @@ function App() {
     }
   }
 
+  // Native dialogs can't mix files and folders in a single picker, so folders get
+  // their own picker. The selected directory paths are merged into the same
+  // selectedFiles state the file picker uses; the backend already tarballs any
+  // directory path it receives.
+  async function append_folders() {
+    try {
+      const selected = await open({ directory: true, multiple: true });
+      if (!selected) {
+        return;
+      }
+
+      const folders = Array.isArray(selected) ? selected : [selected];
+      const stringFolders = folders.filter((f) => typeof f === "string") as string[];
+
+      setSelectedFiles((prev) => {
+        const existing = prev ?? [];
+        const merged = [...existing];
+        for (const f of stringFolders) {
+          if (!merged.includes(f)) merged.push(f);
+        }
+        return merged.length > 0 ? merged : null;
+      });
+    } catch (err) {
+      console.error("Error selecting folders:", err);
+    }
+  }
+
   async function send_files() {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
@@ -888,6 +915,33 @@ function App() {
                       >
                         {isDragging ? "Drop files here" : "Click or drag files here"}
                       </span>
+                      {!isDragging && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            append_folders();
+                          }}
+                          className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-blue-300 bg-blue-50/60 text-[10px] xl:text-xs font-medium text-blue-600 hover:bg-blue-100/80 hover:border-blue-400 transition-colors cursor-pointer"
+                          title="Select a folder to send"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="1.5"
+                            stroke="currentColor"
+                            className="w-3.5 h-3.5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
+                            />
+                          </svg>
+                          Select a folder instead
+                        </button>
+                      )}
                     </label>
                   ) : (
                     <div className="flex-1 flex flex-col min-h-0">
@@ -905,6 +959,16 @@ function App() {
                             title="Add more files"
                           >
                             Add files
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              append_folders();
+                            }}
+                            className="text-[10px] xl:text-xs text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+                            title="Add a folder"
+                          >
+                            Add folder
                           </button>
                           <button
                             onClick={(e) => {
