@@ -16,10 +16,22 @@ pub struct AppSettings {
     pub default_folder_name_format: String,
     #[serde(default = "default_relay_server_url")]
     pub relay_server_url: Option<String>,
+    #[serde(default = "default_minimize_on_start")]
+    pub minimize_on_start: bool,
+    #[serde(default = "default_minimize_on_close")]
+    pub minimize_on_close: bool,
 }
 
 fn default_auto_extract() -> bool {
     false
+}
+
+fn default_minimize_on_start() -> bool {
+    false
+}
+
+fn default_minimize_on_close() -> bool {
+    true
 }
 
 fn default_folder_name_format() -> String {
@@ -61,6 +73,22 @@ impl AppSettings {
 
     pub fn set_relay_server_url(&mut self, value: Option<String>) {
         self.relay_server_url = value;
+    }
+
+    pub fn get_minimize_on_start(&self) -> bool {
+        self.minimize_on_start
+    }
+
+    pub fn set_minimize_on_start(&mut self, value: bool) {
+        self.minimize_on_start = value;
+    }
+
+    pub fn get_minimize_on_close(&self) -> bool {
+        self.minimize_on_close
+    }
+
+    pub fn set_minimize_on_close(&mut self, value: bool) {
+        self.minimize_on_close = value;
     }
 }
 
@@ -151,6 +179,8 @@ fn create_default_settings(app_handle: &AppHandle) -> AppSettings {
         auto_extract_tarballs: false,
         default_folder_name_format: default_folder_name_format(),
         relay_server_url: default_relay_server_url(),
+        minimize_on_start: default_minimize_on_start(),
+        minimize_on_close: default_minimize_on_close(),
     }
 }
 
@@ -311,6 +341,44 @@ pub async fn set_relay_server_url(
     app_settings_lock.set_relay_server_url(value);
 
     // Save settings
+    let settings_path = get_settings_path(&app_handle);
+    if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+
+    Ok(())
+}
+
+pub async fn get_minimize_on_start(app_handle: AppHandle) -> Result<bool, String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_minimize_on_start())
+}
+
+pub async fn set_minimize_on_start(app_handle: AppHandle, value: bool) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_minimize_on_start(value);
+
+    let settings_path = get_settings_path(&app_handle);
+    if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
+        return Err(format!("Failed to save settings: {}", e));
+    }
+
+    Ok(())
+}
+
+pub async fn get_minimize_on_close(app_handle: AppHandle) -> Result<bool, String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let app_settings_lock = app_settings_state.lock().await;
+    Ok(app_settings_lock.get_minimize_on_close())
+}
+
+pub async fn set_minimize_on_close(app_handle: AppHandle, value: bool) -> Result<(), String> {
+    let app_settings_state = app_handle.state::<Mutex<AppSettings>>();
+    let mut app_settings_lock = app_settings_state.lock().await;
+    app_settings_lock.set_minimize_on_close(value);
+
     let settings_path = get_settings_path(&app_handle);
     if let Err(e) = save_settings(&app_settings_lock, &settings_path) {
         return Err(format!("Failed to save settings: {}", e));

@@ -45,6 +45,15 @@ export default function SettingsMenu() {
 
   const [downloadDir, setDownloadDir] = useTauriValue<string>("get_download_path", "");
   const [autoExtract, setAutoExtract] = useTauriValue<boolean>("get_auto_extract_tarballs", false);
+  const [minimizeOnStart, setMinimizeOnStart] = useTauriValue<boolean>(
+    "get_minimize_on_start",
+    false,
+  );
+  const [minimizeOnClose, setMinimizeOnClose] = useTauriValue<boolean>(
+    "get_minimize_on_close",
+    true,
+  );
+  const [autostart, setAutostart] = useTauriValue<boolean>("get_autostart", false);
   const [folderFormat, setFolderFormat] = useTauriValue<string>(
     "get_default_folder_name_format",
     "#-files-via-wyrmhole",
@@ -97,6 +106,30 @@ export default function SettingsMenu() {
     const next = !autoExtract;
     setAutoExtract(next);
     saveTauri("set_auto_extract_tarballs", { value: next });
+  }
+
+  function toggleMinimizeOnStart() {
+    const next = !minimizeOnStart;
+    setMinimizeOnStart(next);
+    saveTauri("set_minimize_on_start", { value: next });
+  }
+
+  function toggleMinimizeOnClose() {
+    const next = !minimizeOnClose;
+    setMinimizeOnClose(next);
+    saveTauri("set_minimize_on_close", { value: next });
+  }
+
+  async function toggleAutostart() {
+    const next = !autostart;
+    setAutostart(next);
+    try {
+      await invoke("set_autostart", { value: next });
+    } catch (e) {
+      setAutostart(!next); // revert on failure
+      console.error("Error setting autostart:", e);
+      toast.error("Failed to update launch on startup");
+    }
   }
 
   async function testRelay() {
@@ -170,6 +203,68 @@ export default function SettingsMenu() {
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autoExtract ? "translate-x-4" : "translate-x-0.5"}`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <label htmlFor="autostart" className="text-xs font-medium text-gray-700 block">
+                Launch on Startup
+              </label>
+              <p className="text-[11px] text-gray-500 mt-0.5">Open wyrmhole when you log in</p>
+            </div>
+            <button
+              id="autostart"
+              onClick={toggleAutostart}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${autostart ? "bg-blue-500" : "bg-gray-300"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autostart ? "translate-x-4" : "translate-x-0.5"}`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <label
+                htmlFor="minimize-on-start"
+                className="text-xs font-medium text-gray-700 block"
+              >
+                Minimize on Start
+              </label>
+              <p className="text-[11px] text-gray-500 mt-0.5">Launch hidden in the system tray</p>
+            </div>
+            <button
+              id="minimize-on-start"
+              onClick={toggleMinimizeOnStart}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${minimizeOnStart ? "bg-blue-500" : "bg-gray-300"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${minimizeOnStart ? "translate-x-4" : "translate-x-0.5"}`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <label
+                htmlFor="minimize-on-close"
+                className="text-xs font-medium text-gray-700 block"
+              >
+                Minimize on Close
+              </label>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                Closing hides to the tray instead of quitting
+              </p>
+            </div>
+            <button
+              id="minimize-on-close"
+              onClick={toggleMinimizeOnClose}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${minimizeOnClose ? "bg-blue-500" : "bg-gray-300"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${minimizeOnClose ? "translate-x-4" : "translate-x-0.5"}`}
               />
             </button>
           </div>

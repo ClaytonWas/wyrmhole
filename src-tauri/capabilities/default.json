@@ -13,6 +13,10 @@
       "allow": [{ "path": "**" }]
     },
     "dialog:default",
-    "window-state:default"
+    "window-state:default",
+    "core:tray:default",
+    "core:menu:default",
+    "notification:default",
+    "autostart:default"
   ]
 }
