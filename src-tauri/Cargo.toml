@@ -1,6 +1,6 @@
 [package]
 name = "wyrmhole"
-version = "0.3.4"
+version = "1.0.0"
 description = "A lightweight GUI for magic-wormhole.rs - secure file transfer using Tauri and React"
 authors = ["Cwas"]
 edition = "2024"
@@ -23,7 +23,7 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 magic-wormhole = "0.7.6"
 uuid = { version = "1", features = ["v4"] }
-tokio = "1.47.1"
+tokio = { version = "1.47.1", features = ["time"] }
 once_cell = "1.21.3"
 serde_json = "1.0.142"
 futures = "0.3.31"
@@ -35,3 +35,12 @@ flate2 = "1.0"
 tauri-plugin-window-state = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-autostart = "2"
+
+# Forwards a second launch (e.g. from a file-manager "Send via wyrmhole" entry)
+# into the already-running instance instead of spawning a duplicate.
+tauri-plugin-single-instance = "2"
+
+# Registry access for the optional Windows "Send via wyrmhole" context-menu
+# entry, which the user opts into from Settings (never touched by the installer).
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"

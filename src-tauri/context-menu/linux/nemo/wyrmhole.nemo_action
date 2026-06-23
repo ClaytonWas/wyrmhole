@@ -1,0 +1,10 @@
+[Nemo Action]
+# Cinnamon's Nemo file manager. Install to:
+#   ~/.local/share/nemo/actions/wyrmhole.nemo_action   (per-user)
+#   /usr/share/nemo/actions/wyrmhole.nemo_action        (system-wide / .deb)
+Name=Send via wyrmhole
+Comment=Send the selected files/folders via wyrmhole
+Exec=wyrmhole %F
+Icon-Name=wyrmhole
+Selection=NotNone
+Extensions=any;

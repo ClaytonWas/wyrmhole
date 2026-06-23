@@ -1,12 +1,12 @@
 // This file provides secure Tauri command bindings that delegate to specialized modules.
 // All file transfer logic is in files.rs, settings logic is in settings.rs, etc.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{
+    AppHandle, Emitter, Manager, WindowEvent,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, WindowEvent,
 };
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_notification::NotificationExt;
@@ -17,6 +17,88 @@ use tokio::sync::Mutex;
 #[derive(Clone)]
 struct MinimizeOnClose(Arc<AtomicBool>);
 
+// Name of the event the frontend listens for to start a send for OS-provided
+// paths. The payload is the full batch, which the frontend sends as one package.
+const SEND_FROM_OS_EVENT: &str = "send-files-from-os";
+
+// How long to wait for more paths before dispatching a batch. Windows launches
+// one process per file on a multi-selection, so those arrive as separate
+// single-instance forwards within a few milliseconds; this window coalesces
+// them (and the cold-start argv) into a single send.
+const BATCH_DEBOUNCE_MS: u64 = 700;
+
+// Accumulates OS-provided paths (cold-start argv + single-instance/open-event
+// forwards) and flushes them to the frontend as one batch once they stop
+// arriving and the frontend is listening. `generation` invalidates stale flush
+// timers when a newer path arrives.
+#[derive(Default)]
+struct OsSendQueue(std::sync::Mutex<OsSendQueueInner>);
+
+#[derive(Default)]
+struct OsSendQueueInner {
+    paths: Vec<String>,
+    generation: u64,
+    frontend_ready: bool,
+}
+
+// Pull real filesystem paths out of a launch argument vector. Skips the
+// executable (first arg) and any `-`-prefixed flags, and keeps only arguments
+// that actually exist on disk so stray tokens don't get treated as files.
+fn extract_file_paths(args: &[String]) -> Vec<String> {
+    args.iter()
+        .skip(1)
+        .filter(|a| !a.starts_with('-'))
+        .filter(|a| std::path::Path::new(a.as_str()).exists())
+        .cloned()
+        .collect()
+}
+
+// Add OS-provided paths to the batch and schedule a debounced flush. Safe to
+// call before the frontend is ready (paths just wait in the queue).
+fn enqueue_os_paths(app: &AppHandle, new_paths: Vec<String>) {
+    if new_paths.is_empty() {
+        return;
+    }
+    show_main_window(app);
+
+    let generation = {
+        let queue = app.state::<OsSendQueue>();
+        let mut q = queue.0.lock().unwrap();
+        for p in new_paths {
+            if !q.paths.contains(&p) {
+                q.paths.push(p);
+            }
+        }
+        q.generation += 1;
+        q.generation
+    };
+
+    schedule_flush(app.clone(), generation);
+}
+
+// After the debounce window, dispatch the batch if no newer path arrived and the
+// frontend is listening; otherwise leave it for the next trigger to flush.
+fn schedule_flush(app: AppHandle, generation: u64) {
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_millis(BATCH_DEBOUNCE_MS)).await;
+
+        let paths = {
+            let queue = app.state::<OsSendQueue>();
+            let mut q = queue.0.lock().unwrap();
+            if q.generation != generation || !q.frontend_ready {
+                return;
+            }
+            std::mem::take(&mut q.paths)
+        };
+
+        if !paths.is_empty() {
+            let _ = app.emit(SEND_FROM_OS_EVENT, paths);
+            show_main_window(&app);
+        }
+    });
+}
+
+pub mod context_menu;
 pub mod files;
 pub mod files_json;
 pub mod settings;
@@ -196,6 +278,35 @@ async fn test_relay_server(app_handle: AppHandle) -> Result<String, String> {
     files::test_relay_server(app_handle).await
 }
 
+// Called by the frontend once its `send-files-from-os` listener is attached.
+// Marks the queue ready and triggers a flush so any paths buffered during a
+// cold start get dispatched as one batch.
+#[tauri::command]
+fn frontend_ready(app: AppHandle) {
+    let generation = {
+        let queue = app.state::<OsSendQueue>();
+        let mut q = queue.0.lock().unwrap();
+        q.frontend_ready = true;
+        q.generation += 1;
+        q.generation
+    };
+    schedule_flush(app, generation);
+}
+
+// Whether the OS "Send via wyrmhole" context-menu entry is currently registered
+// for this user. Reads live OS state so the Settings toggle reflects reality.
+#[tauri::command]
+fn get_context_menu_enabled() -> Result<bool, String> {
+    context_menu::is_enabled()
+}
+
+// Opt-in registration of the context-menu entry, driven by the Settings toggle.
+// The installer never modifies this; only an explicit user action does.
+#[tauri::command]
+fn set_context_menu_enabled(value: bool) -> Result<(), String> {
+    context_menu::set_enabled(value)
+}
+
 // Reveal and focus the main window (used by the tray menu and left-click).
 fn show_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -222,6 +333,13 @@ pub fn run() {
     }
 
     tauri::Builder::default()
+        // Must be the FIRST plugin registered. When a second launch happens
+        // (e.g. the user picks "Send via wyrmhole" while the app is already in
+        // the tray), its argv is forwarded here instead of starting a new
+        // process; we turn the paths into a send on the existing instance.
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            enqueue_os_paths(app, extract_file_paths(&argv));
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
@@ -239,6 +357,16 @@ pub fn run() {
             app.manage(MinimizeOnClose(Arc::new(AtomicBool::new(
                 minimize_on_close,
             ))));
+
+            // Paths this process was launched with (file-manager context-menu
+            // entry on a cold start). Queued now; dispatched as one batch once
+            // the frontend signals it's ready via `frontend_ready`.
+            let launch_paths = extract_file_paths(&std::env::args().collect::<Vec<_>>());
+            let launched_with_files = !launch_paths.is_empty();
+            app.manage(OsSendQueue::default());
+            if launched_with_files {
+                enqueue_os_paths(app.handle(), launch_paths);
+            }
 
             files_json::init_received_files(app.handle());
             files_json::init_sent_files(app.handle());
@@ -272,8 +400,10 @@ pub fn run() {
                 .build(app)?;
 
             // Show the window after state is restored (prevents flashing), unless
-            // the user chose to start minimized to the tray.
-            if !minimize_on_start
+            // the user chose to start minimized to the tray. Launching via a
+            // file-manager "Send via wyrmhole" entry always shows the window so
+            // the transfer code is visible, overriding start-minimized.
+            if (!minimize_on_start || launched_with_files)
                 && let Some(window) = app.get_webview_window("main")
             {
                 window
@@ -337,8 +467,25 @@ pub fn run() {
             set_autostart,
             export_received_files_json,
             export_sent_files_json,
-            test_relay_server
+            test_relay_server,
+            frontend_ready,
+            get_context_menu_enabled,
+            set_context_menu_enabled
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, _event| {
+            // macOS delivers files chosen via Finder Services / "Open With" as
+            // Apple "open" events rather than argv, so handle them here. Other
+            // platforms route through argv + single-instance above.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Opened { urls } = _event {
+                let paths: Vec<String> = urls
+                    .iter()
+                    .filter_map(|u| u.to_file_path().ok())
+                    .map(|p| p.to_string_lossy().into_owned())
+                    .collect();
+                enqueue_os_paths(_app_handle, paths);
+            }
+        });
 }

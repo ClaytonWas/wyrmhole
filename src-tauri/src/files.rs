@@ -230,7 +230,7 @@ pub async fn send_file_call(
             "send-progress",
             serde_json::json!({
                 "id": send_id.clone(),
-                "file_name": format!("{}.gz", file_name.clone()),
+                "file_name": format!("{}.tar.gz", file_name.clone()),
                 "sent": 0,
                 "total": 0,
                 "percentage": 0,
@@ -241,7 +241,7 @@ pub async fn send_file_call(
 
         // Create temporary tarball
         let temp_dir = std::env::temp_dir();
-        let tarball_name = format!("{}.gz", file_name);
+        let tarball_name = format!("{}.tar.gz", file_name);
         let tarball_path = temp_dir.join(format!(
             "wyrmhole_send_{}_{}",
             Uuid::new_v4(),
@@ -380,7 +380,7 @@ pub async fn send_file_call(
 
         // Add to sent files history (for folder, use the tarball name without extension)
         let tarball_name_without_ext = tarball_name
-            .strip_suffix(".gz")
+            .strip_suffix(".tar.gz")
             .unwrap_or(&tarball_name)
             .to_string();
 
@@ -389,7 +389,7 @@ pub async fn send_file_call(
             files_json::SentFile {
                 file_name: tarball_name_without_ext,
                 file_size: actual_tarball_size,
-                file_extension: "gz".to_string(),
+                file_extension: "tar.gz".to_string(),
                 file_paths: vec![absolute_path.clone()],
                 send_time: Local::now(),
                 connection_code,
@@ -599,7 +599,7 @@ pub async fn send_multiple_files_call(
     };
 
     // Calculate the tarball name immediately
-    let tarball_name = format!("{}.gz", display_name);
+    let tarball_name = format!("{}.tar.gz", display_name);
 
     // Emit an initial progress event with "Preparing..." status
     // This happens synchronously before any async operations, so the frontend gets the correct name right away
@@ -771,7 +771,7 @@ pub async fn send_multiple_files_call(
         &tarball_name
     ));
 
-    // Use the tarball name (with .gz) for progress events since that's what's actually being sent
+    // Use the tarball name (with .tar.gz) for progress events since that's what's actually being sent
     let progress_file_name = tarball_name.clone();
 
     // Use the same display_name for the folder inside the tarball
@@ -919,9 +919,9 @@ pub async fn send_multiple_files_call(
     // Store all file paths
     let all_file_paths: Vec<PathBuf> = file_paths.iter().map(PathBuf::from).collect();
 
-    // Remove .gz extension from tarball name
+    // Remove .tar.gz extension from tarball name
     let tarball_name_without_ext = tarball_name
-        .strip_suffix(".gz")
+        .strip_suffix(".tar.gz")
         .unwrap_or(&tarball_name)
         .to_string();
 
@@ -930,7 +930,7 @@ pub async fn send_multiple_files_call(
         files_json::SentFile {
             file_name: tarball_name_without_ext,
             file_size: file_size_to_send,
-            file_extension: "gz".to_string(),
+            file_extension: "tar.gz".to_string(),
             file_paths: all_file_paths,
             send_time: Local::now(),
             connection_code,

@@ -54,6 +54,7 @@ export default function SettingsMenu() {
     true,
   );
   const [autostart, setAutostart] = useTauriValue<boolean>("get_autostart", false);
+  const [contextMenu, setContextMenu] = useTauriValue<boolean>("get_context_menu_enabled", false);
   const [folderFormat, setFolderFormat] = useTauriValue<string>(
     "get_default_folder_name_format",
     "#-files-via-wyrmhole",
@@ -129,6 +130,23 @@ export default function SettingsMenu() {
       setAutostart(!next); // revert on failure
       console.error("Error setting autostart:", e);
       toast.error("Failed to update launch on startup");
+    }
+  }
+
+  async function toggleContextMenu() {
+    const next = !contextMenu;
+    setContextMenu(next);
+    try {
+      await invoke("set_context_menu_enabled", { value: next });
+      toast.success(
+        next ? "Added to your file manager's right-click menu" : "Removed from right-click menu",
+      );
+    } catch (e) {
+      setContextMenu(!next); // revert on failure
+      console.error("Error setting context menu:", e);
+      toast.error(
+        e instanceof Error ? e.message : String(e ?? "Failed to update right-click menu"),
+      );
     }
   }
 
@@ -221,6 +239,26 @@ export default function SettingsMenu() {
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autostart ? "translate-x-4" : "translate-x-0.5"}`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <label htmlFor="context-menu" className="text-xs font-medium text-gray-700 block">
+                Right-Click "Send via wyrmhole"
+              </label>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                Add a context-menu entry to send files/folders
+              </p>
+            </div>
+            <button
+              id="context-menu"
+              onClick={toggleContextMenu}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${contextMenu ? "bg-blue-500" : "bg-gray-300"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${contextMenu ? "translate-x-4" : "translate-x-0.5"}`}
               />
             </button>
           </div>

@@ -293,14 +293,17 @@ function App() {
     }
   }
 
-  async function send_files() {
-    if (!selectedFiles || selectedFiles.length === 0) return;
+  // Core send routine shared by the manual "Send" button and the OS
+  // context-menu ("Send via wyrmhole") entry. Takes explicit paths so it
+  // doesn't depend on the async `selectedFiles` state having settled.
+  async function startSend(paths: string[], name: string) {
+    if (!paths || paths.length === 0) return;
 
     const sendId = crypto.randomUUID();
     let displayName = "files";
 
-    if (selectedFiles.length === 1) {
-      const filePath = selectedFiles[0];
+    if (paths.length === 1) {
+      const filePath = paths[0];
       displayName = filePath.split(/[/\\]/).pop() || "Unknown file";
 
       sendOps.set(sendId, {
@@ -344,13 +347,11 @@ function App() {
 
       try {
         const response = await invoke("send_multiple_files_call", {
-          filePaths: selectedFiles,
+          filePaths: paths,
           sendId,
-          folderName: folderName.trim() || null,
+          folderName: name.trim() || null,
         });
         console.log("Sent files:", response);
-        // Clear folder name after sending
-        setFolderName("");
       } catch (err) {
         console.error("Error sending files:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
@@ -368,6 +369,22 @@ function App() {
         );
       }
     }
+  }
+
+  async function send_files() {
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    await startSend(selectedFiles, folderName);
+    if (selectedFiles.length > 1) setFolderName(""); // Clear after sending
+  }
+
+  // Files handed to the app from a file-manager "Send via wyrmhole" entry.
+  // Show them in the Send panel and immediately start the transfer so the
+  // connection code appears without any extra clicks.
+  function send_files_from_os(paths: string[]) {
+    if (!paths || paths.length === 0) return;
+    setSelectedFiles(paths);
+    setFolderName("");
+    startSend(paths, "");
   }
 
   async function request_file() {
@@ -506,6 +523,10 @@ function App() {
     recieved_files_data();
     sent_files_data();
     get_default_folder_name_format();
+    // Signal that our `send-files-from-os` listener (below) is active so the
+    // backend can flush any paths the app was cold-started with from a
+    // file-manager "Send via wyrmhole" entry — dispatched as one batch.
+    invoke("frontend_ready").catch((err) => console.error("Error signaling frontend ready:", err));
   }, []);
 
   // Listen for native file drag-and-drop events
@@ -540,6 +561,10 @@ function App() {
   // Refresh history tables when backend emits add events.
   useTauriEvent("received-file-added", () => recieved_files_data());
   useTauriEvent("sent-file-added", () => sent_files_data());
+
+  // Files forwarded from a file-manager "Send via wyrmhole" entry while the
+  // app is already running in the tray.
+  useTauriEvent<string[]>("send-files-from-os", (paths) => send_files_from_os(paths));
 
   useTauriEvent<{ value: string }>("default-folder-name-format-updated", (payload) => {
     setDefaultFolderNameFormat(payload.value);

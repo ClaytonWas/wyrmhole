@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Thunar (XFCE) custom action. Thunar stores custom actions per-user in
+  ~/.config/Thunar/uca.xml, so this can't be shipped system-wide cleanly.
+
+  Easiest setup (GUI):
+    Thunar -> Edit -> Configure custom actions... -> + (Add)
+      Name:        Send via wyrmhole
+      Command:     wyrmhole %F
+      Appearance Conditions tab -> File Pattern: *  -> tick every file type
+        (Directories, Audio/Image/Text/Video/Other Files)
+
+  Or merge the <action> block below into the <actions> element of
+  ~/.config/Thunar/uca.xml by hand (back the file up first), then restart Thunar
+  with:  thunar -q
+-->
+<action>
+  <icon>wyrmhole</icon>
+  <name>Send via wyrmhole</name>
+  <unique-id>wyrmhole-send-1</unique-id>
+  <command>wyrmhole %F</command>
+  <description>Send the selected files/folders via wyrmhole</description>
+  <patterns>*</patterns>
+  <directories/>
+  <audio-files/>
+  <image-files/>
+  <other-files/>
+  <text-files/>
+  <video-files/>
+</action>
