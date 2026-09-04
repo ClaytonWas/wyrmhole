@@ -303,7 +303,7 @@ fn get_context_menu_enabled() -> Result<bool, String> {
 // Opt-in registration of the context-menu entry, driven by the Settings toggle.
 // The installer never modifies this; only an explicit user action does.
 #[tauri::command]
-fn set_context_menu_enabled(value: bool) -> Result<(), String> {
+fn set_context_menu_enabled(value: bool) -> Result<String, String> {
     context_menu::set_enabled(value)
 }
 

@@ -1,0 +1,25 @@
+#!/bin/sh
+# "Send via wyrmhole" - file-manager script (Nautilus / Nemo / Caja).
+# Written by wyrmhole: Settings -> Right-Click "Send via wyrmhole".
+# Toggling that setting off deletes this file.
+#
+# To install by hand, copy this file - keeping the name, which is what the
+# menu shows - into your file manager's scripts directory and chmod +x it:
+#   Nautilus  ~/.local/share/nautilus/scripts/
+#   Caja      ~/.config/caja/scripts/
+# (Nemo doesn't need it - ../nemo/ gives it a top-level entry.)
+# It then appears under Scripts -> Send via wyrmhole. No extra packages.
+
+selected="${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS:-${NEMO_SCRIPT_SELECTED_FILE_PATHS:-${CAJA_SCRIPT_SELECTED_FILE_PATHS:-}}}"
+
+if [ -n "$selected" ]; then
+	set -f
+	IFS='
+'
+	set -- $selected
+	unset IFS
+	set +f
+fi
+
+[ "$#" -eq 0 ] && exit 0
+exec '/usr/bin/wyrmhole' "$@"
