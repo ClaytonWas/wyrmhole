@@ -1,6 +1,6 @@
 [package]
 name = "wyrmhole"
-version = "1.0.0"
+version = "1.1.0"
 description = "A lightweight GUI for magic-wormhole.rs - secure file transfer using Tauri and React"
 authors = ["Cwas"]
 edition = "2024"

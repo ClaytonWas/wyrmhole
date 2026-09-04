@@ -1,0 +1,15 @@
+# %F lets a file manager hand us the selected paths, and MimeType puts us in its
+# "Open With" list -- the dependency-free fallback for "Send via wyrmhole".
+# Template variables: categories, comment, exec, icon, name.
+[Desktop Entry]
+Categories=Network;FileTransfer;
+{{#if comment}}
+Comment={{comment}}
+{{/if}}
+Exec={{exec}} %F
+Icon={{icon}}
+Name={{name}}
+Terminal=false
+Type=Application
+StartupWMClass={{exec}}
+MimeType=application/octet-stream;inode/directory;
