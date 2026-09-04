@@ -137,9 +137,12 @@ export default function SettingsMenu() {
     const next = !contextMenu;
     setContextMenu(next);
     try {
-      await invoke("set_context_menu_enabled", { value: next });
+      const summary = await invoke<string>("set_context_menu_enabled", { value: next });
       toast.success(
-        next ? "Added to your file manager's right-click menu" : "Removed from right-click menu",
+        summary ||
+          (next
+            ? "Added to your file manager's right-click menu"
+            : "Removed from right-click menu"),
       );
     } catch (e) {
       setContextMenu(!next); // revert on failure

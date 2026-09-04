@@ -1,0 +1,15 @@
+# freedesktop file-manager action (PCManFM, PCManFM-Qt, *-actions plugins).
+# Install to:
+#   ~/.local/share/file-manager/actions/wyrmhole.desktop   (per-user)
+#   /usr/share/file-manager/actions/wyrmhole.desktop       (system-wide)
+[Desktop Entry]
+Type=Action
+Name=Send via wyrmhole
+Tooltip=Send the selected files/folders via wyrmhole
+Icon=wyrmhole
+Profiles=wyrmhole;
+
+[X-Action-Profile wyrmhole]
+Name=Send via wyrmhole
+MimeTypes=*/*;
+Exec="/usr/bin/wyrmhole" %F

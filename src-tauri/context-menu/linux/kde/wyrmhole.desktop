@@ -1,7 +1,13 @@
+# KDE service menu (Dolphin, Konqueror). Install to:
+#   ~/.local/share/kio/servicemenus/wyrmhole.desktop   (per-user)
+#   /usr/share/kio/servicemenus/wyrmhole.desktop       (system-wide / .rpm)
+# Plasma >= 5.85 ignores service menus that are not executable:
+#   chmod +x ~/.local/share/kio/servicemenus/wyrmhole.desktop
+# On Plasma < 5.85 use ~/.local/share/kservices5/ServiceMenus/ instead.
 [Desktop Entry]
 Type=Service
 ServiceTypes=KonqPopupMenu/Plugin
-# all/all covers both files and folders; %F passes every selected path.
+# all/all covers files and folders alike; %F passes every selection.
 MimeType=all/all;
 Actions=sendViaWyrmhole;
 X-KDE-Priority=TopLevel
@@ -9,4 +15,4 @@ X-KDE-Priority=TopLevel
 [Desktop Action sendViaWyrmhole]
 Name=Send via wyrmhole
 Icon=wyrmhole
-Exec=wyrmhole %F
+Exec="/usr/bin/wyrmhole" %F

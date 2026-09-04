@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Thunar (XFCE) custom action. Thunar stores custom actions per-user in
-  ~/.config/Thunar/uca.xml, so this can't be shipped system-wide cleanly.
+  Thunar (XFCE) custom action.
 
-  Easiest setup (GUI):
-    Thunar -> Edit -> Configure custom actions... -> + (Add)
-      Name:        Send via wyrmhole
-      Command:     wyrmhole %F
-      Appearance Conditions tab -> File Pattern: *  -> tick every file type
-        (Directories, Audio/Image/Text/Video/Other Files)
+  You do not normally need this file: Settings -> Right-Click "Send via
+  wyrmhole" merges the <action> block below into ~/.config/Thunar/uca.xml
+  for you, leaving any custom actions you already have untouched, and
+  removes just that block when you toggle the setting back off.
 
-  Or merge the <action> block below into the <actions> element of
-  ~/.config/Thunar/uca.xml by hand (back the file up first), then restart Thunar
-  with:  thunar -q
+  To do it by hand instead, paste the block inside the <actions> element of
+  ~/.config/Thunar/uca.xml (back the file up first), then run: thunar -q
+
+  Or via the GUI: Thunar -> Edit -> Configure custom actions... -> + (Add)
+    Name:    Send via wyrmhole
+    Command: wyrmhole %F
+    Appearance Conditions -> File Pattern: *  -> tick every file type
 -->
 <action>
-  <icon>wyrmhole</icon>
-  <name>Send via wyrmhole</name>
-  <unique-id>wyrmhole-send-1</unique-id>
-  <command>wyrmhole %F</command>
-  <description>Send the selected files/folders via wyrmhole</description>
-  <patterns>*</patterns>
-  <directories/>
-  <audio-files/>
-  <image-files/>
-  <other-files/>
-  <text-files/>
-  <video-files/>
+	<icon>wyrmhole</icon>
+	<name>Send via wyrmhole</name>
+	<unique-id>wyrmhole-send-via-wyrmhole</unique-id>
+	<command>&quot;/usr/bin/wyrmhole&quot; %F</command>
+	<description>Send the selected files/folders via wyrmhole</description>
+	<patterns>*</patterns>
+	<directories/>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
 </action>
