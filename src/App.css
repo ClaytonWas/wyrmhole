@@ -61,14 +61,16 @@ h2 {
   }
 }
 
-.spin-on-hover {
-  animation: spin 2s linear infinite;
+/* Only the logo's worm group spins, not the whole header element. */
+.spin-on-hover .spin-target {
+  animation: spin 2s linear infinite reverse;
   animation-play-state: paused;
-  display: inline-block;
-  transition: transform 0.3s ease;
+  /* WyrmholeLogo puts the spiral centre at (0, 0). */
+  transform-box: view-box;
+  transform-origin: 0 0;
 }
 
-.spin-on-hover:hover {
+.spin-on-hover:hover .spin-target {
   animation-play-state: running;
 }
 

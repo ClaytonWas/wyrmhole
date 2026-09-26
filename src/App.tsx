@@ -12,7 +12,7 @@ import PendingFileOfferCard from "./PendingFileOfferCard";
 import ConnectingCard from "./ConnectingCard";
 import SettingsMenu from "./SettingsMenu";
 import { FileIcon } from "./FileIcon";
-import { XIcon } from "./Icons";
+import { WyrmholeLogo, XIcon } from "./Icons";
 import "./App.css";
 
 // Stops vertical wheel scroll from bubbling past a scrollable region when the
@@ -727,8 +727,8 @@ function App() {
       <nav className="glass-navbar flex-shrink-0 z-10">
         <div className="px-3 sm:px-6 py-2 sm:py-2.5 flex justify-between items-center">
           <h1 className="text-lg sm:text-2xl xl:text-3xl font-bold flex items-center select-none gap-1 sm:gap-2 text-gray-800">
-            <span className="spin-on-hover cursor-pointer text-lg sm:text-2xl xl:text-3xl flex items-center">
-              🌀
+            <span className="spin-on-hover cursor-pointer flex items-center">
+              <WyrmholeLogo className="w-6 h-6 sm:w-8 sm:h-8 xl:w-9 xl:h-9" />
             </span>
             <span className="gradient-shimmer flex items-center">wyrmhole</span>
           </h1>
